@@ -22,6 +22,8 @@ import { SaaSLanguages } from './pages/SaaSLanguages';
 import { SaaSDemo } from './pages/SaaSDemo';
 import { SaaSTaxConfig } from './pages/SaaSTaxConfig';
 import { SaaSEmailConfig } from './pages/SaaSEmailConfig';
+import { SaaSNewsletter } from './pages/SaaSNewsletter';
+import { SaaSTestimonials } from './pages/SaaSTestimonials';
 import { BrokerAIConfig } from './pages/BrokerAIConfig';
 import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
@@ -29,6 +31,9 @@ import { EmployeeDetail } from './pages/EmployeeDetail';
 import { LeadFinder } from './pages/LeadFinder';
 import { DataImport } from './pages/DataImport';
 import { CallAgent } from './pages/CallAgent';
+import { FeatureInfo } from './pages/FeatureInfo';
+import { Legal } from './pages/Legal';
+import { OnboardingWizard } from './pages/OnboardingWizard';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SecurityProvider } from './contexts/SecurityContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -53,6 +58,11 @@ const App: React.FC = () => {
             <Router>
               <Routes>
                 <Route path="/" element={<Landing />} />
+                <Route path="/register" element={<OnboardingWizard />} />
+                
+                {/* Marketing & Content Routes */}
+                <Route path="/features/:slug" element={<FeatureInfo />} />
+                <Route path="/legal/:type" element={<Legal />} />
                 
                 {/* Dynamic Dashboard based on Role */}
                 <Route path="/dashboard" element={<DashboardRouter />} />
@@ -72,6 +82,8 @@ const App: React.FC = () => {
                 <Route path="/tax" element={<TaxManagement />} />
                 <Route path="/saas/tax-config" element={<SaaSTaxConfig />} />
                 <Route path="/saas/email-config" element={<SaaSEmailConfig />} />
+                <Route path="/saas/newsletter" element={<SaaSNewsletter />} />
+                <Route path="/saas/testimonials" element={<SaaSTestimonials />} />
                 <Route path="/saas/call-agent" element={<CallAgent />} />
 
                 <Route path="/partners" element={<PartnerHub />} />

@@ -22,24 +22,46 @@ const BrandingContext = createContext<BrandingContextType>({
 
 export const useBranding = () => useContext(BrandingContext);
 
-// Helper to convert Hex to RGB for Tailwind variables
-const hexToRgb = (hex: string) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : '14 165 233';
+// Helper to convert Hex to HSL for shade generation
+const hexToHSL = (hex: string) => {
+    let r = parseInt(hex.slice(1, 3), 16) / 255;
+    let g = parseInt(hex.slice(3, 5), 16) / 255;
+    let b = parseInt(hex.slice(5, 7), 16) / 255;
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h: number = 0, s: number = 0, l: number = (max + min) / 2;
+    if (max !== min) {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
 };
 
-// Simple shader to lighten/darken hex (Basic implementation for prototype)
-// In a production app, use 'tinycolor2' or 'chroma-js'
-const adjustColor = (color: string, amount: number) => {
-    return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
-}
+// Helper to convert HSL back to RGB string for Tailwind
+const hslToRGBString = (h: number, s: number, l: number) => {
+    s /= 100; l /= 100;
+    let c = (1 - Math.abs(2 * l - 1)) * s,
+        x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+        m = l - c / 2, r = 0, g = 0, b = 0;
+    if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+    else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+    else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+    else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+    else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+    else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+    return `${Math.round((r + m) * 255)} ${Math.round((g + m) * 255)} ${Math.round((b + m) * 255)}`;
+};
 
 export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [branding, setBranding] = useState<BrandingConfig>(defaultBranding);
 
-  // Load Tenant based on User
   useEffect(() => {
     if (user?.tenantId) {
         const foundTenant = MOCK_TENANTS.find(t => t.id === user.tenantId);
@@ -48,39 +70,28 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setBranding(foundTenant.branding || defaultBranding);
         }
     } else {
-        // SaaS Admin or unassigned user gets default branding
         setTenant(null);
         setBranding(defaultBranding);
     }
   }, [user]);
 
-  // Apply CSS Variables when branding changes
   useEffect(() => {
     const root = document.documentElement;
     const baseColor = branding.primaryColor;
+    const hsl = hexToHSL(baseColor);
 
-    // We simulate a palette by manually shifting hex values. 
-    // This is approximate but works for visual demos without heavy libraries.
-    // 500/600 is the base.
-    
-    // Note: This logic is simplified. A real hex shader would be more complex.
-    // We will trust the browser calculates these somewhat okay, or rely on valid hex inputs.
-    
-    root.style.setProperty('--color-brand-600', hexToRgb(baseColor));
-    
-    // Naive manual shifts for other shades (won't be perfect but proves the concept)
-    // Ideally you import the user's color into a utility that generates the full palette
-    root.style.setProperty('--color-brand-500', hexToRgb(baseColor)); 
-    root.style.setProperty('--color-brand-700', hexToRgb(baseColor)); // In prod: Darken(10%)
-    root.style.setProperty('--color-brand-900', hexToRgb(baseColor)); // In prod: Darken(30%)
-    root.style.setProperty('--color-brand-50', hexToRgb(baseColor)); // In prod: Lighten(90%)
-    root.style.setProperty('--color-brand-100', hexToRgb(baseColor)); // In prod: Lighten(80%)
+    // Generate accurate shades using HSL manipulation
+    root.style.setProperty('--color-brand-50', hslToRGBString(hsl.h, hsl.s, 97));
+    root.style.setProperty('--color-brand-100', hslToRGBString(hsl.h, hsl.s, 92));
+    root.style.setProperty('--color-brand-500', hslToRGBString(hsl.h, hsl.s, hsl.l));
+    root.style.setProperty('--color-brand-600', hslToRGBString(hsl.h, hsl.s, Math.max(0, hsl.l - 8)));
+    root.style.setProperty('--color-brand-700', hslToRGBString(hsl.h, hsl.s, Math.max(0, hsl.l - 18)));
+    root.style.setProperty('--color-brand-900', hslToRGBString(hsl.h, hsl.s, Math.max(0, hsl.l - 35)));
 
   }, [branding]);
 
   const updateBranding = (config: Partial<BrandingConfig>) => {
       setBranding(prev => ({ ...prev, ...config }));
-      // In a real app, you would save this to the backend here
   };
 
   return (

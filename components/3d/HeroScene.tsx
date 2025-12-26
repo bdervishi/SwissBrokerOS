@@ -1,7 +1,19 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, MeshDistortMaterial, Sphere, Icosahedron, TorusKnot, RoundedBox, Sparkles, Stars } from '@react-three/drei';
 import * as THREE from 'three';
+
+// Define Three.js elements as local constants to fix JSX intrinsic element errors
+const Group = 'group' as any;
+const Mesh = 'mesh' as any;
+const TorusGeometry = 'torusGeometry' as any;
+const MeshStandardMaterial = 'meshStandardMaterial' as any;
+const MeshPhysicalMaterial = 'meshPhysicalMaterial' as any;
+const BoxGeometry = 'boxGeometry' as any;
+const AmbientLight = 'ambientLight' as any;
+const PointLight = 'pointLight' as any;
+const Fog = 'fog' as any;
 
 interface HeroSceneProps {
   currentSlide: number;
@@ -10,7 +22,7 @@ interface HeroSceneProps {
 // --- VISUAL 1: THE CORE (OS) ---
 const TheCore = () => {
   return (
-    <group position={[0, 0, 0]}>
+    <Group position={[0, 0, 0]}>
       <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
         <Icosahedron args={[1.5, 0]} position={[0, 0, 0]}>
           <MeshDistortMaterial
@@ -24,16 +36,16 @@ const TheCore = () => {
         </Icosahedron>
       </Float>
       {/* Orbiting Rings */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[2.5, 0.02, 16, 100]} />
-        <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.5} />
-      </mesh>
-      <mesh rotation={[Math.PI / 3, Math.PI / 4, 0]}>
-        <torusGeometry args={[3, 0.02, 16, 100]} />
-        <meshStandardMaterial color="#bae6fd" emissive="#bae6fd" emissiveIntensity={0.2} />
-      </mesh>
+      <Mesh rotation={[Math.PI / 2, 0, 0]}>
+        <TorusGeometry args={[2.5, 0.02, 16, 100]} />
+        <MeshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={0.5} />
+      </Mesh>
+      <Mesh rotation={[Math.PI / 3, Math.PI / 4, 0]}>
+        <TorusGeometry args={[3, 0.02, 16, 100]} />
+        <MeshStandardMaterial color="#bae6fd" emissive="#bae6fd" emissiveIntensity={0.2} />
+      </Mesh>
       <Sparkles count={50} scale={6} size={4} speed={0.4} opacity={0.5} color="#bae6fd" />
-    </group>
+    </Group>
   );
 };
 
@@ -46,11 +58,11 @@ const WealthMonoliths = () => {
   ];
 
   return (
-    <group position={[15, 0, 0]}>
+    <Group position={[15, 0, 0]}>
       <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
         {bars.map((bar, idx) => (
           <RoundedBox key={idx} args={bar.scale as [number, number, number]} radius={0.1} smoothness={4} position={bar.pos as [number, number, number]}>
-            <meshStandardMaterial 
+            <MeshStandardMaterial 
                 color={bar.color} 
                 roughness={0.1} 
                 metalness={0.6} 
@@ -61,18 +73,18 @@ const WealthMonoliths = () => {
         {/* Floating Coins/Particles */}
         <Sparkles count={40} scale={5} size={3} speed={0.4} opacity={0.6} color="#d1fae5" />
       </Float>
-    </group>
+    </Group>
   );
 };
 
 // --- VISUAL 3: SECURITY (Swiss Vault) ---
 const SecurityVault = () => {
   return (
-    <group position={[30, 0, 0]}>
+    <Group position={[30, 0, 0]}>
       <Float speed={1} rotationIntensity={0.2} floatIntensity={0.2}>
         {/* Outer Shield Shell */}
         <Sphere args={[1.8, 32, 32]} position={[0, 0, 0]}>
-           <meshPhysicalMaterial 
+           <MeshPhysicalMaterial 
               color="#ffffff" 
               transmission={0.6} 
               opacity={0.3} 
@@ -85,23 +97,23 @@ const SecurityVault = () => {
         
         {/* Inner Lock Core */}
         <TorusKnot args={[0.8, 0.25, 100, 16]} position={[0, 0, 0]}>
-           <meshStandardMaterial color="#dc2626" roughness={0.3} metalness={0.8} emissive="#991b1b" emissiveIntensity={0.5} />
+           <MeshStandardMaterial color="#dc2626" roughness={0.3} metalness={0.8} emissive="#991b1b" emissiveIntensity={0.5} />
         </TorusKnot>
 
         {/* Floating Cross Elements */}
-        <group position={[0, 0, 1.2]}>
-             <mesh position={[0,0,0]}>
-                <boxGeometry args={[0.8, 0.2, 0.1]} />
-                <meshStandardMaterial color="white" />
-             </mesh>
-             <mesh position={[0,0,0]}>
-                <boxGeometry args={[0.2, 0.8, 0.1]} />
-                <meshStandardMaterial color="white" />
-             </mesh>
-        </group>
+        <Group position={[0, 0, 1.2]}>
+             <Mesh position={[0,0,0]}>
+                <BoxGeometry args={[0.8, 0.2, 0.1]} />
+                <MeshStandardMaterial color="white" />
+             </Mesh>
+             <Mesh position={[0,0,0]}>
+                <BoxGeometry args={[0.2, 0.8, 0.1]} />
+                <MeshStandardMaterial color="white" />
+             </Mesh>
+        </Group>
       </Float>
        <Sparkles count={50} scale={5} size={2} speed={0.2} opacity={0.8} color="#fecaca" />
-    </group>
+    </Group>
   );
 };
 
@@ -128,9 +140,9 @@ export const HeroScene: React.FC<HeroSceneProps> = ({ currentSlide }) => {
     <div className="absolute inset-0 z-0">
       <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
          {/* Lights */}
-         <ambientLight intensity={0.4} />
-         <pointLight position={[10, 10, 10]} intensity={1.5} color="#ffffff" />
-         <pointLight position={[-10, -10, -5]} intensity={0.5} color="#0ea5e9" />
+         <AmbientLight intensity={0.4} />
+         <PointLight position={[10, 10, 10]} intensity={1.5} color="#ffffff" />
+         <PointLight position={[-10, -10, -5]} intensity={0.5} color="#0ea5e9" />
          
          {/* Background */}
          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={0.5} />
@@ -144,7 +156,7 @@ export const HeroScene: React.FC<HeroSceneProps> = ({ currentSlide }) => {
          <SecurityVault />
          
          {/* Atmosphere */}
-         <fog attach="fog" args={['#020617', 5, 25]} />
+         <Fog attach="fog" args={['#020617', 5, 25]} />
       </Canvas>
     </div>
   );

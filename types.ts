@@ -99,6 +99,15 @@ export enum CommissionStatus {
 
 export type TaxReturnStatus = 'OPEN' | 'DOCS_MISSING' | 'IN_PROGRESS' | 'REVIEW' | 'SUBMITTED' | 'ARCHIVED';
 
+export interface Testimonial {
+  id: string;
+  quote: string;
+  author: string;
+  role: string;
+  company: string;
+  avatar: string;
+}
+
 /**
  * Interfaces mirroring the Prisma Schema for the Frontend
  */

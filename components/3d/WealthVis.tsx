@@ -1,8 +1,22 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Float, Billboard, RoundedBox, SoftShadows, Grid, useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import { Asset, AssetType } from '../../types';
+
+// Define Three.js elements as local constants to fix JSX intrinsic element errors
+const Group = 'group' as any;
+const MeshPhysicalMaterial = 'meshPhysicalMaterial' as any;
+const Mesh = 'mesh' as any;
+const RingGeometry = 'ringGeometry' as any;
+const MeshBasicMaterial = 'meshBasicMaterial' as any;
+const Fog = 'fog' as any;
+const AmbientLight = 'ambientLight' as any;
+const SpotLight = 'spotLight' as any;
+const PointLight = 'pointLight' as any;
+const CircleGeometry = 'circleGeometry' as any;
+const MeshStandardMaterial = 'meshStandardMaterial' as any;
 
 interface WealthVisProps {
   assets: Asset[];
@@ -55,7 +69,7 @@ const AssetBar: React.FC<AssetBarProps> = ({ position, targetHeight, color, labe
   });
 
   return (
-    <group position={position}>
+    <Group position={position}>
       {/* The Bar */}
       <RoundedBox
         ref={meshRef}
@@ -68,7 +82,7 @@ const AssetBar: React.FC<AssetBarProps> = ({ position, targetHeight, color, labe
         castShadow
         receiveShadow
       >
-        <meshPhysicalMaterial 
+        <MeshPhysicalMaterial 
           color={color}
           roughness={0.2} 
           metalness={0.1}
@@ -80,7 +94,7 @@ const AssetBar: React.FC<AssetBarProps> = ({ position, targetHeight, color, labe
       </RoundedBox>
 
       {/* Label - Uses Billboard to always face camera */}
-      <group position={[0, targetHeight + 0.8, 0]}>
+      <Group position={[0, targetHeight + 0.8, 0]}>
         <Float speed={2} rotationIntensity={0} floatIntensity={0.2} floatingRange={[0, 0.2]}>
           <Billboard>
             <Text
@@ -110,14 +124,14 @@ const AssetBar: React.FC<AssetBarProps> = ({ position, targetHeight, color, labe
             </Text>
           </Billboard>
         </Float>
-      </group>
+      </Group>
       
       {/* Base Ring for context */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <ringGeometry args={[0.6, 0.65, 32]} />
-        <meshBasicMaterial color={color} opacity={0.3} transparent side={THREE.DoubleSide} />
-      </mesh>
-    </group>
+      <Mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+        <RingGeometry args={[0.6, 0.65, 32]} />
+        <MeshBasicMaterial color={color} opacity={0.3} transparent side={THREE.DoubleSide} />
+      </Mesh>
+    </Group>
   );
 };
 
@@ -168,11 +182,11 @@ export const WealthVis: React.FC<WealthVisProps> = ({ assets }) => {
   return (
     <div className="h-[400px] w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl overflow-hidden relative">
       <Canvas shadows camera={{ position: [0, 6, 10], fov: 45 }}>
-        <fog attach="fog" args={['#0f172a', 5, 20]} />
+        <Fog attach="fog" args={['#0f172a', 5, 20]} />
         
         {/* Lights */}
-        <ambientLight intensity={0.5} />
-        <spotLight 
+        <AmbientLight intensity={0.5} />
+        <SpotLight 
             position={[10, 10, 10]} 
             angle={0.15} 
             penumbra={1} 
@@ -180,7 +194,7 @@ export const WealthVis: React.FC<WealthVisProps> = ({ assets }) => {
             castShadow 
             shadow-mapSize={[2048, 2048]} 
         />
-        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#3b82f6" />
+        <PointLight position={[-10, -10, -10]} intensity={0.5} color="#3b82f6" />
 
         {/* Controls */}
         <OrbitControls 
@@ -192,7 +206,7 @@ export const WealthVis: React.FC<WealthVisProps> = ({ assets }) => {
         />
 
         {/* Scene Objects */}
-        <group position={[0, -1, 0]}>
+        <Group position={[0, -1, 0]}>
             {/* Floor */}
             <Grid 
                 renderOrder={-1} 
@@ -219,11 +233,11 @@ export const WealthVis: React.FC<WealthVisProps> = ({ assets }) => {
             ))}
 
             {/* Center Platform */}
-            <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-                <circleGeometry args={[4, 32]} />
-                <meshStandardMaterial color="#1e293b" transparent opacity={0.5} />
-            </mesh>
-        </group>
+            <Mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
+                <CircleGeometry args={[4, 32]} />
+                <MeshStandardMaterial color="#1e293b" transparent opacity={0.5} />
+            </Mesh>
+        </Group>
 
         <SoftShadows size={10} samples={10} focus={0} />
       </Canvas>
