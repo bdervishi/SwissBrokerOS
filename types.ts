@@ -7,7 +7,7 @@ export enum UserRole {
   SAAS_SALES = 'SAAS_SALES',
   SAAS_MARKETING = 'SAAS_MARKETING',
   SAAS_FINANCE = 'SAAS_FINANCE',
-  SAAS_ACQUISITION = 'SAAS_ACQUISITION', // NEW: Hunting Brokers
+  SAAS_ACQUISITION = 'SAAS_ACQUISITION', // NEW: Hunting Brokers & Partners (Garagen)
 
   // BROKER Roles
   BROKER_ADMIN = 'BROKER_ADMIN', // Inhaber
@@ -19,7 +19,7 @@ export enum UserRole {
   CLIENT = 'CLIENT'
 }
 
-export type EmployeeModule = 'INSURANCE' | 'MORTGAGE' | 'TAX' | 'PENSION';
+export type EmployeeModule = 'INSURANCE' | 'MORTGAGE' | 'TAX' | 'PENSION' | 'CREDIT';
 
 export enum PolicyStatus {
   ACTIVE = 'ACTIVE',
@@ -34,6 +34,11 @@ export enum MortgageType {
   MIXED = 'MIXED'
 }
 
+export enum CreditType {
+    PRIVATE = 'PRIVATE',
+    LEASING = 'LEASING'
+}
+
 export enum AssetType {
   CASH = 'CASH',
   SECURITIES = 'SECURITIES',
@@ -46,7 +51,8 @@ export enum IntegrationCategory {
   ACCOUNTING = 'ACCOUNTING',
   COMMUNICATION = 'COMMUNICATION',
   CRM = 'CRM',
-  BANKING = 'BANKING'
+  BANKING = 'BANKING',
+  FINANCE_PROVIDER = 'FINANCE_PROVIDER'
 }
 
 export enum IntegrationStatus {
@@ -59,7 +65,8 @@ export enum PartnerCategory {
   INSURANCE = 'INSURANCE',
   BANK = 'BANK',
   LEGAL = 'LEGAL',
-  SERVICE = 'SERVICE'
+  SERVICE = 'SERVICE',
+  LEASING = 'LEASING'
 }
 
 export enum PartnerStatus {
@@ -408,4 +415,16 @@ export interface CallLog {
     outcome: 'BOOKED_DEMO' | 'NOT_INTERESTED' | 'CALLBACK' | 'VOICEMAIL';
     transcript: string;
     sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
+}
+
+// Bank / Credit Offer Type
+export interface BankOffer {
+    id: string;
+    bankName: string;
+    productName: string;
+    interestRateRange: [number, number]; // min, max
+    maxDuration: number;
+    commissionPercentage: number; // e.g., 2% kickback
+    logoUrl?: string;
+    type: CreditType;
 }

@@ -4,7 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { MOCK_COMMISSIONS, MOCK_TENANTS, MOCK_POLICIES, MOCK_CLIENTS, MOCK_USERS } from '../constants';
 import { CommissionStatus, CommissionType, UserRole, PolicyStatus } from '../types';
-import { TrendingUp, DollarSign, Clock, Download, Filter, Building2, AlertTriangle, ShieldAlert, Phone, Users, CheckCircle } from 'lucide-react';
+import { TrendingUp, DollarSign, Clock, Download, Filter, Building2, AlertTriangle, ShieldAlert, Phone, Users, CheckCircle, Settings as SettingsIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Link, useLocation } from 'react-router-dom';
@@ -18,6 +18,12 @@ export const Commissions: React.FC = () => {
     const initialTab = location.state?.tab === 'STORNO' ? 'STORNO' : 'OVERVIEW';
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STORNO' | 'AGENTS'>(initialTab);
 
+    // Mock Agent Settings (Local State)
+    const [agentSettings, setAgentSettings] = useState([
+        { userId: 'u_agent_1', name: 'Felix Fieldagent', split: 60, role: 'Broker Agent' },
+        { userId: 'u_saas_4', name: 'Alex Acquisition', split: 20, role: 'Hunter (SaaS)' } // Hunter gets recurring SaaS commission
+    ]);
+
     // Update tab if location state changes (e.g. clicking multiple times)
     useEffect(() => {
         if (location.state?.tab) {
@@ -30,12 +36,28 @@ export const Commissions: React.FC = () => {
         return <Navigate to="/dashboard" />;
     }
     
-    // 2. Agent Redirect (Agents should use their own dashboard, but if they land here, redirect)
-    if (role === UserRole.BROKER_AGENT) {
-        return <Navigate to="/dashboard" />;
+    // 2. SaaS Hunter View
+    if (role === UserRole.SAAS_ACQUISITION) {
+        // Simple view for Hunters
+        const myCommissions = MOCK_COMMISSIONS; // Mock: In real app filter by hunter ID
+        const totalEarned = 12500;
+        
+        return (
+            <Layout>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Meine Provisionen</h1>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <KPICard title="Total Verdient" value={`CHF ${totalEarned}`} icon={<DollarSign className="text-emerald-600"/>} trend="Lifetime"/>
+                    <KPICard title="Offen" value="CHF 450" icon={<Clock className="text-amber-600"/>} trend="Nächste Auszahlung"/>
+                    <KPICard title="Aktiver Split" value="20%" icon={<SettingsIcon className="text-slate-600"/>} trend="Auf Recurring Revenue"/>
+                </div>
+                <Card title="Abrechnungen">
+                    <div className="p-4 text-center text-slate-500">Keine Transaktionen diesen Monat.</div>
+                </Card>
+            </Layout>
+        )
     }
 
-    // 3. SaaS View (Revenue from Tenants)
+    // 3. SaaS Admin View (Revenue from Tenants)
     if (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_SALES || role === UserRole.SAAS_FINANCE) {
         // ... (SaaS View Code remains same as previous, but included for completeness)
         const totalMrr = MOCK_TENANTS.reduce((sum, t) => sum + t.mrr, 0);
@@ -413,41 +435,53 @@ export const Commissions: React.FC = () => {
                         <h2 className="font-bold text-lg text-slate-900 dark:text-slate-100">Externe Vermittler Übersicht</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        {agentStats.map(stat => (
-                            <div key={stat.agent.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <img src={stat.agent.avatarUrl} className="w-12 h-12 rounded-full bg-slate-200" alt="" />
-                                    <div>
-                                        <h3 className="font-bold text-slate-900 dark:text-slate-100">{stat.agent.firstName} {stat.agent.lastName}</h3>
-                                        <p className="text-xs text-slate-500">{stat.dealCount} Abschlüsse</p>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <Card title="Agenten Konfiguration (Admin)" className="lg:col-span-1 bg-slate-50 dark:bg-slate-900/50">
+                            <div className="space-y-4">
+                                {agentSettings.map(agent => (
+                                    <div key={agent.userId} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                        <div>
+                                            <div className="font-bold text-sm">{agent.name}</div>
+                                            <div className="text-xs text-slate-500">{agent.role}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-xs text-slate-400 uppercase">Split</div>
+                                            <div className="font-bold text-brand-600">{agent.split}%</div>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div className="space-y-3 mb-6">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Volumen Total</span>
-                                        <span className="font-medium"><SensitiveData>CHF {stat.totalVolume.toLocaleString()}</SensitiveData></span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Auszahlbar (Freigegeben)</span>
-                                        <span className="font-bold text-emerald-600"><SensitiveData>CHF {stat.payoutDue.toLocaleString()}</SensitiveData></span>
-                                    </div>
-                                </div>
+                                ))}
+                                <Button variant="outline" className="w-full text-xs">Provisionen bearbeiten</Button>
+                            </div>
+                        </Card>
 
-                                <div className="flex gap-2">
-                                    <Button size="sm" variant="outline" className="flex-1">Details</Button>
-                                    <Button size="sm" className="flex-1" icon={<CheckCircle size={14}/>}>Abrechnen</Button>
+                        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {agentStats.map(stat => (
+                                <div key={stat.agent.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <img src={stat.agent.avatarUrl} className="w-12 h-12 rounded-full bg-slate-200" alt="" />
+                                        <div>
+                                            <h3 className="font-bold text-slate-900 dark:text-slate-100">{stat.agent.firstName} {stat.agent.lastName}</h3>
+                                            <p className="text-xs text-slate-500">{stat.dealCount} Abschlüsse</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Volumen Total</span>
+                                            <span className="font-medium"><SensitiveData>CHF {stat.totalVolume.toLocaleString()}</SensitiveData></span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Auszahlbar (Freigegeben)</span>
+                                            <span className="font-bold text-emerald-600"><SensitiveData>CHF {stat.payoutDue.toLocaleString()}</SensitiveData></span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" className="flex-1">Details</Button>
+                                        <Button size="sm" className="flex-1" icon={<CheckCircle size={14}/>}>Abrechnen</Button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                        {/* Empty State / Add New Card */}
-                        <div className="bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                            <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                                <Users size={24} />
-                            </div>
-                            <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Neuen Vermittler hinzufügen</h3>
-                            <Button variant="ghost" size="sm" icon={<Users size={14}/>}>Einladen</Button>
+                            ))}
                         </div>
                     </div>
 

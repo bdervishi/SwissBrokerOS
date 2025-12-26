@@ -17,6 +17,7 @@ import { CalendarPage } from './pages/Calendar';
 import { Commissions } from './pages/Commissions';
 import { Inbox } from './pages/Inbox';
 import { TaxManagement } from './pages/TaxManagement';
+import { CreditSimulation } from './pages/CreditSimulation';
 import { SaaSPlans } from './pages/SaaSPlans';
 import { SaaSLanguages } from './pages/SaaSLanguages';
 import { SaaSDemo } from './pages/SaaSDemo';
@@ -77,6 +78,9 @@ const App: React.FC = () => {
                 <Route path="/policy/:id" element={<PolicyDetail />} />
                 <Route path="/mortgages" element={<Mortgages />} />
                 <Route path="/mortgage/:id" element={<MortgageDetail />} />
+                
+                {/* Credit & Leasing */}
+                <Route path="/credit" element={<CreditSimulation />} />
                 
                 {/* TAX ROUTES */}
                 <Route path="/tax" element={<TaxManagement />} />

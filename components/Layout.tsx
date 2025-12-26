@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
-import { useLanguage, LanguageDefinition } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useBranding } from '../contexts/BrandingContext';
 import { UserRole } from '../types';
 import { 
@@ -25,9 +25,6 @@ import {
   Sun,
   Moon,
   Package,
-  Eye,
-  EyeOff,
-  Languages,
   Play,
   XCircle,
   Mail,
@@ -40,7 +37,8 @@ import {
   MailCheck,
   MessageSquareQuote,
   ChevronUp,
-  User as UserIcon
+  Crosshair,
+  CreditCard
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -52,8 +50,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, switchRole, logout, isImpersonating, stopImpersonation } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isPrivacyMode, togglePrivacyMode } = useSecurity();
-  const { language, setLanguage, t, availableLanguages } = useLanguage();
+  const { t } = useLanguage();
   const { branding } = useBranding();
 
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
@@ -105,7 +104,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ]
     }
 
-    if (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_FINANCE || role === UserRole.SAAS_SALES || role === UserRole.SAAS_ACQUISITION) {
+    // Hunter Role
+    if (role === UserRole.SAAS_ACQUISITION) {
+        return [
+            { name: 'Hunter Dashboard', path: '/dashboard', icon: <Crosshair size={20} /> },
+            { name: 'Lead Radar (B2B)', path: '/leads', icon: <Target size={20} /> },
+            { name: 'Meine Provisionen', path: '/commissions', icon: <Wallet size={20} /> },
+            { name: 'Onboarding Links', path: '/saas/demo', icon: <Play size={20} /> },
+        ]
+    }
+
+    if (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_FINANCE || role === UserRole.SAAS_SALES) {
         const saasItems = [
             ...common,
             { name: 'Demo Hub', path: '/saas/demo', icon: <Play size={20} /> },
@@ -139,6 +148,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: t('nav.clients'), path: '/clients', icon: <Users size={20} /> },
         { name: t('nav.policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
         { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
+        { name: 'Kredit & Leasing', path: '/credit', icon: <CreditCard size={20} /> }, // NEW
         { name: 'Steuern', path: '/tax', icon: <Calculator size={20} /> }, 
         { name: t('nav.commissions'), path: '/commissions', icon: <Wallet size={20} /> },
         { name: t('nav.calendar'), path: '/calendar', icon: <Calendar size={20} /> },
@@ -168,6 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const handleRoleSwitch = (newRole: UserRole) => {
     switchRole(newRole);
     setShowRoleSwitcher(false);
+    setSidebarOpen(false);
     navigate('/dashboard');
   };
 
@@ -187,6 +198,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           case UserRole.SAAS_SUPER_ADMIN:
               label = 'SaaS Admin';
               color = 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
+              break;
+          case UserRole.SAAS_ACQUISITION:
+              label = 'Hunter (Sales)';
+              color = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
               break;
           default:
              if (role?.includes('SAAS')) {
@@ -215,38 +230,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </div>
   );
 
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-500">
-      
-      {isImpersonating && (
-          <div className="bg-orange-600 text-white px-4 py-2 flex items-center justify-between text-sm font-black z-50 sticky top-0 shadow-md">
-              <div className="flex items-center gap-2">
-                  <Play size={16} fill="currentColor" />
-                  <span>DEMO MODE: Viewing as {user?.firstName} {user?.lastName} ({user?.organizationName})</span>
-              </div>
-              <button 
-                onClick={stopImpersonation}
-                className="bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-black hover:bg-orange-50 transition-colors flex items-center gap-1"
-              >
-                  <XCircle size={14} /> Beenden
-              </button>
-          </div>
-      )}
-
-      <div className="flex flex-1">
-      {/* Sidebar Desktop */}
-      <aside className={`hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed h-full z-30 transition-colors duration-500 ${isImpersonating ? 'top-[40px]' : 'top-0'}`} style={{height: isImpersonating ? 'calc(100% - 40px)' : '100%'}}>
-        <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800">
-          <Link to="/dashboard">
-             <BrandLogo />
-          </Link>
-        </div>
-
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+  const NavLinks = ({ mobile }: { mobile?: boolean }) => (
+      <div className={`flex-1 overflow-y-auto py-6 px-4 space-y-1 ${mobile ? '' : 'flex-1'}`}>
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => mobile && setSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 location.pathname === item.path
                   ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300 shadow-sm border border-brand-100 dark:border-brand-800'
@@ -257,10 +247,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {item.name}
             </Link>
           ))}
-        </div>
+      </div>
+  );
 
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            
+  const UserMenu = () => (
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-white dark:bg-slate-900">
             <button 
                 onClick={toggleTheme}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent"
@@ -276,30 +267,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {showRoleSwitcher && (
                     <div className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 p-2 animate-in slide-in-from-bottom-2 duration-200">
                         <div className="text-[10px] font-black text-slate-400 uppercase px-3 py-2 tracking-widest">Entwickler-Rollen</div>
-                        <RoleOption 
-                            label="SaaS Super Admin" 
-                            role={UserRole.SAAS_SUPER_ADMIN} 
-                            currentRole={role} 
-                            onClick={handleRoleSwitch} 
-                        />
-                        <RoleOption 
-                            label="Broker Inhaber" 
-                            role={UserRole.BROKER_ADMIN} 
-                            currentRole={role} 
-                            onClick={handleRoleSwitch} 
-                        />
-                        <RoleOption 
-                            label="Vermittler (Agent)" 
-                            role={UserRole.BROKER_AGENT} 
-                            currentRole={role} 
-                            onClick={handleRoleSwitch} 
-                        />
-                        <RoleOption 
-                            label="End-Klient" 
-                            role={UserRole.CLIENT} 
-                            currentRole={role} 
-                            onClick={handleRoleSwitch} 
-                        />
+                        <RoleOption label="SaaS Super Admin" role={UserRole.SAAS_SUPER_ADMIN} currentRole={role} onClick={handleRoleSwitch} />
+                        <RoleOption label="Hunter (SaaS Sales)" role={UserRole.SAAS_ACQUISITION} currentRole={role} onClick={handleRoleSwitch} />
+                        <RoleOption label="Broker Inhaber" role={UserRole.BROKER_ADMIN} currentRole={role} onClick={handleRoleSwitch} />
+                        <RoleOption label="Vermittler (Agent)" role={UserRole.BROKER_AGENT} currentRole={role} onClick={handleRoleSwitch} />
+                        <RoleOption label="End-Klient" role={UserRole.CLIENT} currentRole={role} onClick={handleRoleSwitch} />
                     </div>
                 )}
                 
@@ -325,13 +297,74 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                 </div>
             </div>
-        </div>
-      </aside>
+      </div>
+  );
 
-      {/* Main Content */}
-      <main className={`flex-1 transition-all duration-500 p-4 md:p-8 pt-20 md:ml-64 ${isImpersonating ? 'mt-[40px]' : ''}`}>
-        {children}
-      </main>
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-500">
+      
+      {/* Impersonation Banner */}
+      {isImpersonating && (
+          <div className="bg-orange-600 text-white px-4 py-2 flex items-center justify-between text-sm font-black z-50 sticky top-0 shadow-md">
+              <div className="flex items-center gap-2">
+                  <Play size={16} fill="currentColor" />
+                  <span>DEMO MODE: Viewing as {user?.firstName} {user?.lastName} ({user?.organizationName})</span>
+              </div>
+              <button 
+                onClick={stopImpersonation}
+                className="bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-black hover:bg-orange-50 transition-colors flex items-center gap-1"
+              >
+                  <XCircle size={14} /> Beenden
+              </button>
+          </div>
+      )}
+
+      {/* Mobile Header */}
+      <header className={`md:hidden fixed w-full z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between transition-colors duration-500 ${isImpersonating ? 'top-[40px]' : 'top-0'}`}>
+          <div className="flex items-center gap-4">
+              <button onClick={() => setSidebarOpen(true)} className="text-slate-600 dark:text-slate-300 p-1">
+                  <Menu size={24} />
+              </button>
+              <BrandLogo />
+          </div>
+          <div className="flex items-center gap-2">
+             <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300">
+                {isDark ? <Moon size={20} /> : <Sun size={20} />}
+             </button>
+          </div>
+      </header>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+           <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col animate-in slide-in-from-left duration-200">
+               <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
+                  <BrandLogo />
+                  <button onClick={() => setSidebarOpen(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+                      <X size={24} />
+                  </button>
+               </div>
+               <NavLinks mobile />
+               <UserMenu />
+           </aside>
+        </div>
+      )}
+
+      <div className="flex flex-1 pt-16 md:pt-0">
+        {/* Desktop Sidebar */}
+        <aside className={`hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed h-full z-30 transition-colors duration-500 ${isImpersonating ? 'top-[40px]' : 'top-0'}`} style={{height: isImpersonating ? 'calc(100% - 40px)' : '100%'}}>
+            <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-800">
+                <Link to="/dashboard"><BrandLogo /></Link>
+            </div>
+            <NavLinks />
+            <UserMenu />
+        </aside>
+
+        {/* Main Content */}
+        <main className={`flex-1 transition-all duration-500 p-4 md:p-8 md:ml-64 ${isImpersonating ? 'mt-[40px]' : ''}`}>
+            {children}
+        </main>
       </div>
     </div>
   );

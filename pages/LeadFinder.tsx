@@ -17,18 +17,28 @@ import {
     MoreHorizontal,
     ArrowRight,
     Target,
-    Briefcase
+    Briefcase,
+    Car,
+    DollarSign,
+    Landmark
 } from 'lucide-react';
 
 // Mock CRM Leads (Local state simulation)
 const INITIAL_LEADS_BROKER = [
-    { id: 'l1', name: 'AlpenTech Solutions', city: 'Zürich', status: 'NEW', note: 'Gefunden via News "Series A Funding"' },
-    { id: 'l2', name: 'Bäckerei Müller & Söhne', city: 'Bern', status: 'CONTACTED', note: 'Lokale Suche' },
+    { id: 'l1', name: 'AlpenTech Solutions', city: 'Zürich', status: 'NEW', note: 'Gefunden via News "Series A Funding"', potential: 5000 },
+    { id: 'l2', name: 'Bäckerei Müller & Söhne', city: 'Bern', status: 'CONTACTED', note: 'Lokale Suche', potential: 1200 },
 ];
 
 const INITIAL_LEADS_SAAS = [
-    { id: 's1', name: 'Versicherungsbroker Meier AG', city: 'Luzern', status: 'NEW', note: 'Veraltete Webseite, Potenzial für Digitalisierung' },
-    { id: 's2', name: 'Top Finanz Consulting', city: 'Zug', status: 'CONTACTED', note: 'Spezialisiert auf Expats' },
+    { id: 's1', name: 'Versicherungsbroker Meier AG', city: 'Luzern', status: 'NEW', note: 'Veraltete Webseite, Potenzial für Digitalisierung', potential: 250 },
+    { id: 's2', name: 'Top Finanz Consulting', city: 'Zug', status: 'CONTACTED', note: 'Spezialisiert auf Expats', potential: 850 },
+];
+
+// Expanded Mock Data for Hunters (Broad Financial Services)
+const INITIAL_LEADS_HUNTING = [
+    { id: 'h1', name: 'Alpha Wealth Management', city: 'Zürich', status: 'NEW', note: 'Vermögensverwalter, benötigt Reporting-Tool', potential: 890 },
+    { id: 'h2', name: 'Steuerberatung K. Müller', city: 'St. Gallen', status: 'OFFER', note: 'Macht viele Steuererklärungen, Cross-Selling Potenzial', potential: 450 },
+    { id: 'h3', name: 'Auto-Leasing Express', city: 'Bern', status: 'NEW', note: 'Könnte Versicherungs-Modul integrieren', potential: 1200 },
 ];
 
 interface LeadResult {
@@ -37,21 +47,30 @@ interface LeadResult {
     city: string;
     reason: string;
     website?: string;
+    estimatedRevenue?: string;
+    type?: 'BROKER' | 'TAX' | 'WEALTH' | 'LEASING' | 'OTHER';
 }
 
 export const LeadFinder: React.FC = () => {
     const { role } = useAuth();
     
-    // Determine context (SaaS Hunting Brokers vs. Broker Hunting Clients)
-    const isSaaSMode = role === UserRole.SAAS_ACQUISITION || role === UserRole.SAAS_SALES || role === UserRole.SAAS_SUPER_ADMIN;
-
+    // Determine context
+    const isSaaSAdmin = role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_SALES;
+    const isHunter = role === UserRole.SAAS_ACQUISITION;
+    
     // Search State
     const [query, setQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<LeadResult[]>([]);
     
-    // CRM State
-    const [leads, setLeads] = useState(isSaaSMode ? INITIAL_LEADS_SAAS : INITIAL_LEADS_BROKER);
+    // CRM State initialization based on role
+    const getInitialLeads = () => {
+        if (isHunter) return INITIAL_LEADS_HUNTING;
+        if (isSaaSAdmin) return INITIAL_LEADS_SAAS;
+        return INITIAL_LEADS_BROKER;
+    };
+
+    const [leads, setLeads] = useState(getInitialLeads());
 
     // Access Control
     if (role === UserRole.CLIENT) {
@@ -69,33 +88,52 @@ export const LeadFinder: React.FC = () => {
             
             let prompt = "";
 
-            if (isSaaSMode) {
-                // SaaS Context: Find Insurance Brokers / Financial Advisors
+            if (isHunter) {
+                // HUNTER CONTEXT: Broad Financial Services Search
                 prompt = `
-                    Finde 5 echte Versicherungsbroker, Finanzberater oder Treuhandfirmen in der Schweiz, die auf folgende Beschreibung passen: "${query}".
+                    Finde 5 echte Unternehmen in der Schweiz im Bereich Finanzdienstleistung, die auf folgende Beschreibung passen: "${query}".
+                    
+                    Zielgruppe sind potenzielle B2B-Kunden für unsere SaaS-Software "SwissBroker OS".
+                    Relevante Kategorien:
+                    1. Versicherungsbroker (Einzelkämpfer oder Firmen)
+                    2. Steuerberatungsbüros (die Versicherungen optimieren könnten)
+                    3. Vermögensverwalter (Independent Asset Managers)
+                    4. Leasing- oder Kreditvermittler
                     
                     Gib mir die Antwort als JSON Array zurück. Jedes Objekt soll folgende Felder haben:
                     - name: Name der Firma
                     - city: Stadt/Ort
-                    - description: Kurze Beschreibung (z.B. "Unabhängiger Broker", "Spezialist für BVG").
-                    - reason: Ein kurzer Satz, warum sie eine neue Makler-Software (SaaS) brauchen könnten (z.B. "Webseite wirkt veraltet", "Wachsende Mitarbeiterzahl", "Fokus auf Tech-Startups").
+                    - description: Kurze Beschreibung (z.B. "Unabhängiger Vermögensverwalter", "Treuhandbüro").
+                    - reason: Ein kurzer Satz, warum sie SwissBroker OS brauchen könnten (z.B. "Manuelle Prozesse", "Veraltete Webseite", "Hohes Kundenvolumen").
                     - website: URL der Webseite (wenn gefunden, sonst leer).
+                    - estimatedRevenue: Schätzung des monatlichen SaaS-Umsatzes für uns (Zahl zwischen 150 und 2000, als String).
+                    - type: Eines der folgenden Keywords: 'BROKER', 'TAX', 'WEALTH', 'LEASING', 'OTHER'.
 
-                    Nutze Google Search, um aktuelle und reale Daten zu finden.
+                    Nutze Google Search, um aktuelle und reale Daten zu finden. Priorisiere Firmen, die digitalisierungswürdig aussehen.
+                `;
+            } else if (isSaaSAdmin) {
+                // SAAS ADMIN CONTEXT: Specific Brokers (Admin Focus)
+                prompt = `
+                    Finde 5 echte Versicherungsbroker in der Schweiz, passend zu: "${query}".
+                    
+                    Gib mir JSON zurück:
+                    - name, city, description
+                    - reason: Warum brauchen sie Digitalisierung?
+                    - website
+                    - estimatedRevenue: String
+                    - type: 'BROKER'
                 `;
             } else {
-                // Broker Context: Find End-Clients (Companies)
+                // BROKER CONTEXT: Find End-Clients (Consumers/Companies)
                 prompt = `
-                    Finde 5 echte Unternehmen in der Schweiz, die auf folgende Beschreibung passen: "${query}".
+                    Finde 5 echte Unternehmen in der Schweiz (potenzielle Endkunden für Versicherung), passend zu: "${query}".
                     
-                    Gib mir die Antwort als JSON Array zurück. Jedes Objekt soll folgende Felder haben:
-                    - name: Name der Firma
-                    - city: Stadt/Ort
-                    - description: Sehr kurze Beschreibung was sie tun.
-                    - reason: Ein kurzer Satz, warum sie Versicherungsbedarf haben könnten (z.B. "Hohes Haftpflichtrisiko", "Wachsende Mitarbeiterzahl").
-                    - website: URL der Webseite (wenn gefunden, sonst leer).
-
-                    Nutze Google Search, um aktuelle und reale Daten zu finden.
+                    Gib mir JSON zurück:
+                    - name, city, description
+                    - reason: Warum brauchen sie Versicherung / Beratung?
+                    - website
+                    - estimatedRevenue: "-"
+                    - type: 'OTHER'
                 `;
             }
 
@@ -111,20 +149,18 @@ export const LeadFinder: React.FC = () => {
             const text = response.text;
             if (text) {
                 const data = JSON.parse(text);
-                // Ensure it's an array
                 const results = Array.isArray(data) ? data : (data.companies || []);
                 setSearchResults(results);
             }
 
         } catch (e) {
             console.error("Lead Search Error:", e);
-            // Fallback Mock data if API fails or quota exceeded in demo
-            const fallback = isSaaSMode ? [
-                { name: 'Traditional Broker AG', city: 'St. Gallen', description: 'Familienbetrieb seit 1980', reason: 'Modernisierungsbedarf der IT-Infrastruktur', website: 'https://example.com' },
-                { name: 'Finanz & Co.', city: 'Bern', description: 'Finanzplanung für Private', reason: 'Skalierungsprobleme ohne CRM', website: 'https://example.com' }
+            // Fallback Mock data
+            const fallback: LeadResult[] = isHunter ? [
+                { name: 'Finanz Partner Zürich AG', city: 'Zürich', description: 'Unabhängige Vermögensberatung', reason: 'Könnten CRM für Portfolio-Tracking nutzen', website: 'https://example.com', estimatedRevenue: '850', type: 'WEALTH' },
+                { name: 'Treuhand Müller & Co', city: 'Bern', description: 'Steuerberatung für KMU', reason: 'Cross-Selling Potenzial bei Firmenkunden', website: 'https://example.com', estimatedRevenue: '450', type: 'TAX' }
             ] : [
-                { name: 'Demo Architekten AG', city: 'Zürich', description: 'Architekturbüro für Hochbau', reason: 'Berufshaftpflicht und Bauwesenversicherung', website: 'https://example.com' },
-                { name: 'StartUp Velo', city: 'Basel', description: 'E-Bike Verleih', reason: 'Sachversicherung und Flottenlösung', website: 'https://example.com' }
+                { name: 'Beispiel Firma AG', city: 'Zürich', description: 'Architekturbüro', reason: 'Berufshaftpflicht', website: 'https://example.com', estimatedRevenue: '0', type: 'OTHER' }
             ];
             setSearchResults(fallback);
         } finally {
@@ -138,46 +174,72 @@ export const LeadFinder: React.FC = () => {
             name: lead.name,
             city: lead.city,
             status: 'NEW',
-            note: lead.reason
+            note: lead.reason,
+            potential: parseInt(lead.estimatedRevenue || '0')
         }]);
-        // Remove from search results to indicate it's added
         setSearchResults(prev => prev.filter(r => r.name !== lead.name));
     };
 
-    const LeadColumn = ({ title, status, color }: { title: string, status: string, color: string }) => (
-        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col h-full min-h-[300px]">
-            <div className={`text-xs font-bold uppercase tracking-wider mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 ${color}`}>
-                {title} ({leads.filter(l => l.status === status).length})
-            </div>
-            <div className="space-y-3">
-                {leads.filter(l => l.status === status).map(lead => (
-                    <div key={lead.id} className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                        <div className="font-bold text-slate-900 dark:text-slate-100">{lead.name}</div>
-                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
-                            <MapPin size={10} /> {lead.city}
+    const getTypeIcon = (type?: string) => {
+        switch (type) {
+            case 'BROKER': return <Briefcase size={20} />;
+            case 'TAX': return <Building2 size={20} />;
+            case 'WEALTH': return <Landmark size={20} />;
+            case 'LEASING': return <Car size={20} />;
+            default: return <Target size={20} />;
+        }
+    };
+
+    const LeadColumn = ({ title, status, color }: { title: string, status: string, color: string }) => {
+        const columnLeads = leads.filter(l => l.status === status);
+        const totalPotential = columnLeads.reduce((sum, l) => sum + (l.potential || 0), 0);
+
+        return (
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col h-full min-h-[300px]">
+                <div className={`flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 ${color}`}>
+                    <div className="text-xs font-bold uppercase tracking-wider">{title} ({columnLeads.length})</div>
+                    {(isHunter || isSaaSAdmin) && totalPotential > 0 && (
+                        <div className="text-xs font-mono text-slate-500">CHF {totalPotential}/mt</div>
+                    )}
+                </div>
+                <div className="space-y-3">
+                    {columnLeads.map(lead => (
+                        <div key={lead.id} className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                            <div className="flex justify-between items-start">
+                                <div className="font-bold text-slate-900 dark:text-slate-100">{lead.name}</div>
+                                {(isHunter || isSaaSAdmin) && (
+                                    <div className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">
+                                        CHF {lead.potential}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                                <MapPin size={10} /> {lead.city}
+                            </div>
+                            {lead.note && <div className="text-xs text-slate-400 mt-2 italic line-clamp-2">"{lead.note}"</div>}
+                            
+                            <div className="mt-3 pt-2 border-t border-slate-50 dark:border-slate-800 flex justify-between items-center">
+                                <span className="text-[10px] text-slate-400">{new Date().toLocaleDateString()}</span>
+                                <Button size="sm" variant="ghost" className="h-6 text-xs">Aktion</Button>
+                            </div>
                         </div>
-                        {lead.note && <div className="text-xs text-slate-400 mt-2 italic line-clamp-2">"{lead.note}"</div>}
-                        
-                        <div className="mt-3 pt-2 border-t border-slate-50 dark:border-slate-800 flex justify-end">
-                            <Button size="sm" variant="ghost" className="h-6 text-xs">Details</Button>
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <Layout>
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <Target className="text-brand-600" />
-                    {isSaaSMode ? 'Broker Radar (SaaS Acquisition)' : 'Lead Radar'}
+                    {isHunter ? 'Partner Radar (B2B Vertrieb)' : isSaaSAdmin ? 'Broker Radar' : 'Lead Radar'}
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400">
-                    {isSaaSMode 
-                        ? 'Finden Sie Maklerbüros und Finanzberater, die SwissBroker OS nutzen könnten.'
-                        : 'Finden Sie neue Firmenkunden durch KI-gestützte Google Suche & Maps Analyse.'}
+                    {isHunter 
+                        ? 'Identifizieren Sie Broker, Vermögensverwalter, Steuerberater und Leasing-Firmen für die SaaS-Plattform.'
+                        : 'KI-gestützte Suche nach Neukunden.'}
                 </p>
             </div>
 
@@ -185,16 +247,16 @@ export const LeadFinder: React.FC = () => {
                 
                 {/* LEFT: SEARCH AREA */}
                 <div className="space-y-6">
-                    <Card title={isSaaSMode ? "Makler Suche" : "Akquise Suche"}>
+                    <Card title={isHunter ? "B2B Zielgruppen Suche" : "Suche"}>
                         <div className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    {isSaaSMode ? 'Region / Spezialisierung' : 'Zielgruppe / Ort'}
+                                    {isHunter ? 'Branche / Region' : 'Zielgruppe / Ort'}
                                 </label>
                                 <div className="relative">
                                     <input 
                                         type="text" 
-                                        placeholder={isSaaSMode ? "z.B. Makler in St. Gallen" : "z.B. Zahnärzte in Winterthur"} 
+                                        placeholder={isHunter ? "z.B. Vermögensverwalter in Zug oder Steuerbüro in Bern" : "z.B. Architekten in Bern"} 
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -203,9 +265,7 @@ export const LeadFinder: React.FC = () => {
                                     <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
                                 </div>
                                 <p className="text-xs text-slate-500 mt-2">
-                                    {isSaaSMode 
-                                        ? 'Tipp: Suchen Sie nach "Unabhängige Finanzberater" oder "KMU Versicherungsbroker".'
-                                        : 'Tipp: Suchen Sie auch nach Ereignissen wie "Neue Firmengründungen Zug".'}
+                                    {isHunter && 'Tipp: Suche nach "Versicherungsbroker", "Leasing Vermittler" oder "Treuhandbüros".'}
                                 </p>
                             </div>
                             
@@ -223,15 +283,13 @@ export const LeadFinder: React.FC = () => {
                     {/* Search Results */}
                     {searchResults.length > 0 && (
                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                            <h3 className="font-bold text-slate-900 dark:text-slate-100 px-1">
-                                {isSaaSMode ? 'Potenzielle Partner' : 'Gefundene Firmen'}
-                            </h3>
+                            <h3 className="font-bold text-slate-900 dark:text-slate-100 px-1">Gefundene Einträge</h3>
                             {searchResults.map((result, idx) => (
                                 <div key={idx} className="bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-900/50 rounded-xl p-4 shadow-sm hover:border-brand-400 transition-colors group">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-brand-50 dark:bg-brand-900/20 rounded-lg flex items-center justify-center text-brand-600">
-                                                <Building2 size={20} />
+                                                {getTypeIcon(result.type)}
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">{result.name}</h4>
@@ -249,15 +307,23 @@ export const LeadFinder: React.FC = () => {
                                         <button 
                                             onClick={() => addLead(result)}
                                             className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 rounded-full transition-colors"
-                                            title="Zu Leads hinzufügen"
+                                            title="Zu Pipeline hinzufügen"
                                         >
                                             <Plus size={18} />
                                         </button>
                                     </div>
                                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{result.description}</p>
-                                    <div className="bg-blue-50 dark:bg-blue-900/10 p-2 rounded text-xs text-blue-800 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30 flex items-start gap-2">
-                                        <Target size={12} className="mt-0.5 shrink-0" />
-                                        {result.reason}
+                                    
+                                    <div className="flex justify-between items-center mt-2">
+                                        <div className="bg-blue-50 dark:bg-blue-900/10 p-1.5 rounded text-[10px] text-blue-800 dark:text-blue-300 border border-blue-100 dark:border-blue-900/30 flex items-start gap-1 max-w-[70%]">
+                                            <Target size={10} className="mt-0.5 shrink-0" />
+                                            <span className="truncate">{result.reason}</span>
+                                        </div>
+                                        {(isHunter || isSaaSAdmin) && result.estimatedRevenue && (
+                                            <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                                                <DollarSign size={12}/> {result.estimatedRevenue} MRR
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -268,7 +334,9 @@ export const LeadFinder: React.FC = () => {
                 {/* RIGHT: LEAD BOARD */}
                 <div className="lg:col-span-2">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Meine Pipeline</h3>
+                        <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                            {isHunter ? 'Partner Pipeline (Acquisition)' : 'Vertriebs Pipeline'}
+                        </h3>
                         <div className="flex gap-2">
                             <Button size="sm" variant="outline">Import CSV</Button>
                             <Button size="sm" variant="ghost">Ansicht anpassen</Button>
@@ -277,8 +345,8 @@ export const LeadFinder: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <LeadColumn title="Neu / Unbearbeitet" status="NEW" color="text-blue-600 border-blue-200" />
-                        <LeadColumn title="Kontaktiert" status="CONTACTED" color="text-amber-600 border-amber-200" />
-                        <LeadColumn title={isSaaSMode ? "Demo Gebucht" : "Angebot"} status="OFFER" color="text-purple-600 border-purple-200" />
+                        <LeadColumn title="Kontaktiert / Demo" status="CONTACTED" color="text-amber-600 border-amber-200" />
+                        <LeadColumn title={isHunter ? "Onboarding" : "Angebot"} status="OFFER" color="text-purple-600 border-purple-200" />
                     </div>
                 </div>
 

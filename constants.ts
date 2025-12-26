@@ -1,5 +1,5 @@
 
-import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial } from './types';
+import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType } from './types';
 
 export const APP_NAME = "SwissBroker OS";
 
@@ -58,7 +58,7 @@ export const MOCK_USERS: User[] = [
         position: 'CEO / Inhaber', 
         phone: '+41 79 123 45 67', 
         avatarUrl: 'https://i.pravatar.cc/150?u=max',
-        modules: ['INSURANCE', 'MORTGAGE', 'PENSION', 'TAX'] 
+        modules: ['INSURANCE', 'MORTGAGE', 'PENSION', 'TAX', 'CREDIT'] 
     },
     { 
         id: 'u_broker_2', 
@@ -162,14 +162,29 @@ export const MOCK_INTEGRATIONS: Integration[] = [
   { id: 'int_google', name: 'Google Workspace', description: 'Verbinden Sie Gmail und Google Calendar für nahtlose Kommunikation.', category: IntegrationCategory.COMMUNICATION, status: IntegrationStatus.DISCONNECTED, iconUrl: 'G', lastSync: '-', connectionType: 'OAUTH' },
   { id: 'int_helvico', name: 'Helvico', description: 'Automatisierte Buchhaltung für Firmenkunden. Synchronisiert Debitoren und Prämienrechnungen.', category: IntegrationCategory.ACCOUNTING, status: IntegrationStatus.DISCONNECTED, iconUrl: 'H', lastSync: '-', connectionType: 'API_KEY' },
   { id: 'int_bexio', name: 'Bexio', description: 'Import von Kundenstammdaten und Export von Honorarnoten.', category: IntegrationCategory.ACCOUNTING, status: IntegrationStatus.CONNECTED, iconUrl: 'B', lastSync: 'Heute, 10:30', connectionType: 'OAUTH' },
-  { id: 'int_finnova', name: 'Finnova Open Wealth', description: 'Direkte Anbindung an Bankdaten für die Vermögensübersicht.', category: IntegrationCategory.BANKING, status: IntegrationStatus.DISCONNECTED, iconUrl: 'F', lastSync: '-', connectionType: 'API_KEY' }
+  { id: 'int_finnova', name: 'Finnova Open Wealth', description: 'Direkte Anbindung an Bankdaten für die Vermögensübersicht.', category: IntegrationCategory.BANKING, status: IntegrationStatus.DISCONNECTED, iconUrl: 'F', lastSync: '-', connectionType: 'API_KEY' },
+  // Credit Providers
+  { id: 'int_banknow', name: 'BANK-now API', description: 'Direkte Anbindung für Kreditentscheide in Echtzeit.', category: IntegrationCategory.FINANCE_PROVIDER, status: IntegrationStatus.CONNECTED, iconUrl: 'BN', lastSync: 'Live', connectionType: 'API_KEY' },
+  { id: 'int_cembra', name: 'Cembra Money Bank', description: 'Leasing-Kalkulation und Antragsstrecke.', category: IntegrationCategory.FINANCE_PROVIDER, status: IntegrationStatus.CONNECTED, iconUrl: 'CM', lastSync: 'Live', connectionType: 'OAUTH' },
 ];
 
 export const MOCK_PARTNERS: Partner[] = [
   { id: 'partner_axa', name: 'AXA Versicherungen', category: PartnerCategory.INSURANCE, status: PartnerStatus.ACTIVE, description: 'Führender Allbranchenversicherer in der Schweiz. Spezialisiert auf KMU und Berufliche Vorsorge.', website: 'https://www.axa.ch', brokerNumber: 'CH-88291-Broker', contacts: [ { name: 'Peter Muster', role: 'Key Account Manager', email: 'peter.muster@axa.ch', phone: '+41 58 215 00 00' }, { name: 'Support Broker', role: 'Administration', email: 'broker@axa.ch', phone: '+41 58 215 11 11' } ], products: [ { name: 'Berufliche Vorsorge (BVG)', category: 'Vorsorge', commissionRate: 'Bestand 2%', description: 'Vollversicherung und teilautonome Lösungen.' }, { name: 'Sachversicherungen KMU', category: 'Sach', commissionRate: 'Abschluss 15%', description: 'Kombinierte Sach- und Haftpflichtversicherung.' } ] },
   { id: 'partner_zurich', name: 'Zurich Insurance', category: PartnerCategory.INSURANCE, status: PartnerStatus.ACTIVE, description: 'Globaler Versicherer mit starken Schweizer Wurzeln. Innovativ im Bereich Cyber-Risk.', website: 'https://www.zurich.ch', brokerNumber: 'Z-99221-B', contacts: [ { name: 'Anna Müller', role: 'Broker Consultant', email: 'anna.mueller@zurich.ch', phone: '+41 44 628 00 00' } ], products: [ { name: 'Cyber & Data Risk', category: 'Haftpflicht', commissionRate: '15 - 20%', description: 'Umfassender Schutz vor Cyberkriminalität.' }, { name: 'Lebensversicherung', category: 'Leben', commissionRate: 'Abschluss 35‰', description: 'Risikoleben und Erwerbsunfähigkeit.' } ] },
   { id: 'partner_ubs', name: 'UBS Switzerland', category: PartnerCategory.BANK, status: PartnerStatus.PENDING, description: 'Grossbank für Hypothekenfinanzierung und Vermögensverwaltung.', website: 'https://www.ubs.com', brokerNumber: 'Pending', contacts: [ { name: 'Hypotheken Desk', role: 'Finanzierung', email: 'hypo@ubs.com', phone: '+41 44 234 11 11' } ], products: [ { name: 'Festhypotheken', category: 'Hypotheken', commissionRate: '0.3% Vermittlung', description: 'Langfristige Zinssicherheit.' }, { name: 'SARON Hypotheken', category: 'Hypotheken', commissionRate: '0.3% Vermittlung', description: 'Geldmarktbasierte Finanzierung.' } ] },
-  { id: 'partner_legal', name: 'Kanzlei Meier & Partner', category: PartnerCategory.LEGAL, status: PartnerStatus.ACTIVE, description: 'Spezialisten für Versicherungsrecht und Vertragsprüfung.', website: 'https://meier-legal.ch', brokerNumber: 'N/A', contacts: [ { name: 'Dr. Hans Meier', role: 'Partner', email: 'h.meier@meier-legal.ch', phone: '+41 44 555 66 77' } ], products: [ { name: 'Rechtsberatung Mandanten', category: 'Recht', commissionRate: '10% Kickback', description: 'Prüfung komplexer Policen und Haftungsfragen.' } ] }
+  { id: 'partner_legal', name: 'Kanzlei Meier & Partner', category: PartnerCategory.LEGAL, status: PartnerStatus.ACTIVE, description: 'Spezialisten für Versicherungsrecht und Vertragsprüfung.', website: 'https://meier-legal.ch', brokerNumber: 'N/A', contacts: [ { name: 'Dr. Hans Meier', role: 'Partner', email: 'h.meier@meier-legal.ch', phone: '+41 44 555 66 77' } ], products: [ { name: 'Rechtsberatung Mandanten', category: 'Recht', commissionRate: '10% Kickback', description: 'Prüfung komplexer Policen und Haftungsfragen.' } ] },
+  // Credit Partners
+  { id: 'partner_banknow', name: 'BANK-now', category: PartnerCategory.BANK, status: PartnerStatus.ACTIVE, description: 'Spezialist für Privatkredite und Leasing.', website: 'https://www.bank-now.ch', brokerNumber: 'BN-8822', contacts: [], products: [{name: 'Privatkredit', category: 'Kredit', commissionRate: '1.5% - 3%', description: 'Flexible Laufzeiten'}] },
+  { id: 'partner_cembra', name: 'Cembra Money Bank', category: PartnerCategory.LEASING, status: PartnerStatus.ACTIVE, description: 'Führender Anbieter für Fahrzeugleasing.', website: 'https://www.cembra.ch', brokerNumber: 'CM-9911', contacts: [], products: [{name: 'Auto Leasing', category: 'Leasing', commissionRate: '1% - 2%', description: 'Neuwagen & Occasionen'}] }
+];
+
+export const MOCK_BANK_OFFERS: BankOffer[] = [
+    { id: 'offer_bn_1', bankName: 'BANK-now', productName: 'CREDIT-now', interestRateRange: [4.9, 9.9], maxDuration: 84, commissionPercentage: 2.5, type: CreditType.PRIVATE },
+    { id: 'offer_cem_1', bankName: 'Cembra', productName: 'Financing Plus', interestRateRange: [5.5, 10.5], maxDuration: 72, commissionPercentage: 2.0, type: CreditType.PRIVATE },
+    { id: 'offer_migros', bankName: 'Migros Bank', productName: 'Privatkredit', interestRateRange: [4.5, 7.9], maxDuration: 84, commissionPercentage: 1.0, type: CreditType.PRIVATE },
+    // Leasing
+    { id: 'lease_cem_1', bankName: 'Cembra', productName: 'Auto Leasing', interestRateRange: [3.9, 5.9], maxDuration: 60, commissionPercentage: 1.5, type: CreditType.LEASING },
+    { id: 'lease_amag', bankName: 'AMAG Leasing', productName: 'Leasing Plus', interestRateRange: [2.9, 4.9], maxDuration: 48, commissionPercentage: 1.0, type: CreditType.LEASING },
 ];
 
 const today = new Date();
