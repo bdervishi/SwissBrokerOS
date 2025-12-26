@@ -38,8 +38,21 @@ import {
   MessageSquareQuote,
   ChevronUp,
   Crosshair,
-  CreditCard
+  CreditCard,
+  Zap,
+  Coins
 } from 'lucide-react';
+
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+}
+
+interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -50,8 +63,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, switchRole, logout, isImpersonating, stopImpersonation } = useAuth();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPrivacyMode, togglePrivacyMode } = useSecurity();
   const { t } = useLanguage();
   const { branding } = useBranding();
 
@@ -80,100 +91,159 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  const getNavItems = () => {
-    const common = [
-        { name: t('nav.dashboard'), path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    ];
-
+  const getNavSections = (): NavSection[] => {
+    // --- CLIENT VIEW ---
     if (role === UserRole.CLIENT) {
+        return [{
+            items: [
+                { name: t('nav.dashboard'), path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+                { name: t('nav.my_policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
+                { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
+                { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> },
+            ]
+        }];
+    }
+
+    // --- HUNTER VIEW ---
+    if (role === UserRole.SAAS_ACQUISITION) {
         return [
-            ...common,
-            { name: t('nav.my_policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
-            { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
-            { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> },
+            {
+                title: "Overview",
+                items: [
+                    { name: 'Hunter Dashboard', path: '/dashboard', icon: <Crosshair size={20} /> },
+                ]
+            },
+            {
+                title: "Sales Tools",
+                items: [
+                    { name: 'Lead Radar (B2B)', path: '/leads', icon: <Target size={20} /> },
+                    { name: 'Onboarding Links', path: '/saas/demo', icon: <Play size={20} /> },
+                ]
+            },
+            {
+                title: "Personal",
+                items: [
+                    { name: 'Meine Provisionen', path: '/commissions', icon: <Wallet size={20} /> },
+                ]
+            }
         ];
     }
 
-    if (role === UserRole.BROKER_AGENT) {
-        return [
-            ...common,
-            { name: 'Lead Radar', path: '/leads', icon: <Target size={20} /> },
-            { name: 'Meine Kunden', path: '/clients', icon: <Users size={20} /> },
-            { name: 'Meine Deals', path: '/dashboard', icon: <Briefcase size={20} /> },
-            { name: 'Termine', path: '/calendar', icon: <Calendar size={20} /> },
-        ]
-    }
-
-    // Hunter Role
-    if (role === UserRole.SAAS_ACQUISITION) {
-        return [
-            { name: 'Hunter Dashboard', path: '/dashboard', icon: <Crosshair size={20} /> },
-            { name: 'Lead Radar (B2B)', path: '/leads', icon: <Target size={20} /> },
-            { name: 'Meine Provisionen', path: '/commissions', icon: <Wallet size={20} /> },
-            { name: 'Onboarding Links', path: '/saas/demo', icon: <Play size={20} /> },
-        ]
-    }
-
+    // --- SAAS ADMIN VIEW (REORGANIZED) ---
     if (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_FINANCE || role === UserRole.SAAS_SALES) {
-        const saasItems = [
-            ...common,
-            { name: 'Demo Hub', path: '/saas/demo', icon: <Play size={20} /> },
-            { name: t('nav.tenants'), path: '/clients', icon: <Building size={20} /> },
+        const sections: NavSection[] = [
+            {
+                title: "Management",
+                items: [
+                    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+                    { name: 'Demo Hub', path: '/saas/demo', icon: <Play size={20} /> },
+                    { name: 'Tenants (Makler)', path: '/clients', icon: <Building size={20} /> },
+                ]
+            }
         ];
 
         if (role !== UserRole.SAAS_FINANCE) {
-            saasItems.push({ name: 'Broker Radar', path: '/leads', icon: <Target size={20} /> });
-            saasItems.push({ name: 'Call Agent', path: '/saas/call-agent', icon: <PhoneCall size={20} /> });
+            sections.push({
+                title: "Growth & Marketing",
+                items: [
+                    { name: 'Broker Radar', path: '/leads', icon: <Target size={20} /> },
+                    { name: 'AI Call Agent', path: '/saas/call-agent', icon: <PhoneCall size={20} /> },
+                    { name: 'Newsletter', path: '/saas/newsletter', icon: <MailCheck size={20} /> },
+                    { name: 'Testimonials', path: '/saas/testimonials', icon: <MessageSquareQuote size={20} /> },
+                ]
+            });
         }
 
-        saasItems.push(
-            { name: 'Newsletter', path: '/saas/newsletter', icon: <MailCheck size={20} /> },
-            { name: 'Testimonials', path: '/saas/testimonials', icon: <MessageSquareQuote size={20} /> },
-            { name: t('nav.plans'), path: '/plans', icon: <Package size={20} /> },
-            { name: 'Tax Config', path: '/saas/tax-config', icon: <Calculator size={20} /> },
-            { name: 'Email Config', path: '/saas/email-config', icon: <Mail size={20} /> },
-            { name: 'Daten Import', path: '/import', icon: <Database size={20} /> },
-            { name: t('nav.revenue'), path: '/commissions', icon: <Wallet size={20} /> },
-            { name: t('nav.analytics'), path: '/analytics', icon: <PieChart size={20} /> },
-            { name: t('nav.languages'), path: '/saas/languages', icon: <Globe size={20} /> },
-            { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> }
-        );
-        return saasItems;
+        sections.push({
+            title: "Finance Operations",
+            items: [
+                { name: 'Abrechnungen (MRR)', path: '/commissions', icon: <Wallet size={20} /> },
+                { name: 'Embedded Finance', path: '/saas/embedded-finance', icon: <Coins size={20} className="text-emerald-500" /> },
+                { name: 'Analytics', path: '/analytics', icon: <PieChart size={20} /> },
+            ]
+        });
+
+        sections.push({
+            title: "Platform Infrastructure",
+            items: [
+                { name: 'Pakete & Pricing', path: '/plans', icon: <Package size={20} /> },
+                { name: 'Tax Engine Config', path: '/saas/tax-config', icon: <Calculator size={20} /> },
+                { name: 'Email & AI Config', path: '/saas/email-config', icon: <Mail size={20} /> },
+                { name: 'Sprachen & L10n', path: '/saas/languages', icon: <Globe size={20} /> },
+                { name: 'Bulk Data Import', path: '/import', icon: <Database size={20} /> },
+            ]
+        });
+
+        sections.push({
+            title: "System",
+            items: [
+                { name: 'Global Settings', path: '/settings', icon: <Settings size={20} /> },
+            ]
+        });
+
+        return sections;
     }
 
-    const brokerItems = [
-        ...common,
-        { name: 'Posteingang', path: '/inbox', icon: <Mail size={20} /> },
-        { name: 'Lead Radar', path: '/leads', icon: <Target size={20} /> },
-        { name: t('nav.clients'), path: '/clients', icon: <Users size={20} /> },
-        { name: t('nav.policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
-        { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
-        { name: 'Kredit & Leasing', path: '/credit', icon: <CreditCard size={20} /> }, // NEW
-        { name: 'Steuern', path: '/tax', icon: <Calculator size={20} /> }, 
-        { name: t('nav.commissions'), path: '/commissions', icon: <Wallet size={20} /> },
-        { name: t('nav.calendar'), path: '/calendar', icon: <Calendar size={20} /> },
-        { name: t('nav.partners'), path: '/partners', icon: <Handshake size={20} /> },
-        { name: t('nav.analytics'), path: '/analytics', icon: <PieChart size={20} /> },
+    // --- BROKER VIEW ---
+    const brokerSections: NavSection[] = [
+        {
+            title: "Daily Business",
+            items: [
+                { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+                { name: 'Posteingang', path: '/inbox', icon: <Mail size={20} /> },
+                { name: 'Termine', path: '/calendar', icon: <Calendar size={20} /> },
+            ]
+        },
+        {
+            title: "Clients & Assets",
+            items: [
+                { name: 'Klienten', path: '/clients', icon: <Users size={20} /> },
+                { name: 'Versicherungen', path: '/policies', icon: <ShieldAlert size={20} /> },
+                { name: 'Hypotheken', path: '/mortgages', icon: <Home size={20} /> },
+                { name: 'Kredit & Leasing', path: '/credit', icon: <CreditCard size={20} /> },
+                { name: 'Steuern', path: '/tax', icon: <Calculator size={20} /> }, 
+            ]
+        },
+        {
+            title: "Growth & Network",
+            items: [
+                { name: 'Lead Radar', path: '/leads', icon: <Target size={20} /> },
+                { name: 'Partner Hub', path: '/partners', icon: <Handshake size={20} /> },
+            ]
+        },
+        {
+            title: "Performance",
+            items: [
+                { name: 'Provisionen', path: '/commissions', icon: <Wallet size={20} /> },
+                { name: 'Analytics', path: '/analytics', icon: <PieChart size={20} /> },
+            ]
+        }
     ];
 
     if (role === UserRole.BROKER_ADMIN || role === UserRole.BROKER_ADMINISTRATION) {
-        brokerItems.push({ name: 'Team & HR', path: '/team', icon: <Briefcase size={20} /> });
+        brokerSections.push({
+            title: "Organization",
+            items: [
+                { name: 'Team & HR', path: '/team', icon: <Briefcase size={20} /> },
+                { name: 'AI Studio', path: '/broker/ai-config', icon: <BrainCircuit size={20} /> },
+                { name: 'Daten Import', path: '/import', icon: <Database size={20} /> },
+            ]
+        });
     }
 
-    if (role === UserRole.BROKER_ADMIN) {
-        brokerItems.push({ name: 'AI Studio', path: '/broker/ai-config', icon: <BrainCircuit size={20} /> });
-        brokerItems.push({ name: 'Daten Import', path: '/import', icon: <Database size={20} /> });
-    }
+    brokerSections.push({
+        title: "Settings",
+        items: [
+            { name: 'Mein Abo', path: '/plans', icon: <Package size={20} /> },
+            { name: 'Integrationen', path: '/integrations', icon: <Blocks size={20} /> },
+            { name: 'Einstellungen', path: '/settings', icon: <Settings size={20} /> },
+        ]
+    });
 
-    return [
-        ...brokerItems,
-        { name: t('nav.plans'), path: '/plans', icon: <Package size={20} /> },
-        { name: t('nav.integrations'), path: '/integrations', icon: <Blocks size={20} /> },
-        { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> },
-    ];
+    return brokerSections;
   };
 
-  const navItems = getNavItems();
+  const navSections = getNavSections();
 
   const handleRoleSwitch = (newRole: UserRole) => {
     switchRole(newRole);
@@ -231,21 +301,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 
   const NavLinks = ({ mobile }: { mobile?: boolean }) => (
-      <div className={`flex-1 overflow-y-auto py-6 px-4 space-y-1 ${mobile ? '' : 'flex-1'}`}>
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => mobile && setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                location.pathname === item.path
-                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300 shadow-sm border border-brand-100 dark:border-brand-800'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent'
-              }`}
-            >
-              <span className={`${location.pathname === item.path ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>{item.icon}</span>
-              {item.name}
-            </Link>
+      <div className={`flex-1 overflow-y-auto py-6 px-4 space-y-8 ${mobile ? '' : 'flex-1'}`}>
+          {navSections.map((section, idx) => (
+            <div key={idx} className="space-y-1">
+                {section.title && (
+                    <div className="px-3 mb-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                        {section.title}
+                    </div>
+                )}
+                {section.items.map((item) => (
+                    <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => mobile && setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all ${
+                        location.pathname === item.path
+                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-300 shadow-sm border border-brand-100 dark:border-brand-800'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent'
+                    }`}
+                    >
+                    <span className={`${location.pathname === item.path ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400'}`}>{item.icon}</span>
+                    {item.name}
+                    </Link>
+                ))}
+            </div>
           ))}
       </div>
   );

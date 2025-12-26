@@ -25,6 +25,7 @@ import { SaaSTaxConfig } from './pages/SaaSTaxConfig';
 import { SaaSEmailConfig } from './pages/SaaSEmailConfig';
 import { SaaSNewsletter } from './pages/SaaSNewsletter';
 import { SaaSTestimonials } from './pages/SaaSTestimonials';
+import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance'; // NEW
 import { BrokerAIConfig } from './pages/BrokerAIConfig';
 import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
@@ -89,6 +90,7 @@ const App: React.FC = () => {
                 <Route path="/saas/newsletter" element={<SaaSNewsletter />} />
                 <Route path="/saas/testimonials" element={<SaaSTestimonials />} />
                 <Route path="/saas/call-agent" element={<CallAgent />} />
+                <Route path="/saas/embedded-finance" element={<SaaSEmbeddedFinance />} />
 
                 <Route path="/partners" element={<PartnerHub />} />
                 <Route path="/partner/:id" element={<PartnerDetail />} />
