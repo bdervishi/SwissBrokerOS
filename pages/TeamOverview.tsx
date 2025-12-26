@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { MOCK_USERS, MOCK_TEAMS } from '../constants';
-import { UserRole, EmployeeModule } from '../types';
-import { Link, Navigate } from 'react-router-dom';
+import { UserRole, EmployeeModule, Team } from '../types';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
     Users, 
@@ -17,11 +18,16 @@ import {
     Shield,
     Home,
     Calculator,
-    Landmark
+    Landmark,
+    MessageSquare
 } from 'lucide-react';
 
 export const TeamOverview: React.FC = () => {
     const { role } = useAuth();
+    const navigate = useNavigate();
+    
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [newTeam, setNewTeam] = useState({ name: '', description: '' });
 
     // Access Control
     if (role !== UserRole.BROKER_ADMIN && role !== UserRole.BROKER_ADMINISTRATION) {
@@ -54,6 +60,13 @@ export const TeamOverview: React.FC = () => {
         }
     }
 
+    const handleCreateTeam = () => {
+        // Mock creation - in real app would hit API
+        console.log("Creating team:", newTeam);
+        setIsCreateModalOpen(false);
+        setNewTeam({ name: '', description: '' });
+    };
+
     return (
         <Layout>
             <div className="flex justify-between items-center mb-8">
@@ -66,7 +79,10 @@ export const TeamOverview: React.FC = () => {
                         Verwalten Sie Mitarbeiter, Abteilungen und Zugriffsrechte.
                     </p>
                 </div>
-                <Button icon={<Plus size={18} />}>Mitarbeiter einladen</Button>
+                <div className="flex gap-3">
+                    <Button variant="outline" icon={<Plus size={18} />} onClick={() => setIsCreateModalOpen(true)}>Neues Team</Button>
+                    <Button icon={<Plus size={18} />}>Mitarbeiter einladen</Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -79,21 +95,29 @@ export const TeamOverview: React.FC = () => {
                                 const teamMembers = employees.filter(e => e.teamId === team.id);
                                 return (
                                     <div key={team.id} className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-xl">
-                                        <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-1">{team.name}</h3>
-                                        <p className="text-xs text-slate-500 mb-3">{teamMembers.length} Mitglieder</p>
+                                        <div className="flex justify-between items-start mb-1">
+                                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">{team.name}</h3>
+                                            <span className="text-[10px] bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-700 font-bold text-slate-500 uppercase">{teamMembers.length} Pers.</span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mb-4 line-clamp-1">{team.description || 'Keine Beschreibung'}</p>
                                         
-                                        <div className="flex -space-x-2 overflow-hidden mb-3">
-                                            {teamMembers.map(m => (
+                                        <div className="flex -space-x-2 overflow-hidden mb-4">
+                                            {teamMembers.slice(0, 5).map(m => (
                                                 <img 
                                                     key={m.id} 
                                                     src={m.avatarUrl || `https://ui-avatars.com/api/?name=${m.firstName}+${m.lastName}`} 
                                                     alt={m.firstName}
-                                                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-slate-900"
+                                                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-slate-900 object-cover"
                                                     title={`${m.firstName} ${m.lastName}`}
                                                 />
                                             ))}
+                                            {teamMembers.length > 5 && (
+                                                <div className="inline-flex h-8 w-8 rounded-full ring-2 ring-white dark:ring-slate-900 bg-slate-100 items-center justify-center text-[10px] font-bold text-slate-400">+{teamMembers.length - 5}</div>
+                                            )}
                                         </div>
-                                        <Button size="sm" variant="outline" className="w-full text-xs">Team verwalten</Button>
+                                        <Link to={`/team/${team.id}`}>
+                                            <Button size="sm" variant="outline" className="w-full text-xs" icon={<ChevronRight size={14}/>}>Team verwalten</Button>
+                                        </Link>
                                     </div>
                                 );
                             })}
@@ -168,6 +192,40 @@ export const TeamOverview: React.FC = () => {
                     </Card>
                 </div>
             </div>
+
+            {/* Create Team Modal */}
+            <Modal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Neues Team erstellen"
+                maxWidth="max-w-md"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Team Name</label>
+                        <input 
+                            type="text"
+                            placeholder="z.B. Vorsorge & Steuern"
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm"
+                            value={newTeam.name}
+                            onChange={e => setNewTeam({...newTeam, name: e.target.value})}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Beschreibung</label>
+                        <textarea 
+                            placeholder="Optional"
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm h-24"
+                            value={newTeam.description}
+                            onChange={e => setNewTeam({...newTeam, description: e.target.value})}
+                        />
+                    </div>
+                    <div className="pt-4 flex justify-end gap-3">
+                        <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)}>Abbrechen</Button>
+                        <Button onClick={handleCreateTeam} disabled={!newTeam.name}>Team anlegen</Button>
+                    </div>
+                </div>
+            </Modal>
         </Layout>
     );
 };

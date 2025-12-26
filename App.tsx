@@ -25,10 +25,12 @@ import { SaaSTaxConfig } from './pages/SaaSTaxConfig';
 import { SaaSEmailConfig } from './pages/SaaSEmailConfig';
 import { SaaSNewsletter } from './pages/SaaSNewsletter';
 import { SaaSTestimonials } from './pages/SaaSTestimonials';
-import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance'; // NEW
+import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance';
+import { SaaSTeams } from './pages/SaaSTeams';
 import { BrokerAIConfig } from './pages/BrokerAIConfig';
 import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
+import { TeamDetail } from './pages/TeamDetail'; // NEW
 import { EmployeeDetail } from './pages/EmployeeDetail';
 import { LeadFinder } from './pages/LeadFinder';
 import { DataImport } from './pages/DataImport';
@@ -91,6 +93,7 @@ const App: React.FC = () => {
                 <Route path="/saas/testimonials" element={<SaaSTestimonials />} />
                 <Route path="/saas/call-agent" element={<CallAgent />} />
                 <Route path="/saas/embedded-finance" element={<SaaSEmbeddedFinance />} />
+                <Route path="/saas/teams" element={<SaaSTeams />} />
 
                 <Route path="/partners" element={<PartnerHub />} />
                 <Route path="/partner/:id" element={<PartnerDetail />} />
@@ -101,6 +104,7 @@ const App: React.FC = () => {
                 
                 {/* Team & HR Routes */}
                 <Route path="/team" element={<TeamOverview />} />
+                <Route path="/team/:id" element={<TeamDetail />} /> // NEW
                 <Route path="/team/member/:id" element={<EmployeeDetail />} />
 
                 {/* Broker AI Studio */}

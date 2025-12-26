@@ -40,7 +40,8 @@ import {
   Crosshair,
   CreditCard,
   Zap,
-  Coins
+  Coins,
+  Users2
 } from 'lucide-react';
 
 interface NavItem {
@@ -138,6 +139,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
                     { name: 'Demo Hub', path: '/saas/demo', icon: <Play size={20} /> },
                     { name: 'Tenants (Makler)', path: '/clients', icon: <Building size={20} /> },
+                    { name: 'SaaS Teams', path: '/saas/teams', icon: <Users2 size={20} /> }, // NEW
                 ]
             }
         ];

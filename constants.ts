@@ -31,7 +31,6 @@ export const MOCK_TESTIMONIALS: Testimonial[] = [
   },
 ];
 
-// ... rest of the constants.ts file (MOCK_TEAMS, MOCK_USERS, etc.)
 export const MOCK_TEAMS: Team[] = [
     { id: 'team_mgmt', name: 'Geschäftsleitung', leaderId: 'u_broker_1' },
     { id: 'team_sales', name: 'Vertrieb & Aussendienst', leaderId: 'u_agent_1' },
@@ -58,13 +57,20 @@ export const MOCK_USERS: User[] = [
         position: 'CEO / Inhaber', 
         phone: '+41 79 123 45 67', 
         avatarUrl: 'https://i.pravatar.cc/150?u=max',
-        modules: ['INSURANCE', 'MORTGAGE', 'PENSION', 'TAX', 'CREDIT'] 
+        modules: ['INSURANCE', 'MORTGAGE', 'PENSION', 'TAX', 'CREDIT'],
+        birthDate: '1982-03-12',
+        familyStatus: 'Verheiratet, 2 Kinder',
+        ahvNumber: '756.1234.5678.90',
+        entryDate: '2015-01-01',
+        noticePeriod: '6 Monate',
+        employmentPercentage: 100,
+        baseSalary: 12500,
+        bonusAgreement: '10% vom Gewinnanteil'
     },
     { 
         id: 'u_broker_2', 
         firstName: 'Lisa', 
         lastName: 'Admin', 
-        // FIXED: Added missing quotes around email address to prevent parsing error
         email: 'office@muster-broker.ch', 
         role: UserRole.BROKER_ADMINISTRATION, 
         organizationName: 'Muster Broker AG', 
@@ -72,10 +78,39 @@ export const MOCK_USERS: User[] = [
         teamId: 'team_backoffice', 
         position: 'Leitung Administration', 
         phone: '+41 44 999 88 77',
-        modules: ['INSURANCE', 'TAX']
+        modules: ['INSURANCE', 'TAX'],
+        birthDate: '1990-07-22',
+        familyStatus: 'Ledig',
+        ahvNumber: '756.9988.7766.55',
+        entryDate: '2018-06-01',
+        noticePeriod: '3 Monate',
+        employmentPercentage: 80,
+        baseSalary: 6800,
+        bonusAgreement: 'CHF 50 pro neuem KVG-Abschluss'
     },
     { id: 'u_broker_3', firstName: 'Tom', lastName: 'Marketing', email: 'marketing@muster-broker.ch', role: UserRole.BROKER_MARKETING, organizationName: 'Muster Broker AG', tenantId: 't1', teamId: 'team_backoffice', position: 'Marketing Manager' },
-    { id: 'u_agent_1', firstName: 'Felix', lastName: 'Fieldagent', email: 'felix@muster-broker.ch', role: UserRole.BROKER_AGENT, organizationName: 'Muster Broker AG', tenantId: 't1', teamId: 'team_sales', position: 'Senior Berater', phone: '+41 78 555 66 77', avatarUrl: 'https://i.pravatar.cc/150?u=felix', modules: ['INSURANCE', 'MORTGAGE', 'PENSION'] },
+    { 
+        id: 'u_agent_1', 
+        firstName: 'Felix', 
+        lastName: 'Fieldagent', 
+        email: 'felix@muster-broker.ch', 
+        role: UserRole.BROKER_AGENT, 
+        organizationName: 'Muster Broker AG', 
+        tenantId: 't1', 
+        teamId: 'team_sales', 
+        position: 'Senior Berater', 
+        phone: '+41 78 555 66 77', 
+        avatarUrl: 'https://i.pravatar.cc/150?u=felix', 
+        modules: ['INSURANCE', 'MORTGAGE', 'PENSION'],
+        birthDate: '1985-11-05',
+        familyStatus: 'Verheiratet',
+        ahvNumber: '756.4433.2211.00',
+        entryDate: '2020-03-01',
+        noticePeriod: '3 Monate',
+        employmentPercentage: 100,
+        baseSalary: 4500,
+        bonusAgreement: 'Provision: 60% Split (70% ab Gold Status)'
+    },
     { id: 'u_demo_solo', firstName: 'David', lastName: 'Demo (Solo)', email: 'david@solo-demo.ch', role: UserRole.BROKER_ADMIN, organizationName: 'David Consult', tenantId: 't_demo_1', avatarUrl: 'https://i.pravatar.cc/150?u=david' },
     { id: 'u_demo_corp', firstName: 'Julia', lastName: 'Demo (CEO)', email: 'julia@prime-finance.ch', role: UserRole.BROKER_ADMIN, organizationName: 'Prime Finance AG', tenantId: 't_demo_2', avatarUrl: 'https://i.pravatar.cc/150?u=julia' },
     { id: 'c1', firstName: 'Thomas', lastName: 'Müller', email: 'thomas.mueller@example.ch', role: UserRole.CLIENT, tenantId: 't1', avatarUrl: 'https://picsum.photos/id/1005/200/200' },

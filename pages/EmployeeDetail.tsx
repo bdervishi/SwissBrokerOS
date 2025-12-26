@@ -21,7 +21,12 @@ import {
     FileText,
     Shield,
     Home,
-    Landmark
+    Landmark,
+    User as UserIcon,
+    FileSignature,
+    Wallet,
+    Heart,
+    BadgeCheck
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -30,12 +35,15 @@ export const EmployeeDetail: React.FC = () => {
     const { role } = useAuth();
     
     // Available Tab Keys
-    type TabKey = 'TIME' | 'CLIENTS' | 'POLICIES' | 'TAX';
+    type TabKey = 'TIME' | 'CLIENTS' | 'POLICIES' | 'TAX' | 'HR';
     
     const [activeTab, setActiveTab] = useState<TabKey>('TIME');
 
-    // Access Control
-    if (role !== UserRole.BROKER_ADMIN && role !== UserRole.BROKER_ADMINISTRATION) {
+    // Access Control: Broker Admins or SaaS Admins
+    const canAccess = role?.includes('SAAS_') || role === UserRole.BROKER_ADMIN || role === UserRole.BROKER_ADMINISTRATION;
+    const canSeeHR = role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.BROKER_ADMIN;
+
+    if (!canAccess) {
         return <Navigate to="/dashboard" />;
     }
 
@@ -43,19 +51,25 @@ export const EmployeeDetail: React.FC = () => {
     const team = MOCK_TEAMS.find(t => t.id === employee?.teamId);
 
     // Filter available tabs based on employee modules
-    // If no modules defined, assume basic access (Time & Clients)
     const getAvailableTabs = (): TabKey[] => {
         if (!employee) return ['TIME'];
         
-        const tabs: TabKey[] = ['TIME', 'CLIENTS']; // Everyone has Time & Clients
+        const tabs: TabKey[] = ['TIME'];
+
+        // HR tab only for admins
+        if (canSeeHR) tabs.push('HR');
+
+        // SaaS Employees usually only see Time tracking for now
+        if (employee.role.startsWith('SAAS_')) {
+            return tabs;
+        }
+
+        tabs.push('CLIENTS');
         
-        // If specific modules are assigned, restrict other tabs
         if (employee.modules) {
             if (employee.modules.includes('INSURANCE')) tabs.push('POLICIES');
             if (employee.modules.includes('TAX')) tabs.push('TAX');
         } else {
-            // Legacy/Fallback: If no modules defined, show everything (or default set)
-            // For safety in this demo, let's show all if undefined to not break old users
             tabs.push('POLICIES', 'TAX'); 
         }
         return tabs;
@@ -63,12 +77,12 @@ export const EmployeeDetail: React.FC = () => {
 
     const availableTabs = getAvailableTabs();
 
-    // Ensure active tab is valid when switching employees or if permissions change
+    // Ensure active tab is valid
     useEffect(() => {
         if (!availableTabs.includes(activeTab)) {
             setActiveTab(availableTabs[0]);
         }
-    }, [id, employee, activeTab]);
+    }, [id, employee, availableTabs, activeTab]);
 
 
     if (!employee) {
@@ -84,11 +98,9 @@ export const EmployeeDetail: React.FC = () => {
 
     // --- DATA AGGREGATION ---
     
-    // 1. Time Reports
     const timeEntries = MOCK_TIME_ENTRIES.filter(t => t.userId === employee.id);
     const totalHours = timeEntries.reduce((sum, t) => sum + t.hours, 0);
     
-    // Mock Chart Data for Time
     const timeData = [
         { name: 'Mo', hours: 8.5 },
         { name: 'Di', hours: 7.0 },
@@ -97,16 +109,10 @@ export const EmployeeDetail: React.FC = () => {
         { name: 'Fr', hours: 6.5 },
     ];
 
-    // 2. Assigned Clients
     const assignedClients = MOCK_CLIENTS.filter(c => c.advisorId === employee.id);
-
-    // 3. Policies Managed (Indirectly via Clients usually, but let's assume we filter policies of assigned clients)
     const managedPolicies = MOCK_POLICIES.filter(p => assignedClients.some(c => c.id === p.clientId));
-
-    // 4. Tax Returns
     const taxReturns = MOCK_TAX_SUMMARIES.filter(t => assignedClients.some(c => c.id === t.clientId));
 
-    // Helper for Module Badges
     const getModuleIcon = (mod: EmployeeModule) => {
         switch(mod) {
             case 'INSURANCE': return <Shield size={12} />;
@@ -129,10 +135,10 @@ export const EmployeeDetail: React.FC = () => {
         <Layout>
             {/* Header */}
             <div className="mb-6">
-                <Link to="/team" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mb-4 transition-colors">
+                <button onClick={() => window.history.back()} className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 mb-4 transition-colors">
                     <ArrowLeft size={16} />
-                    Zurück zum Team
-                </Link>
+                    Zurück zur Übersicht
+                </button>
                 
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-sm">
                     <div className="relative">
@@ -151,6 +157,11 @@ export const EmployeeDetail: React.FC = () => {
                                     {getModuleIcon(mod)} {getModuleLabel(mod)}
                                 </span>
                             ))}
+                            {employee.role.startsWith('SAAS_') && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                                    SaaS Internal
+                                </span>
+                            )}
                         </div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{employee.firstName} {employee.lastName}</h1>
                         <p className="text-slate-500 dark:text-slate-400 font-medium mb-4">{employee.position || 'Mitarbeiter'} {team ? `• ${team.name}` : ''}</p>
@@ -177,26 +188,26 @@ export const EmployeeDetail: React.FC = () => {
             {/* KPI Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div className="text-slate-500 text-xs font-medium uppercase mb-1">Kunden</div>
-                    <div className="text-2xl font-bold">{assignedClients.length}</div>
+                    <div className="text-slate-500 text-xs font-medium uppercase mb-1">Status</div>
+                    <div className="text-xl font-bold text-emerald-600 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div> Aktiv
+                    </div>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div className="text-slate-500 text-xs font-medium uppercase mb-1">Stunden (Woche)</div>
                     <div className="text-2xl font-bold text-brand-600">{totalHours}h</div>
                 </div>
                 
-                {/* Only show Policy KPI if module active */}
-                {availableTabs.includes('POLICIES') && (
+                {availableTabs.includes('CLIENTS') && (
                     <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="text-slate-500 text-xs font-medium uppercase mb-1">Policen</div>
-                        <div className="text-2xl font-bold">{managedPolicies.length}</div>
+                        <div className="text-slate-500 text-xs font-medium uppercase mb-1">Kunden</div>
+                        <div className="text-2xl font-bold">{assignedClients.length}</div>
                     </div>
                 )}
 
-                {/* Only show Tax KPI if module active */}
                 {availableTabs.includes('TAX') && (
                     <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="text-slate-500 text-xs font-medium uppercase mb-1">Steuer-Mandate</div>
+                        <div className="text-slate-500 text-xs font-medium uppercase mb-1">Mandate</div>
                         <div className="text-2xl font-bold text-purple-600">{taxReturns.length}</div>
                     </div>
                 )}
@@ -205,7 +216,14 @@ export const EmployeeDetail: React.FC = () => {
             {/* Tabs */}
             <div className="flex border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
                 <TabButton active={activeTab === 'TIME'} onClick={() => setActiveTab('TIME')} icon={<Clock size={16} />} label="Stundenraport" />
-                <TabButton active={activeTab === 'CLIENTS'} onClick={() => setActiveTab('CLIENTS')} icon={<Users size={16} />} label="Kunden" />
+                
+                {availableTabs.includes('HR') && (
+                    <TabButton active={activeTab === 'HR'} onClick={() => setActiveTab('HR')} icon={<UserIcon size={16} />} label="Personal & Vertrag" />
+                )}
+
+                {availableTabs.includes('CLIENTS') && (
+                    <TabButton active={activeTab === 'CLIENTS'} onClick={() => setActiveTab('CLIENTS')} icon={<Users size={16} />} label="Kunden" />
+                )}
                 
                 {availableTabs.includes('POLICIES') && (
                     <TabButton active={activeTab === 'POLICIES'} onClick={() => setActiveTab('POLICIES')} icon={<ShieldAlert size={16} />} label="Policen" />
@@ -219,7 +237,75 @@ export const EmployeeDetail: React.FC = () => {
             {/* Tab Content */}
             <div className="space-y-6">
                 
-                {/* 1. TIME REPORTS */}
+                {/* 1. HR / CONTRACT FILE */}
+                {activeTab === 'HR' && canSeeHR && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                        <div className="lg:col-span-2 space-y-6">
+                            <Card title="Personalien" noPadding>
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <DetailRow label="Vollständiger Name" value={`${employee.firstName} ${employee.lastName}`} />
+                                    <DetailRow label="Geburtsdatum" value={employee.birthDate || 'Nicht hinterlegt'} />
+                                    <DetailRow label="Familiensituation" value={employee.familyStatus || 'Nicht hinterlegt'} icon={<Heart size={14} className="text-pink-500"/>} />
+                                    <DetailRow label="AHV-Nummer" value={employee.ahvNumber || 'Nicht hinterlegt'} />
+                                    <DetailRow label="Nationalität" value="Schweiz" />
+                                </div>
+                            </Card>
+
+                            <Card title="Vertrag & Anstellung" noPadding>
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <DetailRow label="Eintrittsdatum" value={employee.entryDate || 'Unbekannt'} icon={<Calendar size={14} />} />
+                                    <DetailRow label="Beschäftigungsgrad" value={employee.employmentPercentage ? `${employee.employmentPercentage}%` : '100%'} />
+                                    <DetailRow label="Funktion" value={employee.position || 'Mitarbeiter'} />
+                                    <DetailRow label="Kündigungsfrist" value={employee.noticePeriod || '3 Monate'} />
+                                    <DetailRow label="Urlaubsanspruch" value="25 Tage" />
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="space-y-6">
+                            <Card title="Lohn & Provision" className="border-l-4 border-l-emerald-500">
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                            <Wallet size={14} /> Grundgehalt (monatlich)
+                                        </p>
+                                        <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                                            <SensitiveData>CHF {employee.baseSalary?.toLocaleString() || '0'}.00</SensitiveData>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-1">Exkl. 13. Monatslohn</p>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                            <BadgeCheck size={14} className="text-brand-500" /> Provisionsvereinbarung
+                                        </p>
+                                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                            "{employee.bonusAgreement || 'Keine spezifische Vereinbarung hinterlegt.'}"
+                                        </p>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <Button variant="outline" size="sm" className="w-full" icon={<FileSignature size={14}/>}>Vertrag downloaden (PDF)</Button>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <div className="bg-brand-900 text-white p-6 rounded-xl relative overflow-hidden shadow-lg">
+                                <div className="relative z-10">
+                                    <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                                        <Shield size={16} className="text-brand-400" /> Vertraulichkeit
+                                    </h4>
+                                    <p className="text-[11px] text-brand-200 leading-relaxed">
+                                        Diese Informationen sind nur für Administratoren sichtbar. Jegliche Weitergabe verstösst gegen die internen Datenschutzrichtlinien (nDSG).
+                                    </p>
+                                </div>
+                                <UserIcon size={100} className="absolute -right-8 -bottom-8 opacity-10" />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 2. TIME REPORTS */}
                 {activeTab === 'TIME' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2">
@@ -261,7 +347,7 @@ export const EmployeeDetail: React.FC = () => {
                     </div>
                 )}
 
-                {/* 2. CLIENTS */}
+                {/* 3. CLIENTS */}
                 {activeTab === 'CLIENTS' && (
                     <Card noPadding>
                         <table className="w-full text-left text-sm">
@@ -301,7 +387,7 @@ export const EmployeeDetail: React.FC = () => {
                     </Card>
                 )}
 
-                {/* 3. POLICIES (Conditional) */}
+                {/* 4. POLICIES (Conditional) */}
                 {activeTab === 'POLICIES' && availableTabs.includes('POLICIES') && (
                     <Card noPadding>
                         <table className="w-full text-left text-sm">
@@ -343,7 +429,7 @@ export const EmployeeDetail: React.FC = () => {
                     </Card>
                 )}
 
-                {/* 4. TAX RETURNS (Conditional) */}
+                {/* 5. TAX RETURNS (Conditional) */}
                 {activeTab === 'TAX' && availableTabs.includes('TAX') && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {taxReturns.map((tax, idx) => {
@@ -405,4 +491,15 @@ const TabButton = ({ active, onClick, icon, label }: any) => (
     {icon}
     {label}
   </button>
+);
+
+const DetailRow = ({ label, value, icon }: { label: string, value: string | number, icon?: React.ReactNode }) => (
+    <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            {icon} {label}
+        </span>
+        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1 sm:mt-0">
+            {value}
+        </span>
+    </div>
 );

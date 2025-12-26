@@ -151,6 +151,16 @@ export interface User {
   
   // New: Responsibilities / Access Areas
   modules?: EmployeeModule[]; 
+
+  // HR Specific Fields
+  birthDate?: string;
+  familyStatus?: string; // e.g. "Ledig", "Verheiratet, 2 Kinder"
+  ahvNumber?: string;
+  entryDate?: string;
+  noticePeriod?: string; // e.g. "3 Monate"
+  employmentPercentage?: number; // e.g. 100
+  baseSalary?: number;
+  bonusAgreement?: string;
 }
 
 export interface BrandingConfig {

@@ -1,49 +1,45 @@
 # End-to-End (E2E) Testing Plan
 
 ## 1. Tool Selection
-**Playwright** is chosen for its native support of modern web features, speed, and ability to handle multi-tab scenarios.
+**Playwright** is the primary tool for E2E testing to ensure cross-browser compatibility and handling of multi-step onboarding flows.
 
 ## 2. Critical User Journeys (CUJs)
 
-### Scenario A: The "Golden Path" - Broker Lifecycle
-1.  **Login:** User logs in as `BROKER_ADMIN`.
-2.  **Acquisition:** Navigates to **Lead Radar**. Searches "Architekten Zürich". Adds a result to CRM.
-3.  **Onboarding:** Navigates to **Data Import**. Uploads CSV. Verifies AI Mapping. Confirms Import.
-4.  **Analysis:** Opens Policy Detail of a new client. Checks "Smart Summary".
-5.  **Logout.**
-
-### Scenario B: The SaaS Hunter (Acquisition)
-1.  **Login:** User logs in as `SAAS_ACQUISITION`.
-2.  **Lead Radar:** Checks that the prompt context is optimized for finding "Insurance Brokers".
-3.  **Search:** Searches "Makler Bern".
-4.  **Result:** Adds a lead to the internal SaaS pipeline.
-5.  **Access Check:** Verifies they CANNOT see tenant financial details (restricted to Finance role).
-
-### Scenario C: The Agent Experience (Sales Force)
-1.  **Login:** User logs in as `BROKER_AGENT` (Felix).
-2.  **Dashboard:** Verifies `AgentDashboard` (Wallet, KPIs).
-3.  **Restriction:** Tries to access `/import` or `/settings`. Expects redirect.
-4.  **Commission:** Checks "Offene Provisionen" matches assigned deals.
-
-### Scenario D: AI Studio Configuration
+### Scenario G: HR Management & Privacy (New)
 1.  **Login:** `BROKER_ADMIN`.
-2.  **AI Studio:** Changes Persona Tone to "CASUAL".
-3.  **Knowledge Base:** Uploads dummy PDF. Checks "Processing" -> "Cached" state transition.
+2.  **Navigation:** Go to **Team & HR**.
+3.  **Selection:** Open the profile of "Felix Fieldagent".
+4.  **Privacy Check:** Enable **Privacy Mode** in sidebar.
+5.  **Verification:** Verify that Felix's salary is blurred.
+6.  **HR Access:** Click the **Personal & Vertrag** tab.
+7.  **Data Check:** Verify visibility of AHV-Number and Contract documents.
+8.  **RBAC Check:** Logout and login as `BROKER_AGENT`. Verify the HR tab is no longer visible.
 
-### Scenario E: The Client View
-1.  **Login:** `CLIENT`.
-2.  **Dashboard:** Verifies "My Policies" and 3D Wealth Visualization.
-3.  **Restriction:** Tries to access `/leads` or `/team`. Expects redirect/404.
-
-### Scenario F: Smart Inbox & Productivity
+### Scenario H: Organization Building (New)
 1.  **Login:** `BROKER_ADMIN`.
-2.  **Inbox:** Selects an email. Clicks "Smart Analysis". Verifies Summary generation.
-3.  **Tagging:** Adds a tag "Urgent". Verifies filtering by tag works.
+2.  **Navigation:** Go to **Team & HR**.
+3.  **Action:** Click **Neues Team**.
+4.  **Form:** Enter "Hypotheken-Zentrum" and a description.
+5.  **Navigation:** Click **Team verwalten** for the new team.
+6.  **Assignment:** Open the **Mitglieder hinzufügen** modal.
+7.  **Search:** Search for a specific employee not in a team.
+8.  **Confirmation:** Add them to the team and verify their presence in the team list.
 
-## 3. Visual Regression Testing
-*   **White Labeling:** Compare Screenshots of Tenant A (Blue) vs Tenant B (Red).
-*   **Dark Mode:** Verify contrast ratios in Lead Radar cards.
+### Scenario I: SaaS Internal Operations (New)
+1.  **Login:** `SAAS_SUPER_ADMIN`.
+2.  **Navigation:** Go to **SaaS Teams**.
+3.  **Org View:** Verify visibility of internal departments (Dev, Sales, Finance).
+4.  **Member Detail:** Click on an internal employee and verify their detail page opens correctly.
 
-## 4. CI/CD Integration
-*   **Trigger:** On every Pull Request to `main`.
-*   **Process:** Build App -> Serve Preview -> Run Playwright -> Report Results.
+### Scenario A: Broker Lifecycle (Existing)
+*   **Acquisition:** Lead Radar search -> Add to CRM.
+*   **Onboarding:** Smart Import Center -> CSV Upload -> AI Mapping check.
+*   **Analysis:** Policy Detail -> Smart Summary.
+
+## 3. Visual Regression
+*   **Masking State:** Screenshot comparison of Employee profiles with and without Privacy Mode.
+*   **Team Layout:** Verify that the "stacked avatar" view in `TeamOverview` displays correctly on mobile.
+
+## 4. Environmental Testing
+*   **Dark Mode:** Check readability of sensitive data (blurred state) in dark mode.
+*   **Tenant Theming:** Ensure that custom brand colors correctly theme the "Progress Bars" in the Team Detail view.

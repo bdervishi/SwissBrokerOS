@@ -1,56 +1,38 @@
 # SwissBroker OS - The Operating System for Modern Brokerage
 
 ## 1. The Hook
-**"From Admin to Acquisition. The first Broker OS that grows your business."**
+**"From Admin to Acquisition. From Payroll to Portfolio. The first complete OS for Swiss Brokers."**
 
-Traditional software manages what you have. **SwissBroker OS** helps you get what you don't have yet. It combines administration, compliance, and **AI-driven Lead Generation** into one Swiss-hosted platform.
+While traditional software just stores data, **SwissBroker OS** scales your business. It is the first platform that combines client management, AI-lead generation, and **full-scale HR operations** into one secure Swiss vault.
 
-## 2. The Problem
-1.  **Stagnation:** Brokers spend 80% of time on admin, 20% on sales.
-2.  **Data Silos:** Leads in Excel, emails in Outlook, policies in folders.
-3.  **Onboarding Pain:** Migrating data to new software takes weeks.
-4.  **Financial Risk:** Losing money on unexpected commission clawbacks ("Storno").
+## 2. The Solution: A Triple-Threat Platform
 
-## 3. Our Solution: SwissBroker OS
+### I. The Growth Engine
+*   **Lead Radar:** Proactive acquisition using AI grounding (Google Search). Find architects in Bern or startups in Zug with one click.
+*   **Smart Import:** Migrate decades of legacy data in minutes. Our AI maps your old Excel columns to our modern schema automatically.
 
-A **White-Label SaaS Solution** that digitizes the broker's daily life and fuels growth.
+### II. The Management Core
+*   **Broker AI Studio:** "Hire" a digital twin. Train your AI on your specific AGBs, guidelines, and tone of voice.
+*   **3D Wealth Visualization:** Don't just talk about wealth—show it. Interactive 3D models of client assets turn boring numbers into a visual experience.
+*   **Storno Radar:** Stop losing money. Our early-warning system tracks commission liability periods in real-time.
 
-### Growth Engine (New)
-*   **Lead Radar:** Don't wait for clients. Find them. Enter "Startups in Zug" and let our AI (Google Search Grounding) find real, qualified leads and add them to your pipeline instantly.
-*   **Smart Import Center:** Switch to us in minutes. Upload any CSV, and our AI automatically maps your columns to our database. No manual matching required.
+### III. The People Engine (New)
+*   **Dynamic Org Charts:** Build departments, assign leaders, and manage internal teams with ease.
+*   **Full HR Lifecycle:** Manage salaries, bonus agreements (Provisions-Splits), AHV data, and digital personnel files in a high-security environment.
+*   **Built-in Privacy:** Comply with **nDSG** automatically. Sensitive data masking ensures that only the right people see the sensitive numbers.
 
-### Management Core
-*   **Broker AI Studio:** Build your "Corporate Brain". Upload AGBs and Guidelines. The AI learns your tone and knowledge.
-*   **Agent Portal:** Scale your sales force. Give agents a gamified view of their commissions and clients without exposing sensitive admin data.
-*   **Storno Radar:** Financial early-warning system for commission clawbacks.
-*   **Tax & Mortgage Simulators:** Consult visually and impressively.
+## 3. Unique Selling Proposition (USP)
 
-## 4. Unique Selling Proposition (USP)
+1.  **Unmatched Speed-to-Value:** Our AI-mapping means you are "live" in hours, not months.
+2.  **The "Active" CRM:** We don't just wait for you to type in a client; we help you find them in the wild.
+3.  **Swiss Trust & Compliance:** Data residency in Zürich (Tier IV), nDSG-ready, and FINMA-compliant security standards.
+4.  **Scale-Ready HR:** As you grow from 1 to 50 employees, SwissBroker OS provides the organizational backbone you need.
 
-1.  **Active Acquisition Tool:**
-    Competitors are databases. We are a **Lead Generation Machine**. The Lead Radar integrates live web search directly into your workflow.
+## 4. Business Model (B2B SaaS)
 
-2.  **"Build Your Own AI Employee":**
-    Define your persona, upload your knowledge base, and let the AI handle routine tasks with *your* specific expertise (via Gemini Context Caching).
-
-3.  **Scalable Sales Force:**
-    Onboard external agents in minutes via the dedicated **Agent Dashboard**. Automated billing and transparency included.
-
-4.  **True White Labeling:**
-    Our **"Chameleon Engine"** adapts the entire application's color DNA to match your corporate identity.
-
-## 5. Business Model
-
-**B2B SaaS Subscription:**
-
-*   **Starter (CHF 99/mo):** For the solo fighter. Basic CRM + Portfolio.
-*   **Professional (CHF 249/mo):** Growth focused. Includes Lead Radar, AI Studio & Storno Radar.
-*   **Enterprise (Custom):** For large organizations. API Access, Unlimited Agents, Dedicated Support.
-
-## 6. Technical Trust Anchors
-*   **Data Residency:** 100% Hosted in Zurich (Tier IV Datacenter).
-*   **Encryption:** AES-256 for data at rest.
-*   **AI Compliance:** Brokers decide which data is sent to the LLM. Opt-in per feature.
+*   **Starter (CHF 99/mo):** Solo brokers. Basic CRM & Portfolio.
+*   **Professional (CHF 249/mo):** Growing teams. Includes Lead Radar, Team Management, and AI Studio.
+*   **Enterprise (Custom):** Large firms. API Access, Multi-Entity Support, and Dedicated Success Management.
 
 ---
-*Stop managing. Start growing. Let's demo.*
+**SwissBroker OS: Build a better brokerage.**
