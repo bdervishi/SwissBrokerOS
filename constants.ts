@@ -1,7 +1,85 @@
 
-import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType } from './types';
+import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType, StaticPage, MegaMenuCategory } from './types';
 
 export const APP_NAME = "SwissBroker OS";
+
+// --- STRUCTURED FAQS ---
+export const FAQS = [
+  {
+    category: "Allgemein",
+    question: "Was ist SwissBroker OS?",
+    answer: "Es ist das erste ganzheitliche Betriebssystem für Schweizer Broker, das CRM, HR, KI-Akquise und Finanz-Simulationen in einer sicheren Cloud-Lösung vereint."
+  },
+  {
+    category: "KI & Sicherheit",
+    question: "Wo werden meine Daten gespeichert?",
+    answer: "Sämtliche Daten werden ausschliesslich in ISO-zertifizierten Tier IV Datacentern im Kanton Zürich, Schweiz, gespeichert. Wir erfüllen die nDSG-Anforderungen vollständig."
+  },
+  {
+    category: "KI & Sicherheit",
+    question: "Wie nutzt SwissBroker OS künstliche Intelligenz?",
+    answer: "Wir nutzen KI (Google Gemini) für die automatisierte Analyse von Policen, die Generierung von Steuertipps und zur Unterstützung bei der Neukundenakquise über den Lead Radar."
+  },
+  {
+    category: "Preise & Verträge",
+    question: "Gibt es eine kostenlose Testphase?",
+    answer: "Ja, Sie können SwissBroker OS 14 Tage lang unverbindlich mit vollem Funktionsumfang testen. Danach wählen Sie das passende Paket (Starter, Pro oder Enterprise)."
+  },
+  {
+    category: "Preise & Verträge",
+    question: "Kann ich mein Abo jederzeit kündigen?",
+    answer: "Unsere Standard-Abos sind monatlich kündbar. Bei jährlicher Zahlung gewähren wir attraktive Rabatte, binden Sie aber für 12 Monate."
+  },
+  {
+    category: "Technik",
+    question: "Benötige ich eine spezielle Software-Installation?",
+    answer: "Nein, SwissBroker OS ist eine 100% webbasierte SaaS-Lösung. Sie benötigen lediglich einen modernen Browser auf Ihrem PC, Mac oder Tablet."
+  },
+  {
+    category: "Technik",
+    question: "Kann ich Daten aus meinem alten System importieren?",
+    answer: "Ja, unser Smart Import Center unterstützt CSV- und Excel-Dateien. Eine KI hilft Ihnen dabei, die Spalten Ihres alten Systems automatisch den richtigen Feldern in SwissBroker OS zuzuordnen."
+  }
+];
+
+// --- MOCK NAVIGATION ---
+export const MOCK_NAVIGATION: MegaMenuCategory[] = [
+    {
+        id: 'nav_solutions',
+        title: 'Lösungen',
+        links: [
+            { id: 'l1', title: 'CRM für Makler', description: 'Zentrales Klienten-Register nach nDSG.', path: '/features/crm', iconName: 'Users' },
+            { id: 'l2', title: 'KI-Risikoanalyse', description: 'Identifizieren Sie Vorsorgelücken automatisch.', path: '/features/ai-risk', iconName: 'BrainCircuit' },
+            { id: 'l3', title: 'Hypothekenrechner', description: 'Interaktive Simulationen in Echtzeit.', path: '/features/mortgage-calc', iconName: 'Calculator' },
+            { id: 'l4', title: 'Steuermodul', description: 'Automatisierte Steueroptimierung.', path: '/features/tax-module', iconName: 'ShieldCheck' }
+        ]
+    },
+    {
+        id: 'nav_resources',
+        title: 'Ressourcen',
+        links: [
+            { id: 'r1', title: 'Partner Hub', description: 'Alle Versicherer & Banken auf einen Blick.', path: '/partners', iconName: 'Handshake' },
+            { id: 'r2', title: 'Smart Import', description: 'Migrieren Sie Daten in wenigen Minuten.', path: '/import', iconName: 'Database' },
+            { id: 'r3', title: 'Hilfe-Center (FAQ)', description: 'Fragen & Antworten zu SwissBroker.', path: '/faq', iconName: 'Info' }
+        ]
+    },
+    {
+        id: 'nav_company',
+        title: 'Unternehmen',
+        links: [
+            { id: 'c1', title: 'Über Uns', description: 'Unsere Mission & Geschichte.', path: '/p/ueber-uns', iconName: 'Info' },
+            { id: 'c2', title: 'Karriere', description: 'Werde Teil unseres Teams.', path: '/career', iconName: 'Briefcase' },
+            { id: 'c3', title: 'Partner Programm', description: 'SwissBroker empfehlen & verdienen.', path: '/affiliate', iconName: 'DollarSign' }
+        ]
+    }
+];
+
+// --- MOCK JOBS ---
+export const MOCK_JOBS = [
+    { id: 'j1', title: 'Senior Fullstack Engineer (React)', location: 'Zürich / Remote', type: '100%', department: 'Engineering' },
+    { id: 'j2', title: 'Head of Sales DACH', location: 'Zürich', type: '100%', department: 'Growth' },
+    { id: 'j3', title: 'Customer Success Manager', location: 'Bern / Remote', type: '80-100%', department: 'Operations' },
+];
 
 // --- MOCK TESTIMONIALS ---
 export const MOCK_TESTIMONIALS: Testimonial[] = [
@@ -152,7 +230,7 @@ export const MOCK_TENANTS: Tenant[] = [
 export const MOCK_CLIENTS: Client[] = [
   { id: 'c1', firstName: 'Thomas', lastName: 'Müller', email: 'thomas.mueller@example.ch', role: UserRole.CLIENT, address: 'Bahnhofstrasse 12', zipCity: '8001 Zürich', birthDate: '1980-05-15', advisorId: 'u_broker_1', taxDomicile: 'Zürich', avatarUrl: 'https://picsum.photos/id/1005/200/200' },
   { id: 'c2', firstName: 'Sarah', lastName: 'Keller', email: 'sarah.keller@example.ch', role: UserRole.CLIENT, address: 'Seestrasse 45', zipCity: '6000 Luzern', birthDate: '1992-11-20', advisorId: 'u_broker_1', taxDomicile: 'Luzern', avatarUrl: 'https://picsum.photos/id/1011/200/200' },
-  { id: 'c3', firstName: 'Peter', lastName: 'Agenturkunden', email: 'peter.ag@example.ch', role: UserRole.CLIENT, address: 'Bergweg 3', zipCity: '3000 Bern', birthDate: '1985-02-10', advisorId: 'u_agent_1', taxDomicile: 'Bern', avatarUrl: 'https://picsum.photos/id/1025/200/200' }
+  { id: 'c3', firstName: 'Peter', lastName: 'Agenturkunden', email: 'peter.ag@example.ch', role: UserRole.CLIENT, address: 'Bergweg 3', zipCity: '3000 Bern', birthDate: '1988-01-01', advisorId: 'u_agent_1', taxDomicile: 'Bern', avatarUrl: 'https://picsum.photos/id/1025/200/200' }
 ];
 
 export const MOCK_POLICIES: Policy[] = [
@@ -250,4 +328,117 @@ export const MOCK_EMAILS: Email[] = [
     { id: 'e1', senderName: 'Sarah Keller', senderEmail: 'sarah.keller@example.ch', subject: 'Wasserschaden in der Küche - Meldung', preview: 'Guten Tag, leider habe ich heute morgen einen Wasserschaden in meiner Küche festgestellt. Der Geschirrspüler ist...', content: `<p>Guten Tag Herr Muster,</p><p>leider habe ich heute morgen einen Wasserschaden in meiner Küche festgestellt. Der Geschirrspüler ist undicht und das Parkett ist aufgequollen.</p><p>Ich habe bereits den Sanitär gerufen. Muss ich noch etwas tun?</p><p>Anbei finden Sie die Fotos.</p><br><p>Freundliche Grüsse,</p><p>Sarah Keller</p>`, date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 15), isRead: false, folder: 'INBOX', relatedClientId: 'c2', attachments: [{ name: 'Schaden_Foto_1.jpg', type: 'image/jpeg' }, { name: 'Schaden_Foto_2.jpg', type: 'image/jpeg' }], source: 'OUTLOOK', priority: 'HIGH', tags: ['Schadenfall', 'Dringend'], category: 'CLAIMS' },
     { id: 'e2', senderName: 'Thomas Müller', senderEmail: 'thomas.mueller@example.ch', subject: 'Frage zum Jahresgespräch', preview: 'Hoi Max, können wir unseren Termin nächste Woche um eine Stunde verschieben? Mir ist etwas dazwischen gekommen...', content: `<p>Hoi Max,</p><p>können wir unseren Termin nächste Woche um eine Stunde verschieben? Mir ist etwas dazwischen gekommen.</p><p>15:00 Uhr statt 14:00 Uhr wäre super.</p><br><p>Gruss,</p><p>Thomas</p>`, date: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 14, 30), isRead: true, folder: 'INBOX', relatedClientId: 'c1', source: 'OUTLOOK', priority: 'NORMAL', tags: [], category: 'GENERAL' },
     { id: 'e3', senderName: 'Zurich Insurance Broker Support', senderEmail: 'broker.support@zurich.ch', subject: 'Bestätigung Policenänderung #ZH-221-332', preview: 'Sehr geehrter Partner, hiermit bestätigen wir die Anpassung der Hausratversicherung per 01.07.2024...', content: `<p>Sehr geehrter Partner,</p><p>hiermit bestätigen wir die Anpassung der Hausratversicherung per 01.07.2024.</p><p>Die neue Police wird Ihnen in den nächsten Tagen postalisch zugestellt.</p><br><p>Freundliche Grüsse,</p><p>Ihr Zurich Broker Team</p>`, date: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 2, 10, 0), isRead: true, folder: 'INBOX', relatedClientId: 'c1', relatedPolicyId: 'p2', source: 'GMAIL', priority: 'LOW', tags: ['Police', 'Admin'], category: 'ADMIN' }
+];
+
+export const MOCK_STATIC_PAGES: StaticPage[] = [
+    {
+        id: 'page_imprint',
+        slug: 'impressum',
+        isPublished: true,
+        lastUpdated: '2024-01-01',
+        title: {
+            de: 'Impressum',
+            en: 'Imprint',
+            fr: 'Mentions Légales',
+            it: 'Impronta'
+        },
+        content: {
+            de: '<h2>Kontaktadresse</h2><p>SwissBroker OS<br>Fintech Switzerland AG<br>Bahnhofstrasse 1<br>8001 Zürich</p><h2>Handelsregister</h2><p>Eingetragener Firmenname: Fintech Switzerland AG<br>Nummer: CHE-123.456.789</p>',
+            en: '<h2>Contact</h2><p>SwissBroker OS<br>Fintech Switzerland AG<br>Bahnhofstrasse 1<br>8001 Zurich</p>',
+            fr: '<h2>Contact</h2><p>SwissBroker OS<br>Fintech Switzerland AG<br>Bahnhofstrasse 1<br>8001 Zurich</p>',
+            it: '<h2>Contatto</h2><p>SwissBroker OS<br>Fintech Switzerland AG<br>Bahnhofstrasse 1<br>8001 Zurigo</p>'
+        }
+    },
+    {
+        id: 'page_privacy',
+        slug: 'datenschutz',
+        isPublished: true,
+        lastUpdated: '2024-03-15',
+        title: {
+            de: 'Datenschutz',
+            en: 'Privacy Policy',
+            fr: 'Confidentialité',
+            it: 'Privacy'
+        },
+        content: {
+            de: '<h2>Datenschutzerklärung</h2><p>Wir nehmen den Schutz Ihrer Daten ernst.</p><ul><li>Datenhaltung in der Schweiz</li><li>AES-256 Verschlüsselung</li></ul>',
+            en: '<h2>Privacy Policy</h2><p>We take data protection seriously.</p>',
+            fr: '<h2>Confidentialité</h2><p>Nous prenons la protection des données au sérieux.</p>',
+            it: '<h2>Privacy</h2><p>Prendiamo sul serio la protezione dei dati.</p>'
+        }
+    },
+    {
+        id: 'page_about',
+        slug: 'ueber-uns',
+        isPublished: true,
+        lastUpdated: '2024-06-01',
+        title: {
+            de: 'Über Uns',
+            en: 'About Us',
+            fr: 'À Propos',
+            it: 'Chi Siamo'
+        },
+        content: {
+            de: `
+                <div class="space-y-16">
+                    <div class="text-center space-y-4">
+                        <h2 class="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">Mehr als nur Software.</h2>
+                        <p class="text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
+                            SwissBroker OS ist die Antwort auf den Stillstand. Wir bauen das Betriebssystem für die nächste Generation von Finanzdienstleistern.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="text-4xl mb-4">🇨🇭</div>
+                            <h3 class="font-bold text-lg mb-2 text-slate-900">Swissness</h3>
+                            <p class="text-slate-600 text-sm">Keine Kompromisse bei Sicherheit und Qualität. Hosting in Zürich, Entwicklung in Bern.</p>
+                        </div>
+                        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="text-4xl mb-4">🚀</div>
+                            <h3 class="font-bold text-lg mb-2 text-slate-900">Innovation</h3>
+                            <p class="text-slate-600 text-sm">Wir integrieren KI nicht als Gimmick, sondern als Werkzeug für echte Produktivität.</p>
+                        </div>
+                        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="text-4xl mb-4">🤝</div>
+                            <h3 class="font-bold text-lg mb-2 text-slate-900">Unabhängigkeit</h3>
+                            <p class="text-slate-600 text-sm">Wir gehören keinem Versicherer. Unsere Loyalität gilt ausschließlich den Brokern.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                        <div class="relative z-10 max-w-2xl">
+                            <h3 class="text-2xl font-bold mb-4">Unsere Geschichte</h3>
+                            <p class="text-slate-300 leading-relaxed mb-6">
+                                Gestartet 2023 in einem Zürcher Co-Working Space, getrieben von der Frustration über veraltete CRM-Systeme. Heute vertrauen uns über 50 Broker-Firmen in der ganzen Schweiz.
+                            </p>
+                            <div class="flex gap-8">
+                                <div>
+                                    <span class="block text-3xl font-black text-brand-400">1'200+</span>
+                                    <span class="text-xs uppercase tracking-widest text-slate-400">Nutzer</span>
+                                </div>
+                                <div>
+                                    <span class="block text-3xl font-black text-brand-400">CHF 42M</span>
+                                    <span class="text-xs uppercase tracking-widest text-slate-400">Verwaltetes Volumen</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-12 translate-y-12">
+                            <svg width="300" height="300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold mb-6 text-slate-900">Bereit für den Wandel?</h3>
+                        <a href="#/career" class="inline-flex items-center justify-center px-8 py-4 bg-brand-600 text-white font-bold rounded-full hover:bg-brand-700 transition-colors shadow-lg">
+                            Werde Teil des Teams
+                        </a>
+                    </div>
+                </div>
+            `,
+            en: '<h2>Our Mission</h2><p>SwissBroker OS revolutionizes how Swiss brokers work.</p>',
+            fr: '<h2>Notre Mission</h2><p>SwissBroker OS révolutionne la façon dont les courtiers suisses travaillent.</p>',
+            it: '<h2>La Nostra Missione</h2><p>SwissBroker OS rivoluziona il modo in cui lavorano i broker svizzeri.</p>'
+        }
+    }
 ];

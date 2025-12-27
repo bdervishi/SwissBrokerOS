@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Landing } from './pages/Landing';
@@ -21,22 +22,28 @@ import { CreditSimulation } from './pages/CreditSimulation';
 import { SaaSPlans } from './pages/SaaSPlans';
 import { SaaSLanguages } from './pages/SaaSLanguages';
 import { SaaSDemo } from './pages/SaaSDemo';
+import { SaaSPitch } from './pages/SaaSPitch'; 
 import { SaaSTaxConfig } from './pages/SaaSTaxConfig';
 import { SaaSEmailConfig } from './pages/SaaSEmailConfig';
 import { SaaSNewsletter } from './pages/SaaSNewsletter';
 import { SaaSTestimonials } from './pages/SaaSTestimonials';
 import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance';
 import { SaaSTeams } from './pages/SaaSTeams';
+import { SaaSPages } from './pages/SaaSPages';
 import { BrokerAIConfig } from './pages/BrokerAIConfig';
 import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
-import { TeamDetail } from './pages/TeamDetail'; // NEW
+import { TeamDetail } from './pages/TeamDetail';
 import { EmployeeDetail } from './pages/EmployeeDetail';
 import { LeadFinder } from './pages/LeadFinder';
 import { DataImport } from './pages/DataImport';
 import { CallAgent } from './pages/CallAgent';
 import { FeatureInfo } from './pages/FeatureInfo';
 import { Legal } from './pages/Legal';
+import { PublicPage } from './pages/PublicPage';
+import { Career } from './pages/Career';
+import { AffiliateProgram } from './pages/AffiliateProgram';
+import { FAQPage } from './pages/FAQ'; // NEW
 import { OnboardingWizard } from './pages/OnboardingWizard';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SecurityProvider } from './contexts/SecurityContext';
@@ -67,6 +74,12 @@ const App: React.FC = () => {
                 {/* Marketing & Content Routes */}
                 <Route path="/features/:slug" element={<FeatureInfo />} />
                 <Route path="/legal/:type" element={<Legal />} />
+                <Route path="/career" element={<Career />} />
+                <Route path="/affiliate" element={<AffiliateProgram />} />
+                <Route path="/faq" element={<FAQPage />} /> {/* NEW */}
+                
+                {/* Public Dynamic Pages (CMS) */}
+                <Route path="/p/:slug" element={<PublicPage />} />
                 
                 {/* Dynamic Dashboard based on Role */}
                 <Route path="/dashboard" element={<DashboardRouter />} />
@@ -94,6 +107,7 @@ const App: React.FC = () => {
                 <Route path="/saas/call-agent" element={<CallAgent />} />
                 <Route path="/saas/embedded-finance" element={<SaaSEmbeddedFinance />} />
                 <Route path="/saas/teams" element={<SaaSTeams />} />
+                <Route path="/saas/cms" element={<SaaSPages />} />
 
                 <Route path="/partners" element={<PartnerHub />} />
                 <Route path="/partner/:id" element={<PartnerDetail />} />
@@ -104,15 +118,18 @@ const App: React.FC = () => {
                 
                 {/* Team & HR Routes */}
                 <Route path="/team" element={<TeamOverview />} />
-                <Route path="/team/:id" element={<TeamDetail />} /> // NEW
+                <Route path="/team/:id" element={<TeamDetail />} />
                 <Route path="/team/member/:id" element={<EmployeeDetail />} />
 
                 {/* Broker AI Studio */}
                 <Route path="/broker/ai-config" element={<BrokerAIConfig />} />
 
+                {/* SaaS Admin Specific Routes */}
                 <Route path="/plans" element={<SaaSPlans />} />
                 <Route path="/saas/languages" element={<SaaSLanguages />} />
                 <Route path="/saas/demo" element={<SaaSDemo />} />
+                <Route path="/saas/pitch" element={<SaaSPitch />} />
+                
                 <Route path="/settings" element={<Settings />} />
                 
                 {/* Fallback routes */}

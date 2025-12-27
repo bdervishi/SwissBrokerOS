@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { HeroScene } from '../components/3d/HeroScene';
@@ -5,11 +6,9 @@ import {
   ShieldCheck, 
   TrendingUp, 
   FileCheck, 
-  Lock, 
   Server, 
   ChevronLeft, 
   ChevronRight, 
-  Globe, 
   Mail, 
   Linkedin, 
   Twitter,
@@ -17,15 +16,38 @@ import {
   ShieldHalf,
   ArrowRight,
   Sun,
-  Moon
+  Moon,
+  ChevronDown,
+  Users,
+  BrainCircuit,
+  Calculator,
+  Database,
+  Blocks,
+  Handshake,
+  Info,
+  Briefcase,
+  DollarSign,
+  Menu,
+  X
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { BackToTop } from '../components/ui/BackToTop';
 import { Testimonial } from '../components/Testimonial';
+import { MOCK_STATIC_PAGES, MOCK_NAVIGATION } from '../constants';
+import { StaticPage, MegaMenuCategory } from '../types';
+
+// Helper to map icon names to Lucide components
+const IconMap: Record<string, any> = {
+  Users, BrainCircuit, Calculator, ShieldCheck, Database, Blocks, Handshake, Info, Briefcase, DollarSign
+};
 
 export const Landing: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isDark, setIsDark] = useState(true);
+  const [staticPages, setStaticPages] = useState<StaticPage[]>(MOCK_STATIC_PAGES);
+  const [navigation, setNavigation] = useState<MegaMenuCategory[]>(MOCK_NAVIGATION);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const slides = [
     {
@@ -49,7 +71,6 @@ export const Landing: React.FC = () => {
   ];
 
   useEffect(() => {
-    // Sync with system or local storage
     if (localStorage.theme === 'light') {
       setIsDark(false);
       document.documentElement.classList.remove('dark');
@@ -57,6 +78,12 @@ export const Landing: React.FC = () => {
       setIsDark(true);
       document.documentElement.classList.add('dark');
     }
+
+    const storedPages = localStorage.getItem('app_static_pages');
+    if (storedPages) setStaticPages(JSON.parse(storedPages));
+    
+    const storedNav = localStorage.getItem('app_navigation');
+    if (storedNav) setNavigation(JSON.parse(storedNav));
   }, []);
 
   const toggleTheme = () => {
@@ -71,24 +98,50 @@ export const Landing: React.FC = () => {
     }
   };
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  const getStaticLink = (slug: string) => {
+      const page = staticPages.find(p => p.slug === slug);
+      if (page && page.isPublished) {
+          return <Link to={`/p/${page.slug}`} className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">{page.title.de}</Link>;
+      }
+      return null;
   };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-x-hidden transition-colors duration-500">
       <BackToTop />
+      
       {/* Navbar */}
-      <nav className="fixed w-full z-50 border-b border-slate-200 dark:border-white/10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70">
+      <nav 
+        className="fixed w-full z-[100] border-b border-slate-200 dark:border-white/10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70"
+        onMouseLeave={() => setActiveMenu(null)}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="font-bold text-2xl tracking-tight flex items-center gap-2">
-            <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-serif font-bold text-lg shadow-sm">+</div>
-            <span className="text-slate-900 dark:text-white">SwissBroker</span>
+          <div className="flex items-center gap-12">
+            <Link to="/" className="font-bold text-2xl tracking-tight flex items-center gap-2 shrink-0">
+                <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-serif font-bold text-lg shadow-sm">+</div>
+                <span className="text-slate-900 dark:text-white">SwissBroker</span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-8">
+                {navigation.map((cat) => (
+                    <div 
+                        key={cat.id} 
+                        className="relative h-20 flex items-center"
+                        onMouseEnter={() => setActiveMenu(cat.id)}
+                    >
+                        <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${activeMenu === cat.id ? 'text-brand-600' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}>
+                            {cat.title}
+                            <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === cat.id ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
+                ))}
+            </div>
           </div>
+
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleTheme}
@@ -101,20 +154,92 @@ export const Landing: React.FC = () => {
             <Link to="/register">
               <Button variant="primary" className="shadow-lg shadow-brand-500/20">Jetzt starten</Button>
             </Link>
+            <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 text-slate-600 dark:text-slate-300"
+            >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
+
+        {/* Mega Menu Dropdown */}
+        <div className={`hidden lg:block absolute left-0 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300 origin-top ${activeMenu ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible'}`}>
+            <div className="max-w-7xl mx-auto px-8 py-10">
+                {navigation.map((cat) => (
+                    <div key={cat.id} className={activeMenu === cat.id ? 'block animate-in fade-in slide-in-from-top-2 duration-300' : 'hidden'}>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                            {cat.links.map((link) => {
+                                const IconComp = IconMap[link.iconName] || Info;
+                                return (
+                                    <Link 
+                                        key={link.id} 
+                                        to={link.path}
+                                        className="group p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800"
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+                                                <IconComp size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{link.title}</h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{link.description}</p>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+            <div className="lg:hidden absolute top-20 left-0 w-full h-[calc(100vh-80px)] bg-white dark:bg-slate-950 p-6 overflow-y-auto z-[99]">
+                <div className="space-y-8">
+                    {navigation.map((cat) => (
+                        <div key={cat.id}>
+                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">{cat.title}</h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {cat.links.map((link) => {
+                                    const IconComp = IconMap[link.iconName] || Info;
+                                    return (
+                                        <Link 
+                                            key={link.id} 
+                                            to={link.path} 
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="flex items-center gap-4 p-2"
+                                        >
+                                            <div className="w-10 h-10 bg-slate-50 dark:bg-slate-900 rounded-lg flex items-center justify-center text-slate-500">
+                                                <IconComp size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-900 dark:text-white">{link.title}</p>
+                                                <p className="text-xs text-slate-500">{link.description}</p>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                    <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4">
+                         <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="text-center font-bold text-slate-600 dark:text-slate-400">Login</Link>
+                         <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
+                            <Button className="w-full">Jetzt starten</Button>
+                         </Link>
+                    </div>
+                </div>
+            </div>
+        )}
       </nav>
 
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center pt-20 overflow-hidden">
-        
-        {/* 3D Background */}
         <HeroScene currentSlide={currentSlide} />
-        
-        {/* Content Overlay */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 w-full flex flex-col items-center">
-          
-            {/* Slider Content */}
             <div className="text-center min-h-[320px] flex flex-col items-center justify-center">
                 {slides.map((slide, index) => (
                     <div 
@@ -142,7 +267,6 @@ export const Landing: React.FC = () => {
                 ))}
             </div>
 
-            {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12 mb-24">
                 <Link to="/register">
                     <Button size="lg" className="w-full sm:w-auto px-12 py-4 text-lg shadow-2xl shadow-brand-600/10" icon={<ArrowRight size={20}/>}>Gratis Registrieren</Button>
@@ -155,16 +279,13 @@ export const Landing: React.FC = () => {
             </div>
         </div>
 
-        {/* Slider Controls */}
         <div className="absolute bottom-8 left-0 w-full z-20 flex items-center justify-center gap-8">
             <button 
                 onClick={prevSlide}
                 className="p-3 rounded-full bg-white/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-700/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white transition-all backdrop-blur-sm hover:scale-110 active:scale-95"
-                aria-label="Vorheriger Slide"
             >
                 <ChevronLeft size={24} />
             </button>
-            
             <div className="flex gap-3">
                 {slides.map((_, idx) => (
                     <button 
@@ -176,11 +297,9 @@ export const Landing: React.FC = () => {
                     />
                 ))}
             </div>
-
             <button 
                 onClick={nextSlide}
                 className="p-3 rounded-full bg-white/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-700/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white transition-all backdrop-blur-sm hover:scale-110 active:scale-95"
-                aria-label="Nächster Slide"
             >
                 <ChevronRight size={24} />
             </button>
@@ -215,21 +334,18 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
       <Testimonial />
 
       {/* Footer */}
       <footer className="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-white/10 pt-16 pb-8 relative z-10 transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-            
-            {/* Column 1: Brand */}
-            <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
+            <div className="space-y-6 lg:col-span-2">
               <div className="font-bold text-2xl tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
                 <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-serif font-bold text-lg shadow-sm">+</div>
                 SwissBroker
               </div>
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium">
+              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium max-w-sm">
                 Das erste ganzheitliche Betriebssystem für den Schweizer Finanz- und Versicherungsmarkt. Entwickelt für Wachstum und kompromisslose Sicherheit.
               </p>
               <div className="flex gap-4">
@@ -239,7 +355,6 @@ export const Landing: React.FC = () => {
               </div>
             </div>
 
-            {/* Column 2: Product */}
             <div>
               <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-6">Plattform</h4>
               <ul className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
@@ -247,17 +362,25 @@ export const Landing: React.FC = () => {
                 <li><Link to="/features/ai-risk" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">KI-Risikoanalyse</Link></li>
                 <li><Link to="/features/mortgage-calc" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Hypothekenrechner</Link></li>
                 <li><Link to="/features/tax-module" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Steuermodul</Link></li>
-                <li><Link to="/features/client-portal" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Kundenportal (App)</Link></li>
               </ul>
             </div>
 
-            {/* Column 3: Trust & Compliance */}
+            <div>
+              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-6">Unternehmen</h4>
+              <ul className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
+                <li>{getStaticLink('ueber-uns')}</li>
+                <li><Link to="/career" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Karriere</Link></li>
+                <li><Link to="/affiliate" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Partner Programm</Link></li>
+                <li><Link to="/faq" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Häufige Fragen (FAQ)</Link></li>
+              </ul>
+            </div>
+
             <div>
               <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-6">Vertrauen</h4>
               <ul className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
                 <li className="flex items-center gap-2">
                     <ShieldHalf size={16} className="text-emerald-600 dark:text-emerald-500" />
-                    <span>nDSG Konform (Schweiz)</span>
+                    <span>nDSG Konform (CH)</span>
                 </li>
                 <li className="flex items-center gap-2">
                     <Server size={16} className="text-emerald-600 dark:text-emerald-500" />
@@ -265,7 +388,7 @@ export const Landing: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-2">
                     <MapPin size={16} className="text-emerald-600 dark:text-emerald-500" />
-                    <span>Hosting in Zürich (CH)</span>
+                    <span>Hosting in Zürich</span>
                 </li>
                 <li className="flex items-center gap-2 text-xs pt-2">
                     <div className="w-3 h-3 bg-red-600 rounded-sm"></div>
@@ -273,31 +396,13 @@ export const Landing: React.FC = () => {
                 </li>
               </ul>
             </div>
-
-            {/* Column 4: Newsletter/CTA */}
-            <div>
-              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-6">Stay Updated</h4>
-              <p className="text-xs text-slate-500 mb-4 italic">Erhalten Sie monatliche Insights zum Makler-Markt und neue Features.</p>
-              <div className="flex gap-2 mb-4">
-                <input 
-                    type="email" 
-                    placeholder="Email Adresse" 
-                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-900 dark:text-white"
-                />
-                <Button size="sm">Go</Button>
-              </div>
-              <p className="text-[10px] text-slate-400 dark:text-slate-600">
-                Durch die Anmeldung akzeptieren Sie unsere Datenschutzbestimmungen.
-              </p>
-            </div>
           </div>
 
           <div className="border-t border-slate-200 dark:border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <div className="flex gap-6 font-medium">
-              <Link to="/legal/imprint" className="hover:text-brand-600 dark:hover:text-slate-300">Impressum</Link>
-              <Link to="/legal/privacy" className="hover:text-brand-600 dark:hover:text-slate-300">Datenschutz</Link>
-              <Link to="/legal/terms" className="hover:text-brand-600 dark:hover:text-slate-300">AGB</Link>
-              <Link to="/legal/sitemap" className="hover:text-brand-600 dark:hover:text-slate-300">Sitemap</Link>
+            <div className="flex flex-wrap gap-6 font-medium">
+                {getStaticLink('impressum')}
+                {getStaticLink('datenschutz')}
+                <Link to="/legal/terms" className="hover:text-brand-600 dark:hover:text-slate-300">AGB</Link>
             </div>
             <p className="font-medium">© {new Date().getFullYear()} SwissBroker OS (Fintech Switzerland AG). Alle Rechte vorbehalten.</p>
           </div>

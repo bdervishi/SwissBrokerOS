@@ -41,7 +41,8 @@ import {
   CreditCard,
   Zap,
   Coins,
-  Users2
+  Users2,
+  FileText // New icon for CMS
 } from 'lucide-react';
 
 interface NavItem {
@@ -139,7 +140,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
                     { name: 'Demo Hub', path: '/saas/demo', icon: <Play size={20} /> },
                     { name: 'Tenants (Makler)', path: '/clients', icon: <Building size={20} /> },
-                    { name: 'SaaS Teams', path: '/saas/teams', icon: <Users2 size={20} /> }, // NEW
+                    { name: 'SaaS Teams', path: '/saas/teams', icon: <Users2 size={20} /> },
                 ]
             }
         ];
@@ -152,6 +153,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     { name: 'AI Call Agent', path: '/saas/call-agent', icon: <PhoneCall size={20} /> },
                     { name: 'Newsletter', path: '/saas/newsletter', icon: <MailCheck size={20} /> },
                     { name: 'Testimonials', path: '/saas/testimonials', icon: <MessageSquareQuote size={20} /> },
+                    { name: 'CMS / Seiten', path: '/saas/cms', icon: <FileText size={20} /> }, // NEW
                 ]
             });
         }

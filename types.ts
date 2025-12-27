@@ -1,3 +1,4 @@
+
 /**
  * Enums representing Database Enums
  */
@@ -158,7 +159,7 @@ export interface User {
   ahvNumber?: string;
   entryDate?: string;
   noticePeriod?: string; // e.g. "3 Monate"
-  employmentPercentage?: number; // e.g. 100
+  employmentPercentage?: number; // e.g 100
   baseSalary?: number;
   bonusAgreement?: string;
 }
@@ -437,4 +438,37 @@ export interface BankOffer {
     commissionPercentage: number; // e.g., 2% kickback
     logoUrl?: string;
     type: CreditType;
+}
+
+// CMS / Static Pages
+export interface LocalizedContent {
+    de: string;
+    en: string;
+    fr: string;
+    it: string;
+    [key: string]: string;
+}
+
+export interface StaticPage {
+    id: string;
+    slug: string;
+    title: LocalizedContent;
+    content: LocalizedContent; // HTML
+    isPublished: boolean;
+    lastUpdated: string;
+}
+
+// NEW: Mega Menu Navigation Types
+export interface MegaMenuLink {
+    id: string;
+    title: string;
+    description: string;
+    path: string;
+    iconName: string; // From Lucide list
+}
+
+export interface MegaMenuCategory {
+    id: string;
+    title: string;
+    links: MegaMenuLink[];
 }
