@@ -180,6 +180,8 @@ export interface Tenant {
   mrr: number;
   joinedDate: string;
   branding: BrandingConfig;
+  // NEW: Active Addons
+  activeAddons?: string[]; // IDs of active addons
 }
 
 export interface SaaSPackage {
@@ -192,6 +194,16 @@ export interface SaaSPackage {
   isPopular?: boolean;
   maxUsers?: number;
   supportLevel: 'EMAIL' | 'PRIORITY' | 'DEDICATED';
+  // NEW: Which addons are included by default
+  includedAddons?: string[]; 
+}
+
+export interface SaaSAddon {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    iconName: string; // Lucide icon
 }
 
 export interface Client extends User {
@@ -471,4 +483,59 @@ export interface MegaMenuCategory {
     id: string;
     title: string;
     links: MegaMenuLink[];
+}
+
+// --- NEW: Website Engine Types ---
+export type WebSectionType = 'HERO' | 'SERVICES' | 'ABOUT' | 'TEAM' | 'TESTIMONIALS' | 'CONTACT' | 'CALCULATOR' | 'FAQ' | 'FOOTER';
+
+export interface WebSection {
+    id: string;
+    type: WebSectionType;
+    title: string;
+    content: string; // or more structured
+    isVisible: boolean;
+    order: number;
+    config?: any; // For dynamic blocks like calculator
+    image?: string;
+}
+
+export interface WebsiteConfig {
+    id: string;
+    tenantId: string;
+    status: 'PUBLISHED' | 'DRAFT' | 'OFFLINE';
+    domain: string;
+    theme: {
+        primaryColor: string;
+        font: string;
+        borderRadius: 'sm' | 'md' | 'lg' | 'full';
+    };
+    sections: WebSection[];
+    lastPublished?: string;
+    SEOSettings: {
+        title: string;
+        description: string;
+        keywords: string[];
+    };
+}
+
+// --- NEW: Client Journal & Notes ---
+export interface ClientNote {
+    id: string;
+    clientId: string;
+    authorId: string;
+    authorName: string;
+    content: string;
+    createdAt: string;
+}
+
+export type ActivityType = 'NOTE' | 'POLICY_ADD' | 'MORTGAGE_ADD' | 'MEETING' | 'SYSTEM_LOGIN' | 'DOCUMENT_UPLOAD';
+
+export interface ActivityLog {
+    id: string;
+    clientId: string;
+    type: ActivityType;
+    title: string;
+    description: string;
+    timestamp: string;
+    authorName?: string;
 }

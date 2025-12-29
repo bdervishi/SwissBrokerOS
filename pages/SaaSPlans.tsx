@@ -1,19 +1,75 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_SAAS_PACKAGES, MOCK_TENANTS } from '../constants';
-import { UserRole } from '../types';
+import { Modal } from '../components/ui/Modal';
+import { MOCK_SAAS_PACKAGES, MOCK_TENANTS, MOCK_ADDONS } from '../constants';
+import { UserRole, SaaSAddon } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { Check, Star, Plus, Edit2, Users, Crown, Zap, ShieldCheck, CreditCard } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { useBranding } from '../contexts/BrandingContext';
+import { Check, Star, Plus, Edit2, Users, Crown, Zap, ShieldCheck, CreditCard, Layout as LayoutIcon, BrainCircuit, Palette, ShoppingBag, CheckCircle, Loader2, Server, Lock } from 'lucide-react';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
 
 export const SaaSPlans: React.FC = () => {
     const { role } = useAuth();
+    const { tenant, updateTenant } = useBranding();
+    const navigate = useNavigate();
+
+    // Purchase Flow State
+    const [purchasingAddon, setPurchasingAddon] = useState<SaaSAddon | null>(null);
+    const [purchaseStep, setPurchaseStep] = useState<'CONFIRM' | 'PROCESSING' | 'SUCCESS'>('CONFIRM');
 
     if (role === UserRole.CLIENT) {
         return <Navigate to="/dashboard" />;
     }
+
+    // Get icon component dynamically
+    const getIcon = (name: string) => {
+        switch(name) {
+            case 'Layout': return <LayoutIcon size={24} />;
+            case 'BrainCircuit': return <BrainCircuit size={24} />;
+            case 'Palette': return <Palette size={24} />;
+            default: return <Zap size={24} />;
+        }
+    };
+
+    const initiatePurchase = (addon: SaaSAddon) => {
+        setPurchasingAddon(addon);
+        setPurchaseStep('CONFIRM');
+    };
+
+    const confirmPurchase = () => {
+        if (!purchasingAddon || !tenant) return;
+        
+        setPurchaseStep('PROCESSING');
+
+        // Simulate Network Request & Auto-Approval Logic
+        setTimeout(() => {
+            // 1. Simulate Request to SaaS Admin
+            console.log(`[System] Requesting license for ${purchasingAddon.id} from SaaS Admin...`);
+            
+            setTimeout(() => {
+                // 2. Simulate Auto-Approval
+                console.log(`[System] Auto-Approval Policy matched. Approving license.`);
+                
+                // 3. Update Tenant State
+                const currentAddons = tenant.activeAddons || [];
+                updateTenant({
+                    activeAddons: [...currentAddons, purchasingAddon.id]
+                });
+
+                setPurchaseStep('SUCCESS');
+            }, 1500); // Wait for "Approval"
+        }, 1000); // Wait for "Network"
+    };
+
+    const handleSuccessAction = () => {
+        setPurchasingAddon(null);
+        if (purchasingAddon?.id === 'addon_website') {
+            navigate('/web-engine');
+        }
+    };
 
     // --- SAAS ADMIN VIEW (Management) ---
     if (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_SALES || role === UserRole.SAAS_FINANCE) {
@@ -27,7 +83,7 @@ export const SaaSPlans: React.FC = () => {
                     <Button icon={<Plus size={18} />}>Neues Paket</Button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
                     {MOCK_SAAS_PACKAGES.map(pkg => (
                         <div key={pkg.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 relative flex flex-col">
                             {pkg.isPopular && (
@@ -62,14 +118,40 @@ export const SaaSPlans: React.FC = () => {
                                         <span>{feat}</span>
                                     </div>
                                 ))}
-                                {pkg.features.length > 3 && (
-                                    <div className="text-xs text-slate-400 pl-6">+ {pkg.features.length - 3} weitere Features</div>
+                                {pkg.includedAddons && pkg.includedAddons.length > 0 && (
+                                    <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <p className="text-xs font-bold uppercase text-slate-400 mb-1">Inklusive:</p>
+                                        {pkg.includedAddons.map(addonId => {
+                                            const addon = MOCK_ADDONS.find(a => a.id === addonId);
+                                            return addon ? (
+                                                <div key={addonId} className="flex items-center gap-2 text-xs font-bold text-brand-600">
+                                                    <Plus size={10} /> {addon.name}
+                                                </div>
+                                            ) : null;
+                                        })}
+                                    </div>
                                 )}
                             </div>
 
                             <div className="flex gap-2 mt-auto">
                                 <Button variant="outline" className="w-full" icon={<Edit2 size={16} />}>Editieren</Button>
                             </div>
+                        </div>
+                    ))}
+                </div>
+
+                <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-slate-100">Verfügbare Add-ons (Upselling)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    {MOCK_ADDONS.map(addon => (
+                        <div key={addon.id} className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center gap-4">
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-lg text-brand-600">
+                                {getIcon(addon.iconName)}
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-slate-900 dark:text-slate-100">{addon.name}</h4>
+                                <p className="text-xs text-slate-500">CHF {addon.price} / Mt.</p>
+                            </div>
+                            <Button size="sm" variant="ghost" icon={<Edit2 size={14}/>} />
                         </div>
                     ))}
                 </div>
@@ -82,6 +164,7 @@ export const SaaSPlans: React.FC = () => {
                                 <tr>
                                     <th className="px-6 py-3">Tenant</th>
                                     <th className="px-6 py-3">Aktuelles Paket</th>
+                                    <th className="px-6 py-3">Add-ons</th>
                                     <th className="px-6 py-3">Status</th>
                                     <th className="px-6 py-3 text-right">MRR</th>
                                 </tr>
@@ -91,6 +174,15 @@ export const SaaSPlans: React.FC = () => {
                                     <tr key={t.id}>
                                         <td className="px-6 py-4 font-medium">{t.name}</td>
                                         <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-mono">{t.plan}</span></td>
+                                        <td className="px-6 py-4">
+                                            {t.activeAddons?.length ? (
+                                                <div className="flex gap-1">
+                                                    {t.activeAddons.map(aid => (
+                                                        <span key={aid} className="w-2 h-2 rounded-full bg-brand-500" title={aid}></span>
+                                                    ))}
+                                                </div>
+                                            ) : <span className="text-slate-400">-</span>}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${t.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                                                 {t.status}
@@ -108,8 +200,7 @@ export const SaaSPlans: React.FC = () => {
     }
 
     // --- BROKER VIEW (Storefront) ---
-    // Simulate current plan (hardcoded for demo, would come from auth context's tenant info)
-    const currentPlanId = 'pkg_pro'; 
+    const currentPlanId = tenant?.plan === 'STARTER' ? 'pkg_starter' : tenant?.plan === 'ENTERPRISE' ? 'pkg_enterprise' : 'pkg_pro'; 
 
     return (
         <Layout>
@@ -158,12 +249,25 @@ export const SaaSPlans: React.FC = () => {
                             <ul className="space-y-4 mb-8 flex-1">
                                 {pkg.features.map((feat, i) => (
                                     <li key={i} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                                        <div className="mt-0.5 p-0.5 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 shrink-0">
+                                        <div className={`mt-0.5 p-0.5 rounded-full transition-colors ${isCurrent ? 'bg-brand-100 dark:bg-brand-900/50 text-brand-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
                                             <Check size={12} strokeWidth={3} />
                                         </div>
                                         {feat}
                                     </li>
                                 ))}
+                                {/* Show Included Addons */}
+                                {pkg.includedAddons && pkg.includedAddons.map(addonId => {
+                                    const addon = MOCK_ADDONS.find(a => a.id === addonId);
+                                    if(!addon) return null;
+                                    return (
+                                        <li key={addonId} className="flex items-start gap-3 text-sm font-bold text-brand-600 dark:text-brand-400">
+                                            <div className="mt-0.5 p-0.5 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600">
+                                                <Plus size={12} strokeWidth={3} />
+                                            </div>
+                                            {addon.name} inklusive
+                                        </li>
+                                    );
+                                })}
                             </ul>
 
                             <Button 
@@ -178,6 +282,54 @@ export const SaaSPlans: React.FC = () => {
                 })}
             </div>
 
+            {/* ADD-ONS SECTION */}
+            <div className="max-w-6xl mx-auto mb-16">
+                <h3 className="text-xl font-bold mb-6 text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <Zap className="text-yellow-500" fill="currentColor" /> Erweiterungen & Module
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {MOCK_ADDONS.map(addon => {
+                        // Check if addon is already active (via Plan OR explicit addon purchase)
+                        const isIncludedInPlan = MOCK_SAAS_PACKAGES.find(p => p.id === currentPlanId)?.includedAddons?.includes(addon.id);
+                        const isPurchased = tenant?.activeAddons?.includes(addon.id);
+                        const isActive = isIncludedInPlan || isPurchased;
+
+                        return (
+                            <div key={addon.id} className={`p-6 rounded-xl border transition-all ${isActive ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-900/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-3 rounded-lg ${isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                        {getIcon(addon.iconName)}
+                                    </div>
+                                    {isActive ? (
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded-full flex items-center gap-1">
+                                            <CheckCircle size={12} /> Aktiv
+                                        </span>
+                                    ) : (
+                                        <span className="font-bold text-slate-900 dark:text-slate-100">CHF {addon.price} <span className="text-xs font-normal text-slate-500">/mt.</span></span>
+                                    )}
+                                </div>
+                                <h4 className="font-bold text-lg mb-2">{addon.name}</h4>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 min-h-[40px]">{addon.description}</p>
+                                
+                                {isActive ? (
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full border-emerald-200 text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                                        onClick={() => addon.id === 'addon_website' && navigate('/web-engine')}
+                                    >
+                                        Modul öffnen
+                                    </Button>
+                                ) : (
+                                    <Button className="w-full" icon={<ShoppingBag size={16}/>} onClick={() => initiatePurchase(addon)}>
+                                        Hinzufügen
+                                    </Button>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-brand-900 rounded-2xl p-8 text-white flex items-center gap-6 relative overflow-hidden">
                     <div className="relative z-10">
@@ -189,13 +341,94 @@ export const SaaSPlans: React.FC = () => {
                 </div>
                  <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl p-8 flex items-center gap-6 relative overflow-hidden">
                     <div className="relative z-10">
-                        <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-slate-100">Zusatzmodule</h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Erweitern Sie Ihren Plan mit KI-Modulen oder zusätzlichen User-Lizenzen.</p>
-                        <Button size="sm" variant="outline">Module ansehen</Button>
+                        <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-slate-100">Volume Discounts</h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Ab 10 Benutzerlizenzen bieten wir attraktive Mengenrabatte.</p>
+                        <Button size="sm" variant="outline">Rabatt anfragen</Button>
                     </div>
-                    <Zap size={120} className="absolute -right-6 -bottom-6 text-slate-200 dark:text-slate-700 opacity-50" />
+                    <Users size={120} className="absolute -right-6 -bottom-6 text-slate-200 dark:text-slate-700 opacity-50" />
                 </div>
             </div>
+
+            {/* PURCHASE SIMULATION MODAL */}
+            <Modal
+                isOpen={!!purchasingAddon}
+                onClose={() => setPurchasingAddon(null)}
+                title={purchaseStep === 'SUCCESS' ? 'Aktivierung erfolgreich' : 'Add-on buchen'}
+                maxWidth="max-w-md"
+            >
+                <div className="p-4">
+                    {purchaseStep === 'CONFIRM' && purchasingAddon && (
+                        <div className="space-y-6 text-center">
+                            <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900/30 rounded-full flex items-center justify-center mx-auto text-brand-600">
+                                {getIcon(purchasingAddon.iconName)}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{purchasingAddon.name}</h3>
+                                <p className="text-sm text-slate-500 mt-2">Möchten Sie dieses Modul kostenpflichtig zu Ihrem Plan hinzufügen?</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-sm text-slate-500">Monatliche Kosten</span>
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">CHF {purchasingAddon.price}.00</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs text-slate-400">
+                                    <span>Abrechnung</span>
+                                    <span>via Hauptrechnung</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="ghost" className="flex-1" onClick={() => setPurchasingAddon(null)}>Abbrechen</Button>
+                                <Button className="flex-1" onClick={confirmPurchase}>Jetzt buchen</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {purchaseStep === 'PROCESSING' && (
+                        <div className="py-12 flex flex-col items-center justify-center text-center space-y-6">
+                            <div className="relative">
+                                <div className="w-16 h-16 border-4 border-brand-100 dark:border-brand-900 rounded-full"></div>
+                                <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1 animate-pulse">Lizenzen werden geprüft...</h3>
+                                <p className="text-xs text-slate-500">Anfrage an SaaS Admin gesendet.</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full animate-in fade-in slide-in-from-bottom-2 duration-700 delay-1000">
+                                <Server size={12} /> Auto-Approval Policy Active
+                            </div>
+                        </div>
+                    )}
+
+                    {purchaseStep === 'SUCCESS' && purchasingAddon && (
+                        <div className="text-center space-y-6">
+                            <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto text-emerald-600 animate-in zoom-in duration-300">
+                                <Check size={40} strokeWidth={4} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Modul freigeschaltet!</h3>
+                                <p className="text-sm text-slate-500 mt-2">
+                                    <strong>{purchasingAddon.name}</strong> steht Ihnen ab sofort zur Verfügung.
+                                </p>
+                            </div>
+                            
+                            {purchasingAddon.id === 'addon_website' && (
+                                <div className="bg-brand-50 dark:bg-brand-900/20 p-4 rounded-xl border border-brand-100 dark:border-brand-800 text-sm text-left">
+                                    <p className="font-bold text-brand-800 dark:text-brand-300 mb-1">Nächste Schritte:</p>
+                                    <ul className="list-disc pl-4 space-y-1 text-brand-700 dark:text-brand-400 text-xs">
+                                        <li>Webseite konfigurieren</li>
+                                        <li>Domain verbinden (optional)</li>
+                                        <li>Lead-Formulare aktivieren</li>
+                                    </ul>
+                                </div>
+                            )}
+
+                            <Button className="w-full" onClick={handleSuccessAction}>
+                                {purchasingAddon.id === 'addon_website' ? 'Web-Engine starten' : 'Schliessen'}
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </Layout>
     );
 };

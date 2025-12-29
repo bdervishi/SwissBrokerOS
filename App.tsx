@@ -37,13 +37,14 @@ import { TeamDetail } from './pages/TeamDetail';
 import { EmployeeDetail } from './pages/EmployeeDetail';
 import { LeadFinder } from './pages/LeadFinder';
 import { DataImport } from './pages/DataImport';
+import { WebEngine } from './pages/WebEngine'; // NEW
 import { CallAgent } from './pages/CallAgent';
 import { FeatureInfo } from './pages/FeatureInfo';
 import { Legal } from './pages/Legal';
 import { PublicPage } from './pages/PublicPage';
 import { Career } from './pages/Career';
 import { AffiliateProgram } from './pages/AffiliateProgram';
-import { FAQPage } from './pages/FAQ'; // NEW
+import { FAQPage } from './pages/FAQ'; 
 import { OnboardingWizard } from './pages/OnboardingWizard';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SecurityProvider } from './contexts/SecurityContext';
@@ -76,7 +77,7 @@ const App: React.FC = () => {
                 <Route path="/legal/:type" element={<Legal />} />
                 <Route path="/career" element={<Career />} />
                 <Route path="/affiliate" element={<AffiliateProgram />} />
-                <Route path="/faq" element={<FAQPage />} /> {/* NEW */}
+                <Route path="/faq" element={<FAQPage />} />
                 
                 {/* Public Dynamic Pages (CMS) */}
                 <Route path="/p/:slug" element={<PublicPage />} />
@@ -121,8 +122,9 @@ const App: React.FC = () => {
                 <Route path="/team/:id" element={<TeamDetail />} />
                 <Route path="/team/member/:id" element={<EmployeeDetail />} />
 
-                {/* Broker AI Studio */}
+                {/* Broker Website & AI Studio */}
                 <Route path="/broker/ai-config" element={<BrokerAIConfig />} />
+                <Route path="/web-engine" element={<WebEngine />} /> {/* NEW */}
 
                 {/* SaaS Admin Specific Routes */}
                 <Route path="/plans" element={<SaaSPlans />} />

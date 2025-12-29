@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { MOCK_TENANTS } from '../constants';
@@ -7,6 +8,7 @@ interface BrandingContextType {
   tenant: Tenant | null;
   branding: BrandingConfig;
   updateBranding: (config: Partial<BrandingConfig>) => void;
+  updateTenant: (updates: Partial<Tenant>) => void;
 }
 
 const defaultBranding: BrandingConfig = {
@@ -18,6 +20,7 @@ const BrandingContext = createContext<BrandingContextType>({
   tenant: null,
   branding: defaultBranding,
   updateBranding: () => {},
+  updateTenant: () => {},
 });
 
 export const useBranding = () => useContext(BrandingContext);
@@ -64,16 +67,19 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     if (user?.tenantId) {
-        const foundTenant = MOCK_TENANTS.find(t => t.id === user.tenantId);
-        if (foundTenant) {
-            setTenant(foundTenant);
-            setBranding(foundTenant.branding || defaultBranding);
+        // Only reset if tenant is null (initial load), otherwise keep local state edits
+        if (!tenant) {
+            const foundTenant = MOCK_TENANTS.find(t => t.id === user.tenantId);
+            if (foundTenant) {
+                setTenant(foundTenant);
+                setBranding(foundTenant.branding || defaultBranding);
+            }
         }
     } else {
         setTenant(null);
         setBranding(defaultBranding);
     }
-  }, [user]);
+  }, [user, tenant]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -94,8 +100,12 @@ export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setBranding(prev => ({ ...prev, ...config }));
   };
 
+  const updateTenant = (updates: Partial<Tenant>) => {
+      setTenant(prev => prev ? { ...prev, ...updates } : null);
+  };
+
   return (
-    <BrandingContext.Provider value={{ tenant, branding, updateBranding }}>
+    <BrandingContext.Provider value={{ tenant, branding, updateBranding, updateTenant }}>
       {children}
     </BrandingContext.Provider>
   );

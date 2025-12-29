@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_CLIENTS, MOCK_POLICIES, MOCK_ASSETS, MOCK_ADVICE } from '../constants';
+import { MOCK_CLIENTS, MOCK_POLICIES, MOCK_ASSETS, MOCK_ADVICE, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS } from '../constants';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { 
@@ -11,24 +12,65 @@ import {
   Shield, 
   Landmark, 
   Calculator, 
-  FileText,
-  AlertTriangle,
-  Lightbulb,
-  Download,
-  ChevronRight
+  FileText, 
+  AlertTriangle, 
+  Lightbulb, 
+  Download, 
+  ChevronRight,
+  History,
+  MessageSquare,
+  Plus,
+  Send,
+  User,
+  Clock,
+  ShieldCheck,
+  Calendar,
+  FileBox,
+  TrendingUp
 } from 'lucide-react';
-import { AssetType } from '../types';
+import { AssetType, ActivityType, ActivityLog, ClientNote } from '../types';
 
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL'>('OVERVIEW');
+  
+  // Note State
+  const [noteInput, setNoteInput] = useState('');
+  const [localNotes, setLocalNotes] = useState<ClientNote[]>(MOCK_CLIENT_NOTES.filter(n => n.clientId === id));
   
   const client = MOCK_CLIENTS.find(c => c.id === id);
   const policies = MOCK_POLICIES.filter(p => p.clientId === id);
   const assets = MOCK_ASSETS.filter(a => a.clientId === id);
   const advice = MOCK_ADVICE.filter(a => a.clientId === id);
+  const activities = MOCK_ACTIVITY_LOGS.filter(a => a.clientId === id).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   if (!client) return <Layout><div className="p-8">Klient nicht gefunden</div></Layout>;
+
+  const handleAddNote = () => {
+      if (!noteInput.trim()) return;
+      const newNote: ClientNote = {
+          id: Date.now().toString(),
+          clientId: client.id,
+          authorId: 'u_broker_1',
+          authorName: 'Max Muster',
+          content: noteInput,
+          createdAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      };
+      setLocalNotes([newNote, ...localNotes]);
+      setNoteInput('');
+  };
+
+  const getActivityIcon = (type: ActivityType) => {
+      switch(type) {
+          case 'NOTE': return <MessageSquare size={16} className="text-blue-500" />;
+          case 'POLICY_ADD': return <Shield size={16} className="text-emerald-500" />;
+          case 'MORTGAGE_ADD': return <Landmark size={16} className="text-purple-500" />;
+          case 'MEETING': return <Calendar size={16} className="text-amber-500" />;
+          case 'DOCUMENT_UPLOAD': return <FileBox size={16} className="text-slate-500" />;
+          case 'SYSTEM_LOGIN': return <Clock size={16} className="text-slate-400" />;
+          default: return <History size={16} />;
+      }
+  };
 
   return (
     <Layout>
@@ -52,11 +94,12 @@ export const ClientDetail: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto no-scrollbar">
         <TabButton active={activeTab === 'OVERVIEW'} onClick={() => setActiveTab('OVERVIEW')} icon={<Shield size={16} />} label="Übersicht" />
         <TabButton active={activeTab === 'POLICIES'} onClick={() => setActiveTab('POLICIES')} icon={<FileText size={16} />} label="Versicherungen" />
         <TabButton active={activeTab === 'WEALTH'} onClick={() => setActiveTab('WEALTH')} icon={<Landmark size={16} />} label="Vermögen & Vorsorge" />
         <TabButton active={activeTab === 'TAX'} onClick={() => setActiveTab('TAX')} icon={<Calculator size={16} />} label="Steuern" />
+        <TabButton active={activeTab === 'JOURNAL'} onClick={() => setActiveTab('JOURNAL')} icon={<History size={16} />} label="Journal & Historie" />
       </div>
 
       {/* Content */}
@@ -280,6 +323,99 @@ export const ClientDetail: React.FC = () => {
              </Card>
            </div>
         )}
+
+        {activeTab === 'JOURNAL' && (
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Journal / History Column */}
+              <div className="lg:col-span-2 space-y-6">
+                  <Card title="Journal-Eintrag erfassen">
+                      <div className="space-y-4">
+                          <div className="relative">
+                            <textarea 
+                                className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all min-h-[120px]"
+                                placeholder="Details zum Gespräch oder interne Notiz..."
+                                value={noteInput}
+                                onChange={(e) => setNoteInput(e.target.value)}
+                            />
+                            <div className="absolute bottom-3 right-3">
+                                <Button size="sm" onClick={handleAddNote} disabled={!noteInput.trim()} icon={<Send size={14}/>}>
+                                    Speichern
+                                </Button>
+                            </div>
+                          </div>
+                          <div className="flex gap-4">
+                              <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-600 transition-colors uppercase tracking-widest"><MessageSquare size={14}/> Gespräch</button>
+                              <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-600 transition-colors uppercase tracking-widest"><Clock size={14}/> Rückruf</button>
+                              <button className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-brand-600 transition-colors uppercase tracking-widest"><Plus size={14}/> Aufgabe</button>
+                          </div>
+                      </div>
+                  </Card>
+
+                  <div className="space-y-4">
+                      <h3 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 px-2">
+                        <History size={18} className="text-slate-400" /> Historie & Aktivitäten
+                      </h3>
+                      
+                      <div className="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+                          {/* Combine local notes and activity logs for a unified timeline */}
+                          {[...activities].map((item) => (
+                              <div key={item.id} className="relative group">
+                                  {/* Timeline Node */}
+                                  <div className="absolute -left-8 top-1 w-8 h-8 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 flex items-center justify-center z-10 group-hover:border-brand-500 transition-colors shadow-sm">
+                                      {getActivityIcon(item.type)}
+                                  </div>
+                                  
+                                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                      <div className="flex justify-between items-start mb-1">
+                                          <h4 className="font-bold text-slate-900 dark:text-slate-100">{item.title}</h4>
+                                          <span className="text-[10px] text-slate-400 font-mono">{item.timestamp}</span>
+                                      </div>
+                                      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                          {item.description}
+                                      </p>
+                                      {item.authorName && (
+                                          <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black tracking-widest">
+                                              <User size={10} /> {item.authorName}
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+
+              {/* Sidebar: Notes Summary */}
+              <div className="space-y-6">
+                  <Card title="Wichtige Notizen" className="border-l-4 border-l-brand-500">
+                      <div className="space-y-6">
+                        {localNotes.map(note => (
+                            <div key={note.id} className="group border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{note.createdAt}</span>
+                                    <button className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">"{note.content}"</p>
+                                <p className="text-[10px] text-brand-600 font-bold mt-2">— {note.authorName}</p>
+                            </div>
+                        ))}
+                        {localNotes.length === 0 && <p className="text-sm text-slate-400 italic">Keine manuellen Notizen erfasst.</p>}
+                      </div>
+                  </Card>
+
+                  <div className="bg-slate-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                          <ShieldCheck size={16} className="text-brand-600" /> Compliance Info
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          Alle Journal-Einträge sind revisionssicher gespeichert und gemäss nDSG Anforderungen dokumentiert.
+                      </p>
+                  </div>
+              </div>
+           </div>
+        )}
       </div>
     </Layout>
   );
@@ -304,4 +440,9 @@ const InfoRow = ({ label, value }: { label: string, value: string }) => (
     <span className="text-slate-500 dark:text-slate-400 text-sm">{label}</span>
     <span className="font-medium text-slate-900 dark:text-slate-100 text-sm">{value}</span>
   </div>
+);
+
+// Utility icon
+const X = ({ className, size = 20 }: any) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 );

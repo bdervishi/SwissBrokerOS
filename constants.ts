@@ -1,5 +1,5 @@
 
-import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType, StaticPage, MegaMenuCategory } from './types';
+import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType, StaticPage, MegaMenuCategory, SaaSAddon, ClientNote, ActivityLog } from './types';
 
 export const APP_NAME = "SwissBroker OS";
 
@@ -22,7 +22,7 @@ export const FAQS = [
   },
   {
     category: "Preise & Verträge",
-    question: "Gibt es eine kostenlose Testphase?",
+    question: "Gibt es eine kostenlose testphase?",
     answer: "Ja, Sie können SwissBroker OS 14 Tage lang unverbindlich mit vollem Funktionsumfang testen. Danach wählen Sie das passende Paket (Starter, Pro oder Enterprise)."
   },
   {
@@ -213,18 +213,25 @@ export const MOCK_TAX_RETURNS: TaxReturn[] = [
     { id: 'tax_c1_2022', clientId: 'c1', year: 2022, canton: 'Zürich', status: 'ARCHIVED', deadline: '2023-09-30', documentsCount: 12, taxableIncome: 118000, deductionsTotal: 22000 }
 ];
 
+// --- SAAS ADDONS ---
+export const MOCK_ADDONS: SaaSAddon[] = [
+    { id: 'addon_website', name: 'Web-Engine & SEO', description: 'Eigener Website-Baukasten mit Lead-Generierung und CRM-Anbindung.', price: 29, iconName: 'Layout' },
+    { id: 'addon_ai_plus', name: 'AI Power Pack', description: 'Unlimitierte Token für E-Mail Analyse und Risiko-Checks.', price: 49, iconName: 'BrainCircuit' },
+    { id: 'addon_whitelabel', name: 'Full White Label', description: 'Entfernen Sie alle "Powered by SwissBroker" Hinweise.', price: 99, iconName: 'Palette' },
+];
+
 export const MOCK_SAAS_PACKAGES: SaaSPackage[] = [
-  { id: 'pkg_starter', name: 'Broker Starter', description: 'Perfekt für Einzelmakler, die digital starten wollen.', price: 99, billingCycle: 'MONTHLY', features: ['Bis zu 50 Klienten', 'Basis CRM & Policen', 'Kalender Integration', 'Email Support'], maxUsers: 1, supportLevel: 'EMAIL' },
-  { id: 'pkg_pro', name: 'Professional', description: 'Für wachsende Teams mit Automatisierungsbedarf.', price: 249, billingCycle: 'MONTHLY', features: ['Bis zu 500 Klienten', 'Hypotheken-Rechner', 'Schnittstellen (Bexio, etc.)', 'Automatische Workflows', '3 Benutzer inklusive'], isPopular: true, maxUsers: 5, supportLevel: 'PRIORITY' },
-  { id: 'pkg_enterprise', name: 'Enterprise', description: 'Maßgeschneiderte Lösung für grosse Organisationen.', price: 899, billingCycle: 'MONTHLY', features: ['Unlimitierte Klienten', 'White Labeling', 'API Zugriff', 'Dedizierter Success Manager', 'Unlimitierte Benutzer'], maxUsers: 999, supportLevel: 'DEDICATED' }
+  { id: 'pkg_starter', name: 'Broker Starter', description: 'Perfekt für Einzelmakler, die digital starten wollen.', price: 99, billingCycle: 'MONTHLY', features: ['Bis zu 50 Klienten', 'Basis CRM & Policen', 'Kalender Integration', 'Email Support'], maxUsers: 1, supportLevel: 'EMAIL', includedAddons: [] },
+  { id: 'pkg_pro', name: 'Professional', description: 'Für wachsende Teams mit Automatisierungsbedarf.', price: 249, billingCycle: 'MONTHLY', features: ['Bis zu 500 Klienten', 'Hypotheken-Rechner', 'Schnittstellen (Bexio, etc.)', 'Automatische Workflows', '3 Benutzer inklusive'], isPopular: true, maxUsers: 5, supportLevel: 'PRIORITY', includedAddons: [] },
+  { id: 'pkg_enterprise', name: 'Enterprise', description: 'Maßgeschneiderte Lösung für grosse Organisationen.', price: 899, billingCycle: 'MONTHLY', features: ['Unlimitierte Klienten', 'White Labeling', 'API Zugriff', 'Dedizierter Success Manager', 'Unlimitierte Benutzer'], maxUsers: 999, supportLevel: 'DEDICATED', includedAddons: ['addon_website', 'addon_ai_plus'] }
 ];
 
 export const MOCK_TENANTS: Tenant[] = [
-    { id: 't1', name: 'Muster Broker AG', plan: 'PROFESSIONAL', status: 'ACTIVE', usersCount: 3, mrr: 250, joinedDate: '2023-01-15', branding: { primaryColor: '#0ea5e9', logoText: 'Muster Broker' } },
-    { id: 't2', name: 'Finanz & Partner GmbH', plan: 'ENTERPRISE', status: 'ACTIVE', usersCount: 12, mrr: 850, joinedDate: '2022-11-01', branding: { primaryColor: '#dc2626', logoText: 'F&P Finance' } },
-    { id: 't3', name: 'Solo Broker Hans', plan: 'STARTER', status: 'TRIAL', usersCount: 1, mrr: 0, joinedDate: '2024-05-20', branding: { primaryColor: '#10b981', logoText: 'Hans Consult' } },
-    { id: 't_demo_1', name: 'David Consult (Demo)', plan: 'STARTER', status: 'ACTIVE', usersCount: 1, mrr: 99, joinedDate: '2024-01-01', branding: { primaryColor: '#f59e0b', logoText: 'David Consult' } },
-    { id: 't_demo_2', name: 'Prime Finance AG (Demo)', plan: 'ENTERPRISE', status: 'ACTIVE', usersCount: 25, mrr: 2500, joinedDate: '2023-06-01', branding: { primaryColor: '#7c3aed', logoText: 'Prime Finance' } },
+    { id: 't1', name: 'Muster Broker AG', plan: 'PROFESSIONAL', status: 'ACTIVE', usersCount: 3, mrr: 250, joinedDate: '2023-01-15', branding: { primaryColor: '#0ea5e9', logoText: 'Muster Broker' }, activeAddons: [] },
+    { id: 't2', name: 'Finanz & Partner GmbH', plan: 'ENTERPRISE', status: 'ACTIVE', usersCount: 12, mrr: 850, joinedDate: '2022-11-01', branding: { primaryColor: '#dc2626', logoText: 'F&P Finance' }, activeAddons: ['addon_website'] },
+    { id: 't3', name: 'Solo Broker Hans', plan: 'STARTER', status: 'TRIAL', usersCount: 1, mrr: 0, joinedDate: '2024-05-20', branding: { primaryColor: '#10b981', logoText: 'Hans Consult' }, activeAddons: [] },
+    { id: 't_demo_1', name: 'David Consult (Demo)', plan: 'STARTER', status: 'ACTIVE', usersCount: 1, mrr: 99 + 29, joinedDate: '2024-01-01', branding: { primaryColor: '#f59e0b', logoText: 'David Consult' }, activeAddons: ['addon_website'] },
+    { id: 't_demo_2', name: 'Prime Finance AG (Demo)', plan: 'ENTERPRISE', status: 'ACTIVE', usersCount: 25, mrr: 2500, joinedDate: '2023-06-01', branding: { primaryColor: '#7c3aed', logoText: 'Prime Finance' }, activeAddons: ['addon_website'] },
 ];
 
 export const MOCK_CLIENTS: Client[] = [
@@ -407,19 +414,19 @@ export const MOCK_STATIC_PAGES: StaticPage[] = [
                     </div>
 
                     <div class="bg-slate-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
-                        <div class="relative z-10 max-w-2xl">
-                            <h3 class="text-2xl font-bold mb-4">Unsere Geschichte</h3>
-                            <p class="text-slate-300 leading-relaxed mb-6">
+                        <div className="relative z-10 max-w-2xl">
+                            <h3 className="text-2xl font-bold mb-4">Unsere Geschichte</h3>
+                            <p className="text-slate-300 leading-relaxed mb-6">
                                 Gestartet 2023 in einem Zürcher Co-Working Space, getrieben von der Frustration über veraltete CRM-Systeme. Heute vertrauen uns über 50 Broker-Firmen in der ganzen Schweiz.
                             </p>
-                            <div class="flex gap-8">
+                            <div className="flex gap-8">
                                 <div>
-                                    <span class="block text-3xl font-black text-brand-400">1'200+</span>
-                                    <span class="text-xs uppercase tracking-widest text-slate-400">Nutzer</span>
+                                    <span className="block text-3xl font-black text-brand-400">1'200+</span>
+                                    <span className="text-xs uppercase tracking-widest text-slate-400">Nutzer</span>
                                 </div>
                                 <div>
-                                    <span class="block text-3xl font-black text-brand-400">CHF 42M</span>
-                                    <span class="text-xs uppercase tracking-widest text-slate-400">Verwaltetes Volumen</span>
+                                    <span className="block text-3xl font-black text-brand-400">CHF 42M</span>
+                                    <span className="text-xs uppercase tracking-widest text-slate-400">Verwaltetes Volumen</span>
                                 </div>
                             </div>
                         </div>
@@ -429,7 +436,7 @@ export const MOCK_STATIC_PAGES: StaticPage[] = [
                     </div>
 
                     <div class="text-center">
-                        <h3 class="text-2xl font-bold mb-6 text-slate-900">Bereit für den Wandel?</h3>
+                        <h3 className="text-2xl font-bold mb-6 text-slate-900">Bereit für den Wandel?</h3>
                         <a href="#/career" class="inline-flex items-center justify-center px-8 py-4 bg-brand-600 text-white font-bold rounded-full hover:bg-brand-700 transition-colors shadow-lg">
                             Werde Teil des Teams
                         </a>
@@ -441,4 +448,19 @@ export const MOCK_STATIC_PAGES: StaticPage[] = [
             it: '<h2>La Nostra Missione</h2><p>SwissBroker OS rivoluziona il modo in cui lavorano i broker svizzeri.</p>'
         }
     }
+];
+
+// --- MOCK NOTES & HISTORY ---
+export const MOCK_CLIENT_NOTES: ClientNote[] = [
+    { id: 'n1', clientId: 'c1', authorId: 'u_broker_1', authorName: 'Max Muster', content: 'Kunde plant Hauskauf im Kanton Zug für 2025. Hypothekar-Simulator wurde bereits kurz vorgeführt.', createdAt: '20.05.2024, 14:30' },
+    { id: 'n2', clientId: 'c1', authorId: 'u_broker_1', authorName: 'Max Muster', content: 'Thomas möchte seine Lebensversicherung erhöhen. Offerte von Swiss Life folgt.', createdAt: '15.05.2024, 09:15' },
+    { id: 'n3', clientId: 'c2', authorId: 'u_broker_1', authorName: 'Max Muster', content: 'Rückfrage zu Wasserschaden. Fotos wurden per Email nachgereicht.', createdAt: '22.05.2024, 11:00' },
+];
+
+export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
+    { id: 'al1', clientId: 'c1', type: 'MEETING', title: 'Jahresgespräch durchgeführt', description: 'Besprechung der Portfoliostruktur und Steuerabzüge.', timestamp: '20.05.2024, 14:00', authorName: 'Max Muster' },
+    { id: 'al2', clientId: 'c1', type: 'POLICY_ADD', title: 'Neue Lebensversicherung', description: 'Säule 3b bei Swiss Life hinterlegt.', timestamp: '18.05.2024, 16:45', authorName: 'System' },
+    { id: 'al3', clientId: 'c1', type: 'DOCUMENT_UPLOAD', title: 'Dokument hochgeladen', description: 'Steuerausweis 2023 hinzugefügt.', timestamp: '15.05.2024, 10:20', authorName: 'Thomas Müller' },
+    { id: 'al4', clientId: 'c2', type: 'NOTE', title: 'Gesprächsnotiz', description: 'Kunde ist unzufrieden mit der AXA Bearbeitungszeit.', timestamp: '22.05.2024, 11:05', authorName: 'Max Muster' },
+    { id: 'al5', clientId: 'c1', type: 'SYSTEM_LOGIN', title: 'Kunden-Login', description: 'Klient hat sich über das Webportal angemeldet.', timestamp: '21.05.2024, 20:15', authorName: 'System' },
 ];

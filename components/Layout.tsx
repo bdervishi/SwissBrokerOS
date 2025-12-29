@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,7 +43,8 @@ import {
   Zap,
   Coins,
   Users2,
-  FileText // New icon for CMS
+  FileText,
+  Monitor // New icon
 } from 'lucide-react';
 
 interface NavItem {
@@ -153,7 +155,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     { name: 'AI Call Agent', path: '/saas/call-agent', icon: <PhoneCall size={20} /> },
                     { name: 'Newsletter', path: '/saas/newsletter', icon: <MailCheck size={20} /> },
                     { name: 'Testimonials', path: '/saas/testimonials', icon: <MessageSquareQuote size={20} /> },
-                    { name: 'CMS / Seiten', path: '/saas/cms', icon: <FileText size={20} /> }, // NEW
+                    { name: 'CMS / Seiten', path: '/saas/cms', icon: <FileText size={20} /> }, 
                 ]
             });
         }
@@ -229,6 +231,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             title: "Organization",
             items: [
                 { name: 'Team & HR', path: '/team', icon: <Briefcase size={20} /> },
+                { name: 'Webseite & SEO', path: '/web-engine', icon: <Monitor size={20} /> }, // NEW
                 { name: 'AI Studio', path: '/broker/ai-config', icon: <BrainCircuit size={20} /> },
                 { name: 'Daten Import', path: '/import', icon: <Database size={20} /> },
             ]
