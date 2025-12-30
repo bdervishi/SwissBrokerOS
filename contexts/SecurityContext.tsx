@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface SecurityContextType {
@@ -16,7 +17,8 @@ const SecurityContext = createContext<SecurityContextType>({
 
 export const useSecurity = () => useContext(SecurityContext);
 
-export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Fix: children made optional
+export const SecurityProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   
   // Initialize from localStorage or default to false (Opt-In)

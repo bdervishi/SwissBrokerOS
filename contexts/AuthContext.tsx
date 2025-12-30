@@ -30,7 +30,8 @@ const AuthContext = createContext<AuthContextType>(null!);
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Fix: children made optional
+export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [originalUser, setOriginalUser] = useState<User | null>(null);
   const [loginStep, setLoginStep] = useState<'IDENTIFY' | 'AWAIT_OTL' | 'PASSWORD'>('IDENTIFY');

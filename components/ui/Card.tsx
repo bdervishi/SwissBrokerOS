@@ -1,7 +1,9 @@
+
 import React from 'react';
 
 interface CardProps {
-  children: React.ReactNode;
+  // Fix: children made optional
+  children?: React.ReactNode;
   className?: string;
   title?: string;
   description?: string;

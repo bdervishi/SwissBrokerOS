@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
@@ -46,7 +47,7 @@ export const Clients: React.FC = () => {
                      <tr key={tenant.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                          <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                              <div className="flex items-center gap-3">
-                                 <div className="w-8 h-8 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">
+                                 <div className="w-8 h-8 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold" style={{ backgroundColor: tenant.branding.primaryColor + '20', color: tenant.branding.primaryColor }}>
                                      {tenant.name.substring(0,2).toUpperCase()}
                                  </div>
                                  {tenant.name}
@@ -64,7 +65,9 @@ export const Clients: React.FC = () => {
                             </span>
                          </td>
                          <td className="px-6 py-4 text-right">
-                             <Button size="sm" variant="ghost">Verwalten</Button>
+                             <Link to={`/tenant/${tenant.id}`}>
+                                <Button size="sm" variant="ghost">Verwalten</Button>
+                             </Link>
                          </td>
                      </tr>
                  ))}

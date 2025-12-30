@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
@@ -5,7 +6,8 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: React.ReactNode;
+  // Fix: children made optional
+  children?: React.ReactNode;
   maxWidth?: string;
 }
 

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Use string to allow dynamic languages, but keep strict typing for defaults where helpful
@@ -163,7 +164,8 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export const useLanguage = () => useContext(LanguageContext);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Fix: children made optional
+export const LanguageProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   // Initialize available languages from localStorage or defaults
   const [availableLanguages, setAvailableLanguages] = useState<LanguageDefinition[]>(() => {
     const saved = localStorage.getItem('app_languages_defs');

@@ -6,7 +6,8 @@ interface AccordionProps {
   type?: 'single' | 'multiple';
   collapsible?: boolean;
   className?: string;
-  children: React.ReactNode;
+  // Fix: children made optional
+  children?: React.ReactNode;
 }
 
 export const Accordion: React.FC<AccordionProps> = ({ children, className = '' }) => {
@@ -15,7 +16,8 @@ export const Accordion: React.FC<AccordionProps> = ({ children, className = '' }
 
 interface AccordionItemProps {
   value: string;
-  children: React.ReactNode;
+  // Fix: children made optional
+  children?: React.ReactNode;
   className?: string;
 }
 
@@ -38,7 +40,7 @@ export const AccordionItem: React.FC<AccordionItemProps> = ({ value, children, c
   );
 };
 
-export const AccordionTrigger: React.FC<{ children: React.ReactNode, isOpen?: boolean, setIsOpen?: (v: boolean) => void }> = ({ children, isOpen, setIsOpen }) => {
+export const AccordionTrigger: React.FC<{ children?: React.ReactNode, isOpen?: boolean, setIsOpen?: (v: boolean) => void }> = ({ children, isOpen, setIsOpen }) => {
   return (
     <button
       onClick={() => setIsOpen?.(!isOpen)}
@@ -50,7 +52,7 @@ export const AccordionTrigger: React.FC<{ children: React.ReactNode, isOpen?: bo
   );
 };
 
-export const AccordionContent: React.FC<{ children: React.ReactNode, isOpen?: boolean }> = ({ children, isOpen }) => {
+export const AccordionContent: React.FC<{ children?: React.ReactNode, isOpen?: boolean }> = ({ children, isOpen }) => {
   if (!isOpen) return null;
   return (
     <div className="pb-4 text-sm text-slate-600 dark:text-slate-400 animate-in fade-in slide-in-from-top-1 duration-200">

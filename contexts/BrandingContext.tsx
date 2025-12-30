@@ -60,7 +60,8 @@ const hslToRGBString = (h: number, s: number, l: number) => {
     return `${Math.round((r + m) * 255)} ${Math.round((g + m) * 255)} ${Math.round((b + m) * 255)}`;
 };
 
-export const BrandingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Fix: children made optional
+export const BrandingProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [branding, setBranding] = useState<BrandingConfig>(defaultBranding);

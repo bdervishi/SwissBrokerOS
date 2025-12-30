@@ -60,7 +60,8 @@ interface NavSection {
 }
 
 interface LayoutProps {
-  children: React.ReactNode;
+  // Fix: children made optional
+  children?: React.ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
