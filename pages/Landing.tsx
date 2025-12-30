@@ -28,7 +28,11 @@ import {
   Briefcase,
   DollarSign,
   Menu,
-  X
+  X,
+  ShieldAlert,
+  UserCheck,
+  // Fixed: added missing Building2 icon import
+  Building2
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { BackToTop } from '../components/ui/BackToTop';
@@ -110,7 +114,7 @@ export const Landing: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-x-hidden transition-colors duration-500">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:white overflow-x-hidden transition-colors duration-500">
       <BackToTop />
       
       {/* Navbar */}
@@ -150,7 +154,7 @@ export const Landing: React.FC = () => {
             >
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <Link to="/dashboard" className="hidden sm:block text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-white transition-colors text-sm font-medium mr-2">Login</Link>
+            <Link to="/login/broker" className="hidden sm:block text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-white transition-colors text-sm font-medium mr-2">Login</Link>
             <Link to="/register">
               <Button variant="primary" className="shadow-lg shadow-brand-500/20">Jetzt starten</Button>
             </Link>
@@ -226,7 +230,7 @@ export const Landing: React.FC = () => {
                         </div>
                     ))}
                     <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4">
-                         <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} className="text-center font-bold text-slate-600 dark:text-slate-400">Login</Link>
+                         <Link to="/login/broker" onClick={() => setMobileMenuOpen(false)} className="text-center font-bold text-slate-600 dark:text-slate-400">Login</Link>
                          <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
                             <Button className="w-full">Jetzt starten</Button>
                          </Link>
@@ -271,7 +275,7 @@ export const Landing: React.FC = () => {
                 <Link to="/register">
                     <Button size="lg" className="w-full sm:w-auto px-12 py-4 text-lg shadow-2xl shadow-brand-600/10" icon={<ArrowRight size={20}/>}>Gratis Registrieren</Button>
                 </Link>
-                <Link to="/dashboard">
+                <Link to="/login/broker">
                     <Button variant="outline" size="lg" className="w-full sm:w-auto border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 px-12">
                         Demo ansehen
                     </Button>
@@ -366,12 +370,12 @@ export const Landing: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-6">Unternehmen</h4>
+              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-6">Portal Logins</h4>
               <ul className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium">
-                <li>{getStaticLink('ueber-uns')}</li>
-                <li><Link to="/career" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Karriere</Link></li>
-                <li><Link to="/affiliate" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Partner Programm</Link></li>
-                <li><Link to="/faq" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Häufige Fragen (FAQ)</Link></li>
+                <li><Link to="/login/broker" className="flex items-center gap-2 hover:text-brand-600 transition-colors"><Building2 size={14}/> Makler Login</Link></li>
+                <li><Link to="/login/client" className="flex items-center gap-2 hover:text-emerald-600 transition-colors"><UserCheck size={14}/> Kunden Portal</Link></li>
+                <li><Link to="/login/saas" className="flex items-center gap-2 hover:text-purple-600 transition-colors"><ShieldAlert size={14}/> SaaS Admin</Link></li>
+                <li><Link to="/faq" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Hilfe & FAQ</Link></li>
               </ul>
             </div>
 
@@ -385,10 +389,6 @@ export const Landing: React.FC = () => {
                 <li className="flex items-center gap-2">
                     <Server size={16} className="text-emerald-600 dark:text-emerald-500" />
                     <span>ISO 27001 Datacenter</span>
-                </li>
-                <li className="flex items-center gap-2">
-                    <MapPin size={16} className="text-emerald-600 dark:text-emerald-500" />
-                    <span>Hosting in Zürich</span>
                 </li>
                 <li className="flex items-center gap-2 text-xs pt-2">
                     <div className="w-3 h-3 bg-red-600 rounded-sm"></div>

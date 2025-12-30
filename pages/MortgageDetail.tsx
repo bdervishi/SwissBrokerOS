@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
@@ -12,14 +13,26 @@ import {
   Percent,
   FileText,
   PieChart as PieIcon,
-  Download
+  Download,
+  Send,
+  CheckCircle,
+  Building,
+  Loader2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { SensitiveData } from '../components/ui/SensitiveData';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types';
 
 export const MortgageDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'AMORTIZATION' | 'DOCUMENTS'>('OVERVIEW');
+  
+  // Transaction State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<'IDLE' | 'SUCCESS'>('IDLE');
 
   const mortgage = MOCK_MORTGAGES.find(m => m.id === id);
   
@@ -45,6 +58,14 @@ export const MortgageDetail: React.FC = () => {
   
   const ltvRatio = (mortgage.loanAmount / mortgage.propertyValue) * 100;
 
+  const handleSubmitApplication = () => {
+      setIsSubmitting(true);
+      setTimeout(() => {
+          setIsSubmitting(false);
+          setSubmissionStatus('SUCCESS');
+      }, 2000);
+  };
+
   return (
     <Layout>
       {/* Header */}
@@ -64,6 +85,11 @@ export const MortgageDetail: React.FC = () => {
                  <span>CHF {mortgage.propertyValue.toLocaleString()} Marktwert</span>
                  <span>•</span>
                  <span>{mortgage.type === 'FIXED' ? 'Festhypothek' : 'SARON / Flex'}</span>
+                 {mortgage.applicationStatus === 'APPROVED' && (
+                     <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded text-xs font-bold">
+                         <CheckCircle size={10} /> Genehmigt
+                     </span>
+                 )}
                </div>
              </div>
           </div>
@@ -87,6 +113,50 @@ export const MortgageDetail: React.FC = () => {
             
             {activeTab === 'OVERVIEW' && (
                 <>
+                {/* Transaction Box (Embedded Finance) - Visible to Brokers */}
+                {role !== UserRole.CLIENT && mortgage.applicationStatus === 'DRAFT' && (
+                    <div className="bg-white dark:bg-slate-900 border-2 border-indigo-500/20 rounded-xl p-6 shadow-lg shadow-indigo-500/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                            <Building size={120} />
+                        </div>
+                        <div className="relative z-10">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
+                                <Send size={18} className="text-indigo-600" /> 
+                                Finanzierung einreichen
+                            </h3>
+                            <p className="text-sm text-slate-500 mb-6 max-w-lg">
+                                Reichen Sie dieses Dossier direkt via API bei unseren Partnerbanken ein. Sie erhalten innerhalb von 24h eine Kreditentscheidung.
+                            </p>
+                            
+                            {submissionStatus === 'IDLE' ? (
+                                <div className="flex items-center gap-4">
+                                    <Button 
+                                        className="bg-indigo-600 hover:bg-indigo-700 border-none shadow-lg shadow-indigo-500/20" 
+                                        onClick={handleSubmitApplication}
+                                        disabled={isSubmitting}
+                                        icon={isSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Send size={18}/>}
+                                    >
+                                        {isSubmitting ? 'Übermittle Daten...' : 'Antrag an Bank-Pool senden'}
+                                    </Button>
+                                    <div className="text-xs text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                                        Potenzielle Provision: <SensitiveData>CHF {(mortgage.loanAmount * 0.0035).toFixed(0)}</SensitiveData>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl flex items-center gap-3 animate-in zoom-in">
+                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-800 rounded-full text-emerald-600 dark:text-emerald-300">
+                                        <CheckCircle size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-emerald-800 dark:text-emerald-300">Erfolgreich übermittelt!</h4>
+                                        <p className="text-xs text-emerald-700 dark:text-emerald-400">Transaction ID: TX-{Date.now().toString().slice(-6)}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card title="Finanzierungsstruktur">
                         <div className="h-[200px] w-full">

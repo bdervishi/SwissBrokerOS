@@ -139,6 +139,7 @@ export interface TimeEntry {
 
 export interface User {
   id: string;
+  username: string; // NEW
   email: string;
   firstName: string;
   lastName: string;
@@ -267,6 +268,9 @@ export interface MortgageScenario {
   startDate?: string;
   endDate?: string;
   amortizationMethod?: 'DIRECT' | 'INDIRECT' | 'NONE';
+  // Transaction State
+  applicationStatus?: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  bankTransactionId?: string;
 }
 
 export interface Asset {
@@ -538,4 +542,30 @@ export interface ActivityLog {
     description: string;
     timestamp: string;
     authorName?: string;
+}
+
+// --- NEW: Lead Exchange Marketplace ---
+export interface LeadOffer {
+    id: string;
+    type: 'MORTGAGE' | 'INSURANCE' | 'INVESTMENT';
+    title: string;
+    description: string;
+    volume: number; // Estimated value of deal
+    price: number; // Cost to buy this lead
+    canton: string;
+    datePosted: string;
+    status: 'AVAILABLE' | 'SOLD';
+    sellerTenantId: string;
+    sellerName: string; // e.g. "Broker AG"
+    
+    // TRUST & QUALITY FIELDS
+    sellerRating: number; // 1.0 - 5.0
+    sellerDealCount: number; // How many deals sold
+    qualityScore: number; // 0 - 100
+    verificationStatus: {
+        phoneVerified: boolean;
+        emailVerified: boolean;
+        intentVerified: boolean; // "Kunde erwartet Anruf"
+    };
+    guaranteeIncluded: boolean; // Money-back guarantee
 }

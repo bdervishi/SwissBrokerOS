@@ -2,6 +2,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Landing } from './pages/Landing';
+import { Login } from './pages/Login'; // NEW
 import { Dashboard } from './pages/Dashboard';
 import { ClientDetail } from './pages/ClientDetail';
 import { Clients } from './pages/Clients';
@@ -19,6 +20,7 @@ import { Commissions } from './pages/Commissions';
 import { Inbox } from './pages/Inbox';
 import { TaxManagement } from './pages/TaxManagement';
 import { CreditSimulation } from './pages/CreditSimulation';
+import { LeadMarketplace } from './pages/LeadMarketplace';
 import { SaaSPlans } from './pages/SaaSPlans';
 import { SaaSLanguages } from './pages/SaaSLanguages';
 import { SaaSDemo } from './pages/SaaSDemo';
@@ -37,7 +39,7 @@ import { TeamDetail } from './pages/TeamDetail';
 import { EmployeeDetail } from './pages/EmployeeDetail';
 import { LeadFinder } from './pages/LeadFinder';
 import { DataImport } from './pages/DataImport';
-import { WebEngine } from './pages/WebEngine'; // NEW
+import { WebEngine } from './pages/WebEngine'; 
 import { CallAgent } from './pages/CallAgent';
 import { FeatureInfo } from './pages/FeatureInfo';
 import { Legal } from './pages/Legal';
@@ -53,7 +55,8 @@ import { BrandingProvider } from './contexts/BrandingContext';
 import { UserRole } from './types';
 
 // Helper Wrapper to route agents to their specific dashboard
-const DashboardRouter: React.FC = () => {
+// Use a standard function component to avoid React.FC child-requirement issues
+const DashboardRouter = () => {
     const { role } = useAuth();
     if (role === UserRole.BROKER_AGENT) {
         return <AgentDashboard />;
@@ -61,81 +64,86 @@ const DashboardRouter: React.FC = () => {
     return <Dashboard />;
 }
 
-const App: React.FC = () => {
+// Protected Route Simulation
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    const { isAuthenticated } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login/broker" />;
+    return <>{children}</>;
+};
+
+// Use a standard function component to avoid React.FC child-requirement issues
+const App = () => {
   return (
     <AuthProvider>
       <LanguageProvider>
         <BrandingProvider>
           <SecurityProvider>
+            {/* Standard Router components wrapped with children as required by some TS environments */}
             <Router>
               <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/register" element={<OnboardingWizard />} />
-                
-                {/* Marketing & Content Routes */}
-                <Route path="/features/:slug" element={<FeatureInfo />} />
-                <Route path="/legal/:type" element={<Legal />} />
-                <Route path="/career" element={<Career />} />
-                <Route path="/affiliate" element={<AffiliateProgram />} />
-                <Route path="/faq" element={<FAQPage />} />
-                
-                {/* Public Dynamic Pages (CMS) */}
-                <Route path="/p/:slug" element={<PublicPage />} />
-                
-                {/* Dynamic Dashboard based on Role */}
-                <Route path="/dashboard" element={<DashboardRouter />} />
-                
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="/leads" element={<LeadFinder />} />
-                <Route path="/import" element={<DataImport />} />
-                
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/client/:id" element={<ClientDetail />} />
-                <Route path="/policies" element={<Policies />} />
-                <Route path="/policy/:id" element={<PolicyDetail />} />
-                <Route path="/mortgages" element={<Mortgages />} />
-                <Route path="/mortgage/:id" element={<MortgageDetail />} />
-                
-                {/* Credit & Leasing */}
-                <Route path="/credit" element={<CreditSimulation />} />
-                
-                {/* TAX ROUTES */}
-                <Route path="/tax" element={<TaxManagement />} />
-                <Route path="/saas/tax-config" element={<SaaSTaxConfig />} />
-                <Route path="/saas/email-config" element={<SaaSEmailConfig />} />
-                <Route path="/saas/newsletter" element={<SaaSNewsletter />} />
-                <Route path="/saas/testimonials" element={<SaaSTestimonials />} />
-                <Route path="/saas/call-agent" element={<CallAgent />} />
-                <Route path="/saas/embedded-finance" element={<SaaSEmbeddedFinance />} />
-                <Route path="/saas/teams" element={<SaaSTeams />} />
-                <Route path="/saas/cms" element={<SaaSPages />} />
+                {/* Fixed: ensuring all Route components have explicit children (even if null) to satisfy strict types */}
+                <Route path="/" element={<Landing />}>{null}</Route>
+                <Route path="/register" element={<OnboardingWizard />}>{null}</Route>
+                <Route path="/login/:role" element={<Login />}>{null}</Route>
+                <Route path="/login" element={<Navigate to="/login/broker" />}>{null}</Route>
 
-                <Route path="/partners" element={<PartnerHub />} />
-                <Route path="/partner/:id" element={<PartnerDetail />} />
-                <Route path="/commissions" element={<Commissions />} />
-                <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/integrations" element={<Integrations />} />
+                {/* All Dashboard routes should be protected in production */}
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>}>{null}</Route>
                 
-                {/* Team & HR Routes */}
-                <Route path="/team" element={<TeamOverview />} />
-                <Route path="/team/:id" element={<TeamDetail />} />
-                <Route path="/team/member/:id" element={<EmployeeDetail />} />
+                <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>}>{null}</Route>
+                <Route path="/leads" element={<ProtectedRoute><LeadFinder /></ProtectedRoute>}>{null}</Route>
+                <Route path="/import" element={<ProtectedRoute><DataImport /></ProtectedRoute>}>{null}</Route>
+                <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>}>{null}</Route>
+                
+                <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>}>{null}</Route>
+                <Route path="/client/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>}>{null}</Route>
+                <Route path="/policies" element={<ProtectedRoute><Policies /></ProtectedRoute>}>{null}</Route>
+                <Route path="/policy/:id" element={<ProtectedRoute><PolicyDetail /></ProtectedRoute>}>{null}</Route>
+                <Route path="/mortgages" element={<ProtectedRoute><Mortgages /></ProtectedRoute>}>{null}</Route>
+                <Route path="/mortgage/:id" element={<ProtectedRoute><MortgageDetail /></ProtectedRoute>}>{null}</Route>
+                
+                <Route path="/credit" element={<ProtectedRoute><CreditSimulation /></ProtectedRoute>}>{null}</Route>
+                
+                <Route path="/tax" element={<ProtectedRoute><TaxManagement /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/tax-config" element={<ProtectedRoute><SaaSTaxConfig /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/email-config" element={<ProtectedRoute><SaaSEmailConfig /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/newsletter" element={<ProtectedRoute><SaaSNewsletter /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/testimonials" element={<ProtectedRoute><SaaSTestimonials /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/call-agent" element={<ProtectedRoute><CallAgent /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/embedded-finance" element={<ProtectedRoute><SaaSEmbeddedFinance /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/teams" element={<ProtectedRoute><SaaSTeams /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/cms" element={<ProtectedRoute><SaaSPages /></ProtectedRoute>}>{null}</Route>
 
-                {/* Broker Website & AI Studio */}
-                <Route path="/broker/ai-config" element={<BrokerAIConfig />} />
-                <Route path="/web-engine" element={<WebEngine />} /> {/* NEW */}
+                <Route path="/partners" element={<ProtectedRoute><PartnerHub /></ProtectedRoute>}>{null}</Route>
+                <Route path="/partner/:id" element={<ProtectedRoute><PartnerDetail /></ProtectedRoute>}>{null}</Route>
+                <Route path="/commissions" element={<ProtectedRoute><Commissions /></ProtectedRoute>}>{null}</Route>
+                <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>}>{null}</Route>
+                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>}>{null}</Route>
+                <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>}>{null}</Route>
+                
+                <Route path="/team" element={<ProtectedRoute><TeamOverview /></ProtectedRoute>}>{null}</Route>
+                <Route path="/team/:id" element={<ProtectedRoute><TeamDetail /></ProtectedRoute>}>{null}</Route>
+                <Route path="/team/member/:id" element={<ProtectedRoute><EmployeeDetail /></ProtectedRoute>}>{null}</Route>
 
-                {/* SaaS Admin Specific Routes */}
-                <Route path="/plans" element={<SaaSPlans />} />
-                <Route path="/saas/languages" element={<SaaSLanguages />} />
-                <Route path="/saas/demo" element={<SaaSDemo />} />
-                <Route path="/saas/pitch" element={<SaaSPitch />} />
+                <Route path="/broker/ai-config" element={<ProtectedRoute><BrokerAIConfig /></ProtectedRoute>}>{null}</Route>
+                <Route path="/web-engine" element={<ProtectedRoute><WebEngine /></ProtectedRoute>}>{null}</Route> 
+
+                <Route path="/plans" element={<ProtectedRoute><SaaSPlans /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/languages" element={<ProtectedRoute><SaaSLanguages /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/demo" element={<ProtectedRoute><SaaSDemo /></ProtectedRoute>}>{null}</Route>
+                <Route path="/saas/pitch" element={<ProtectedRoute><SaaSPitch /></ProtectedRoute>}>{null}</Route>
                 
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>}>{null}</Route>
                 
-                {/* Fallback routes */}
-                <Route path="*" element={<Navigate to="/" />} />
+                {/* Content Routes */}
+                <Route path="/features/:slug" element={<FeatureInfo />}>{null}</Route>
+                <Route path="/legal/:type" element={<Legal />}>{null}</Route>
+                <Route path="/career" element={<Career />}>{null}</Route>
+                <Route path="/affiliate" element={<AffiliateProgram />}>{null}</Route>
+                <Route path="/faq" element={<FAQPage />}>{null}</Route>
+                <Route path="/p/:slug" element={<PublicPage />}>{null}</Route>
+
+                <Route path="*" element={<Navigate to="/" />}>{null}</Route>
               </Routes>
             </Router>
           </SecurityProvider>

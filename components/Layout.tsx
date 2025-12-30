@@ -44,7 +44,8 @@ import {
   Coins,
   Users2,
   FileText,
-  Monitor // New icon
+  Monitor,
+  ShoppingBag // New Icon for Marketplace
 } from 'lucide-react';
 
 interface NavItem {
@@ -214,6 +215,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             title: "Growth & Network",
             items: [
                 { name: 'Lead Radar', path: '/leads', icon: <Target size={20} /> },
+                { name: 'Lead Exchange', path: '/marketplace', icon: <ShoppingBag size={20} className="text-purple-500" /> }, // NEW Marketplace
                 { name: 'Partner Hub', path: '/partners', icon: <Handshake size={20} /> },
             ]
         },
@@ -231,7 +233,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             title: "Organization",
             items: [
                 { name: 'Team & HR', path: '/team', icon: <Briefcase size={20} /> },
-                { name: 'Webseite & SEO', path: '/web-engine', icon: <Monitor size={20} /> }, // NEW
+                { name: 'Webseite & SEO', path: '/web-engine', icon: <Monitor size={20} /> }, 
                 { name: 'AI Studio', path: '/broker/ai-config', icon: <BrainCircuit size={20} /> },
                 { name: 'Daten Import', path: '/import', icon: <Database size={20} /> },
             ]

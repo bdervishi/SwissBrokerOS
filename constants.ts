@@ -1,5 +1,6 @@
 
-import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType, StaticPage, MegaMenuCategory, SaaSAddon, ClientNote, ActivityLog } from './types';
+// ... existing imports
+import { AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, IntegrationStatus, PolicyDocument, Claim, Partner, PartnerCategory, PartnerStatus, CalendarEvent, EventType, RelatedEntityType, Commission, CommissionType, CommissionStatus, User, Tenant, SaaSPackage, Email, Team, TimeEntry, TaxSummary, TaxReturn, Testimonial, BankOffer, CreditType, StaticPage, MegaMenuCategory, SaaSAddon, ClientNote, ActivityLog, LeadOffer } from './types';
 
 export const APP_NAME = "SwissBroker OS";
 
@@ -117,14 +118,15 @@ export const MOCK_TEAMS: Team[] = [
 
 export const MOCK_USERS: User[] = [
     // SaaS Roles
-    { id: 'u_saas_1', firstName: 'Admin', lastName: 'Global', email: 'admin@swissbroker-os.ch', role: UserRole.SAAS_SUPER_ADMIN, avatarUrl: 'https://i.pravatar.cc/150?u=saas' },
-    { id: 'u_saas_2', firstName: 'Sarah', lastName: 'Sales', email: 'sales@swissbroker-os.ch', role: UserRole.SAAS_SALES },
-    { id: 'u_saas_3', firstName: 'Frank', lastName: 'Finance', email: 'finance@swissbroker-os.ch', role: UserRole.SAAS_FINANCE },
-    { id: 'u_saas_4', firstName: 'Alex', lastName: 'Acquisition', email: 'hunter@swissbroker-os.ch', role: UserRole.SAAS_ACQUISITION, avatarUrl: 'https://i.pravatar.cc/150?u=hunter' },
+    { id: 'u_saas_1', username: 'admin_global', firstName: 'Admin', lastName: 'Global', email: 'admin@swissbroker-os.ch', role: UserRole.SAAS_SUPER_ADMIN, avatarUrl: 'https://i.pravatar.cc/150?u=saas' },
+    { id: 'u_saas_2', username: 'sarah_sales', firstName: 'Sarah', lastName: 'Sales', email: 'sales@swissbroker-os.ch', role: UserRole.SAAS_SALES },
+    { id: 'u_saas_3', username: 'frank_finance', firstName: 'Frank', lastName: 'Finance', email: 'finance@swissbroker-os.ch', role: UserRole.SAAS_FINANCE },
+    { id: 'u_saas_4', username: 'alex_acq', firstName: 'Alex', lastName: 'Acquisition', email: 'hunter@swissbroker-os.ch', role: UserRole.SAAS_ACQUISITION, avatarUrl: 'https://i.pravatar.cc/150?u=hunter' },
     
     // Broker Roles
     { 
         id: 'u_broker_1', 
+        username: 'max_broker',
         firstName: 'Max', 
         lastName: 'Muster', 
         email: 'max@muster-broker.ch', 
@@ -147,6 +149,7 @@ export const MOCK_USERS: User[] = [
     },
     { 
         id: 'u_broker_2', 
+        username: 'lisa_admin',
         firstName: 'Lisa', 
         lastName: 'Admin', 
         email: 'office@muster-broker.ch', 
@@ -166,9 +169,10 @@ export const MOCK_USERS: User[] = [
         baseSalary: 6800,
         bonusAgreement: 'CHF 50 pro neuem KVG-Abschluss'
     },
-    { id: 'u_broker_3', firstName: 'Tom', lastName: 'Marketing', email: 'marketing@muster-broker.ch', role: UserRole.BROKER_MARKETING, organizationName: 'Muster Broker AG', tenantId: 't1', teamId: 'team_backoffice', position: 'Marketing Manager' },
+    { id: 'u_broker_3', username: 'tom_marketing', firstName: 'Tom', lastName: 'Marketing', email: 'marketing@muster-broker.ch', role: UserRole.BROKER_MARKETING, organizationName: 'Muster Broker AG', tenantId: 't1', teamId: 'team_backoffice', position: 'Marketing Manager' },
     { 
         id: 'u_agent_1', 
+        username: 'felix_agent',
         firstName: 'Felix', 
         lastName: 'Fieldagent', 
         email: 'felix@muster-broker.ch', 
@@ -189,9 +193,9 @@ export const MOCK_USERS: User[] = [
         baseSalary: 4500,
         bonusAgreement: 'Provision: 60% Split (70% ab Gold Status)'
     },
-    { id: 'u_demo_solo', firstName: 'David', lastName: 'Demo (Solo)', email: 'david@solo-demo.ch', role: UserRole.BROKER_ADMIN, organizationName: 'David Consult', tenantId: 't_demo_1', avatarUrl: 'https://i.pravatar.cc/150?u=david' },
-    { id: 'u_demo_corp', firstName: 'Julia', lastName: 'Demo (CEO)', email: 'julia@prime-finance.ch', role: UserRole.BROKER_ADMIN, organizationName: 'Prime Finance AG', tenantId: 't_demo_2', avatarUrl: 'https://i.pravatar.cc/150?u=julia' },
-    { id: 'c1', firstName: 'Thomas', lastName: 'Müller', email: 'thomas.mueller@example.ch', role: UserRole.CLIENT, tenantId: 't1', avatarUrl: 'https://picsum.photos/id/1005/200/200' },
+    { id: 'u_demo_solo', username: 'david_demo', firstName: 'David', lastName: 'Demo (Solo)', email: 'david@solo-demo.ch', role: UserRole.BROKER_ADMIN, organizationName: 'David Consult', tenantId: 't_demo_1', avatarUrl: 'https://i.pravatar.cc/150?u=david' },
+    { id: 'u_demo_corp', username: 'julia_demo', firstName: 'Julia', lastName: 'Demo (CEO)', email: 'julia@prime-finance.ch', role: UserRole.BROKER_ADMIN, organizationName: 'Prime Finance AG', tenantId: 't_demo_2', avatarUrl: 'https://i.pravatar.cc/150?u=julia' },
+    { id: 'c1', username: 'thomas_client', firstName: 'Thomas', lastName: 'Müller', email: 'thomas.mueller@example.ch', role: UserRole.CLIENT, tenantId: 't1', avatarUrl: 'https://picsum.photos/id/1005/200/200' },
 ];
 
 export const MOCK_TIME_ENTRIES: TimeEntry[] = [
@@ -235,9 +239,9 @@ export const MOCK_TENANTS: Tenant[] = [
 ];
 
 export const MOCK_CLIENTS: Client[] = [
-  { id: 'c1', firstName: 'Thomas', lastName: 'Müller', email: 'thomas.mueller@example.ch', role: UserRole.CLIENT, address: 'Bahnhofstrasse 12', zipCity: '8001 Zürich', birthDate: '1980-05-15', advisorId: 'u_broker_1', taxDomicile: 'Zürich', avatarUrl: 'https://picsum.photos/id/1005/200/200' },
-  { id: 'c2', firstName: 'Sarah', lastName: 'Keller', email: 'sarah.keller@example.ch', role: UserRole.CLIENT, address: 'Seestrasse 45', zipCity: '6000 Luzern', birthDate: '1992-11-20', advisorId: 'u_broker_1', taxDomicile: 'Luzern', avatarUrl: 'https://picsum.photos/id/1011/200/200' },
-  { id: 'c3', firstName: 'Peter', lastName: 'Agenturkunden', email: 'peter.ag@example.ch', role: UserRole.CLIENT, address: 'Bergweg 3', zipCity: '3000 Bern', birthDate: '1988-01-01', advisorId: 'u_agent_1', taxDomicile: 'Bern', avatarUrl: 'https://picsum.photos/id/1025/200/200' }
+  { id: 'c1', username: 'thomas_client', firstName: 'Thomas', lastName: 'Müller', email: 'thomas.mueller@example.ch', role: UserRole.CLIENT, address: 'Bahnhofstrasse 12', zipCity: '8001 Zürich', birthDate: '1980-05-15', advisorId: 'u_broker_1', taxDomicile: 'Zürich', avatarUrl: 'https://picsum.photos/id/1005/200/200' },
+  { id: 'c2', username: 'sarah_client', firstName: 'Sarah', lastName: 'Keller', email: 'sarah.keller@example.ch', role: UserRole.CLIENT, address: 'Seestrasse 45', zipCity: '6000 Luzern', birthDate: '1992-11-20', advisorId: 'u_broker_1', taxDomicile: 'Luzern', avatarUrl: 'https://picsum.photos/id/1011/200/200' },
+  { id: 'c3', username: 'peter_client', firstName: 'Peter', lastName: 'Agenturkunden', email: 'peter.ag@example.ch', role: UserRole.CLIENT, address: 'Bergweg 3', zipCity: '3000 Bern', birthDate: '1988-01-01', advisorId: 'u_agent_1', taxDomicile: 'Bern', avatarUrl: 'https://picsum.photos/id/1025/200/200' }
 ];
 
 export const MOCK_POLICIES: Policy[] = [
@@ -268,8 +272,8 @@ export const MOCK_ASSETS: Asset[] = [
 ];
 
 export const MOCK_MORTGAGES: MortgageScenario[] = [
-  { id: 'm1', clientId: 'c1', propertyName: 'Eigentumswohnung Zürich', propertyValue: 1250000, loanAmount: 800000, ownCapital: 450000, interestRate: 1.45, durationYears: 10, type: MortgageType.FIXED, monthlyCost: 966, startDate: '2020-07-01', endDate: '2030-07-01', amortizationMethod: 'INDIRECT' },
-  { id: 'm2', clientId: 'c2', propertyName: 'Einfamilienhaus Luzern', propertyValue: 1800000, loanAmount: 1200000, ownCapital: 600000, interestRate: 1.85, durationYears: 5, type: MortgageType.SARON, monthlyCost: 1850, startDate: '2022-01-01', endDate: '2027-01-01', amortizationMethod: 'DIRECT' }
+  { id: 'm1', clientId: 'c1', propertyName: 'Eigentumswohnung Zürich', propertyValue: 1250000, loanAmount: 800000, ownCapital: 450000, interestRate: 1.45, durationYears: 10, type: MortgageType.FIXED, monthlyCost: 966, startDate: '2020-07-01', endDate: '2030-07-01', amortizationMethod: 'INDIRECT', applicationStatus: 'APPROVED', bankTransactionId: 'TX-9988' },
+  { id: 'm2', clientId: 'c2', propertyName: 'Einfamilienhaus Luzern', propertyValue: 1800000, loanAmount: 1200000, ownCapital: 600000, interestRate: 1.85, durationYears: 5, type: MortgageType.SARON, monthlyCost: 1850, startDate: '2022-01-01', endDate: '2027-01-01', amortizationMethod: 'DIRECT', applicationStatus: 'DRAFT' }
 ];
 
 export const MOCK_ADVICE: AIAdvice[] = [
@@ -463,4 +467,96 @@ export const MOCK_ACTIVITY_LOGS: ActivityLog[] = [
     { id: 'al3', clientId: 'c1', type: 'DOCUMENT_UPLOAD', title: 'Dokument hochgeladen', description: 'Steuerausweis 2023 hinzugefügt.', timestamp: '15.05.2024, 10:20', authorName: 'Thomas Müller' },
     { id: 'al4', clientId: 'c2', type: 'NOTE', title: 'Gesprächsnotiz', description: 'Kunde ist unzufrieden mit der AXA Bearbeitungszeit.', timestamp: '22.05.2024, 11:05', authorName: 'Max Muster' },
     { id: 'al5', clientId: 'c1', type: 'SYSTEM_LOGIN', title: 'Kunden-Login', description: 'Klient hat sich über das Webportal angemeldet.', timestamp: '21.05.2024, 20:15', authorName: 'System' },
+];
+
+// --- MOCK LEAD OFFERS (MARKETPLACE) ---
+export const MOCK_LEAD_OFFERS: LeadOffer[] = [
+    { 
+        id: 'lo1', 
+        type: 'MORTGAGE', 
+        title: 'Einfamilienhaus Finanzierung', 
+        description: 'Kunde sucht Finanzierung für EFH Kauf im Raum Winterthur. Vorabklärung positiv, Kunde ist bereit für Beratung.', 
+        volume: 1200000, 
+        price: 350, 
+        canton: 'Zürich', 
+        datePosted: '22.05.2024', 
+        status: 'AVAILABLE', 
+        sellerTenantId: 't2', 
+        sellerName: 'Finanz & Partner', 
+        sellerRating: 4.8,
+        sellerDealCount: 124,
+        qualityScore: 92,
+        verificationStatus: {
+            phoneVerified: true,
+            emailVerified: true,
+            intentVerified: true
+        },
+        guaranteeIncluded: true
+    },
+    { 
+        id: 'lo2', 
+        type: 'INSURANCE', 
+        title: 'KMU Sachversicherung Portfolio', 
+        description: 'Schreinerei mit 12 Mitarbeitern sucht neuen Broker für BVG und Sach. Unzufrieden mit aktuellem Service.', 
+        volume: 15000, 
+        price: 500, 
+        canton: 'Aargau', 
+        datePosted: '21.05.2024', 
+        status: 'AVAILABLE', 
+        sellerTenantId: 't3', 
+        sellerName: 'Solo Broker Hans', 
+        sellerRating: 3.5,
+        sellerDealCount: 12,
+        qualityScore: 65,
+        verificationStatus: {
+            phoneVerified: true,
+            emailVerified: true,
+            intentVerified: false
+        },
+        guaranteeIncluded: false
+    },
+    { 
+        id: 'lo3', 
+        type: 'INVESTMENT', 
+        title: 'Pensionskassen Anlage (FZ)', 
+        description: 'Kunde möchte Freizügigkeitsguthaben anlegen. Ca. 250k aus Jobwechsel.', 
+        volume: 250000, 
+        price: 200, 
+        canton: 'Zug', 
+        datePosted: '20.05.2024', 
+        status: 'SOLD', 
+        sellerTenantId: 't1', 
+        sellerName: 'Muster Broker AG', 
+        sellerRating: 4.9,
+        sellerDealCount: 85,
+        qualityScore: 98,
+        verificationStatus: {
+            phoneVerified: true,
+            emailVerified: true,
+            intentVerified: true
+        },
+        guaranteeIncluded: true
+    },
+    { 
+        id: 'lo4', 
+        type: 'INSURANCE', 
+        title: 'Privatier Krankenkasse Familie', 
+        description: 'Familie mit 3 Kindern, sucht Optimierung der Zusatzversicherungen. Hohes Upselling-Potenzial.', 
+        volume: 8500, 
+        price: 120, 
+        canton: 'Luzern', 
+        datePosted: 'Heute', 
+        status: 'AVAILABLE', 
+        sellerTenantId: 't2', 
+        sellerName: 'Finanz & Partner', 
+        sellerRating: 4.8,
+        sellerDealCount: 126,
+        qualityScore: 88,
+        verificationStatus: {
+            phoneVerified: true,
+            emailVerified: true,
+            intentVerified: true
+        },
+        guaranteeIncluded: true
+    }
 ];
