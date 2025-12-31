@@ -1,4 +1,5 @@
 
+
 /**
  * Enums representing Database Enums
  */
@@ -116,6 +117,34 @@ export interface Testimonial {
   avatar: string;
 }
 
+// --- NEW: Marketing Case Study Types ---
+export interface CaseStudyStat {
+  label: string;
+  label_de: string;
+  value: string;
+}
+
+export interface CaseStudy {
+  id: string;
+  title: string;
+  title_de: string;
+  client: string;
+  category: 'AI' | 'Web3' | 'Automation' | 'Design' | 'Consulting';
+  year: string;
+  description: string;
+  description_de: string;
+  challenge: string;
+  challenge_de: string;
+  solution: string;
+  solution_de: string;
+  result: string;
+  result_de: string;
+  technologies: string[];
+  stats: CaseStudyStat[];
+  image_prompt: string;
+  createdAt: string;
+}
+
 /**
  * Interfaces mirroring the Prisma Schema for the Frontend
  */
@@ -165,114 +194,54 @@ export interface User {
   bonusAgreement?: string;
 }
 
-export interface BrandingConfig {
-  primaryColor: string; // Hex Code
-  logoUrl?: string;
-  logoText?: string; // If no image provided
-}
-
-// SaaS Tenant (Broker Firm)
-export interface Tenant {
+// Added Client interface
+export interface Client {
   id: string;
-  name: string;
-  plan: 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
-  status: 'ACTIVE' | 'TRIAL' | 'CHURNED';
-  usersCount: number;
-  mrr: number;
-  joinedDate: string;
-  branding: BrandingConfig;
-  // NEW: Active Addons
-  activeAddons?: string[]; // IDs of active addons
-}
-
-export interface SaaSPackage {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  billingCycle: 'MONTHLY' | 'YEARLY';
-  features: string[];
-  isPopular?: boolean;
-  maxUsers?: number;
-  supportLevel: 'EMAIL' | 'PRIORITY' | 'DEDICATED';
-  // NEW: Which addons are included by default
-  includedAddons?: string[]; 
-}
-
-export interface SaaSAddon {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    iconName: string; // Lucide icon
-}
-
-export interface Client extends User {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
   address: string;
   zipCity: string;
   birthDate: string;
   advisorId: string;
-  taxDomicile: string; // Canton
+  taxDomicile: string;
+  avatarUrl: string;
+  tenantId?: string;
 }
 
+// Added Policy interface
 export interface Policy {
   id: string;
   clientId: string;
-  insurer: string; // e.g., "Zurich", "AXA"
-  type: string; // e.g., "Haftpflicht", "Hausrat"
+  insurer: string;
+  type: string;
   policyNumber: string;
   startDate: string;
   endDate: string;
-  premiumAmount: number; // in CHF
-  premiumFrequency: 'YEARLY' | 'HALF_YEARLY' | 'QUARTERLY' | 'MONTHLY';
+  premiumAmount: number;
+  premiumFrequency: string;
   status: PolicyStatus;
-  cancellationNoticePeriod: number; // months
-  documentUrl?: string;
-  coverageDetails?: string[]; // e.g. "Glasbruch", "Diebstahl auswärts"
-  deductible?: number; // Selbstbehalt
-  
-  // Storno / Clawback Fields
-  initialCommission?: number; // The commission received at start
-  liabilityDurationMonths?: number; // How long is the broker liable? (e.g. 36 months)
+  cancellationNoticePeriod: number;
+  deductible?: number;
+  coverageDetails?: string[];
+  initialCommission?: number;
+  liabilityDurationMonths?: number;
 }
 
-export interface PolicyDocument {
-  id: string;
-  policyId: string;
-  title: string;
-  type: 'CONTRACT' | 'INVOICE' | 'AMENDMENT' | 'GENERAL_CONDITIONS';
-  date: string;
-  size: string;
-}
-
-export interface Claim {
-  id: string;
-  policyId: string;
-  date: string;
-  description: string;
-  status: 'OPEN' | 'CLOSED' | 'PENDING';
-  amount: number;
-}
-
-export interface MortgageScenario {
+// Added AIAdvice interface
+export interface AIAdvice {
   id: string;
   clientId: string;
-  propertyName: string;
-  propertyValue: number;
-  loanAmount: number;
-  ownCapital: number;
-  interestRate: number; // percentage
-  durationYears: number;
-  type: MortgageType;
-  monthlyCost: number;
-  startDate?: string;
-  endDate?: string;
-  amortizationMethod?: 'DIRECT' | 'INDIRECT' | 'NONE';
-  // Transaction State
-  applicationStatus?: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-  bankTransactionId?: string;
+  category: 'RISK' | 'SAVING';
+  title: string;
+  description: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  actionItem: string;
 }
 
+// Added Asset interface
 export interface Asset {
   id: string;
   clientId: string;
@@ -280,60 +249,65 @@ export interface Asset {
   type: AssetType;
   value: number;
   lastUpdated: string;
-  provider?: string; // e.g., Bank name
+  provider?: string;
 }
 
-export interface TaxSummary {
-  clientId: string;
-  year: number;
-  deductiblePremiums: number;
-  pillar3aContributions: number;
-  debtInterest: number; // Hypothekarzinsen
-  medicalExpenses: number;
-  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED'; // New field for employee tracking
-}
-
-export interface TaxReturn {
-    id: string;
-    clientId: string;
-    year: number;
-    canton: string;
-    status: TaxReturnStatus;
-    deadline?: string;
-    assignedUserId?: string;
-    documentsCount: number;
-    notes?: string;
-    // Financial Snapshot for AI
-    taxableIncome?: number;
-    taxableWealth?: number;
-    deductionsTotal?: number;
-}
-
-export interface AIAdvice {
+// Added MortgageScenario interface
+export interface MortgageScenario {
   id: string;
   clientId: string;
-  category: 'RISK' | 'OPPORTUNITY' | 'SAVING';
-  title: string;
-  description: string;
-  actionItem?: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  propertyName: string;
+  propertyValue: number;
+  loanAmount: number;
+  ownCapital: number;
+  interestRate: number;
+  durationYears: number;
+  type: MortgageType;
+  monthlyCost: number;
+  startDate: string;
+  endDate: string;
+  amortizationMethod: 'DIRECT' | 'INDIRECT';
+  applicationStatus: 'DRAFT' | 'APPROVED';
+  bankTransactionId?: string;
 }
 
+// Added Integration interface
 export interface Integration {
   id: string;
   name: string;
   description: string;
   category: IntegrationCategory;
   status: IntegrationStatus;
-  iconUrl: string; // placeholder for logo
-  lastSync?: string;
+  iconUrl: string;
+  lastSync: string;
+  connectionType: 'OAUTH' | 'API_KEY';
   errorMessage?: string;
-  connectionType?: 'OAUTH' | 'API_KEY';
 }
 
+// Added PolicyDocument interface
+export interface PolicyDocument {
+  id: string;
+  policyId: string;
+  title: string;
+  type: string;
+  date: string;
+  size: string;
+}
+
+// Added Claim interface
+export interface Claim {
+  id: string;
+  policyId: string;
+  date: string;
+  description: string;
+  status: string;
+  amount: number;
+}
+
+// Added Partner interfaces
 export interface PartnerContact {
   name: string;
-  role: string; // e.g. "Key Account Manager", "Schadensdienst"
+  role: string;
   email: string;
   phone: string;
 }
@@ -341,7 +315,7 @@ export interface PartnerContact {
 export interface PartnerProduct {
   name: string;
   category: string;
-  commissionRate: string; // e.g. "15% - 20%"
+  commissionRate: string;
   description: string;
 }
 
@@ -350,35 +324,28 @@ export interface Partner {
   name: string;
   category: PartnerCategory;
   status: PartnerStatus;
-  logoUrl?: string;
   description: string;
   website: string;
+  brokerNumber: string;
   contacts: PartnerContact[];
   products: PartnerProduct[];
-  brokerNumber: string; // Maklernummer bei der Gesellschaft
+  logoUrl?: string;
 }
 
+// Added CalendarEvent interface
 export interface CalendarEvent {
   id: string;
   title: string;
   start: Date;
   end: Date;
   type: EventType;
-  relatedId?: string;
+  relatedId: string;
   relatedType: RelatedEntityType;
   description?: string;
-  isAllDay?: boolean;
+  isAllDay: boolean;
 }
 
-export interface InsuranceSwitchScenario {
-  originalPolicyId: string;
-  newInsurer: string;
-  newPremium: number;
-  newDeductible: number;
-  newCoverageHighlights: string[];
-  savingsAmount: number;
-}
-
+// Added Commission interface
 export interface Commission {
   id: string;
   date: string;
@@ -386,16 +353,52 @@ export interface Commission {
   currency: string;
   type: CommissionType;
   status: CommissionStatus;
-  source: string; // e.g. "Police AX-992", "Hypothek M1"
+  source: string;
   partnerName: string;
   description: string;
-  // Agent Logic
-  agentId?: string; // Who closed this?
-  agentSplitPercentage?: number; // e.g. 0.70 (70%)
+  agentId?: string;
+  agentSplitPercentage?: number;
 }
 
-export type EmailPriority = 'HIGH' | 'NORMAL' | 'LOW';
-export type EmailCategory = 'GENERAL' | 'CLAIMS' | 'SALES' | 'ADMIN' | 'INVOICE';
+// Added BrandingConfig interface
+export interface BrandingConfig {
+  primaryColor: string;
+  logoText: string;
+  logoUrl?: string;
+}
+
+// Added Tenant interface
+export interface Tenant {
+  id: string;
+  name: string;
+  plan: string;
+  status: string;
+  usersCount: number;
+  mrr: number;
+  joinedDate: string;
+  branding: BrandingConfig;
+  activeAddons: string[];
+}
+
+// Added SaaSPackage interface
+export interface SaaSPackage {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  billingCycle: string;
+  features: string[];
+  maxUsers: number;
+  supportLevel: string;
+  includedAddons: string[];
+  isPopular?: boolean;
+}
+
+// Added Email interfaces
+export interface EmailAttachment {
+  name: string;
+  type: string;
+}
 
 export interface Email {
   id: string;
@@ -403,169 +406,161 @@ export interface Email {
   senderEmail: string;
   subject: string;
   preview: string;
-  content: string; // HTML allowed
+  content: string;
   date: Date;
   isRead: boolean;
-  folder: 'INBOX' | 'SENT' | 'ARCHIVE' | 'TRASH';
-  relatedClientId?: string; // Links email to a client in DB
-  relatedPolicyId?: string; // Specific link to a policy
-  relatedMortgageId?: string; // Specific link to a mortgage
-  attachments?: { name: string, type: string }[];
-  source: 'OUTLOOK' | 'GMAIL' | 'SYSTEM';
-  
-  // New Productivity Features
-  priority: EmailPriority;
-  tags: string[]; // e.g. ["Wichtig", "Wiedervorlage"]
-  snoozedUntil?: Date | null; // If date > now, hide from Inbox
-  category?: EmailCategory;
-  aiAnalysis?: {
-      summary: string;
-      sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
-      suggestedNextSteps: string[];
-  }
+  folder: 'INBOX' | 'ARCHIVE';
+  relatedClientId?: string;
+  relatedPolicyId?: string;
+  attachments?: EmailAttachment[];
+  source: string;
+  priority: 'HIGH' | 'NORMAL' | 'LOW';
+  tags?: string[];
+  category: string;
+  snoozedUntil?: Date;
 }
 
-// Call Agent Types
-export interface CallScript {
-    id: string;
-    title: string;
-    goal: string; // e.g. "Book Demo"
-    openingLine: string;
-    objectionHandlers: { objection: string, response: string }[];
+// Added TaxSummary interface
+export interface TaxSummary {
+  clientId: string;
+  year: number;
+  deductiblePremiums: number;
+  pillar3aContributions: number;
+  debtInterest: number;
+  medicalExpenses: number;
+  status: string;
 }
 
-export interface CallLog {
-    id: string;
-    leadId: string;
-    date: Date;
-    durationSeconds: number;
-    outcome: 'BOOKED_DEMO' | 'NOT_INTERESTED' | 'CALLBACK' | 'VOICEMAIL';
-    transcript: string;
-    sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
+// Added TaxReturn interface
+export interface TaxReturn {
+  id: string;
+  clientId: string;
+  year: number;
+  canton: string;
+  status: TaxReturnStatus;
+  deadline: string;
+  assignedUserId?: string;
+  documentsCount: number;
+  notes?: string;
+  taxableIncome: number;
+  deductionsTotal: number;
 }
 
-// Bank / Credit Offer Type
+// Added BankOffer interface
 export interface BankOffer {
-    id: string;
-    bankName: string;
-    productName: string;
-    interestRateRange: [number, number]; // min, max
-    maxDuration: number;
-    commissionPercentage: number; // e.g., 2% kickback
-    logoUrl?: string;
-    type: CreditType;
+  id: string;
+  bankName: string;
+  productName: string;
+  interestRateRange: [number, number];
+  maxDuration: number;
+  commissionPercentage: number;
+  type: CreditType;
 }
 
-// CMS / Static Pages
+// Added LocalizedContent interface
 export interface LocalizedContent {
-    de: string;
-    en: string;
-    fr: string;
-    it: string;
-    [key: string]: string;
+  de: string;
+  en: string;
+  fr: string;
+  it: string;
 }
 
+// Added StaticPage interface
 export interface StaticPage {
-    id: string;
-    slug: string;
-    title: LocalizedContent;
-    content: LocalizedContent; // HTML
-    isPublished: boolean;
-    lastUpdated: string;
+  id: string;
+  slug: string;
+  isPublished: boolean;
+  lastUpdated: string;
+  title: LocalizedContent;
+  content: LocalizedContent;
 }
 
-// NEW: Mega Menu Navigation Types
+// Added MegaMenu interfaces
 export interface MegaMenuLink {
-    id: string;
-    title: string;
-    description: string;
-    path: string;
-    iconName: string; // From Lucide list
+  id: string;
+  title: string;
+  description: string;
+  path: string;
+  iconName: string;
 }
 
 export interface MegaMenuCategory {
-    id: string;
-    title: string;
-    links: MegaMenuLink[];
+  id: string;
+  title: string;
+  links: MegaMenuLink[];
 }
 
-// --- NEW: Website Engine Types ---
-export type WebSectionType = 'HERO' | 'SERVICES' | 'ABOUT' | 'TEAM' | 'TESTIMONIALS' | 'CONTACT' | 'CALCULATOR' | 'FAQ' | 'FOOTER';
-
-export interface WebSection {
-    id: string;
-    type: WebSectionType;
-    title: string;
-    content: string; // or more structured
-    isVisible: boolean;
-    order: number;
-    config?: any; // For dynamic blocks like calculator
-    image?: string;
+// Added SaaSAddon interface
+export interface SaaSAddon {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  iconName: string;
 }
 
-export interface WebsiteConfig {
-    id: string;
-    tenantId: string;
-    status: 'PUBLISHED' | 'DRAFT' | 'OFFLINE';
-    domain: string;
-    theme: {
-        primaryColor: string;
-        font: string;
-        borderRadius: 'sm' | 'md' | 'lg' | 'full';
-    };
-    sections: WebSection[];
-    lastPublished?: string;
-    SEOSettings: {
-        title: string;
-        description: string;
-        keywords: string[];
-    };
-}
-
-// --- NEW: Client Journal & Notes ---
+// Added ClientNote interface
 export interface ClientNote {
-    id: string;
-    clientId: string;
-    authorId: string;
-    authorName: string;
-    content: string;
-    createdAt: string;
+  id: string;
+  clientId: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
 }
 
-export type ActivityType = 'NOTE' | 'POLICY_ADD' | 'MORTGAGE_ADD' | 'MEETING' | 'SYSTEM_LOGIN' | 'DOCUMENT_UPLOAD';
+// Added ActivityType and ActivityLog interfaces
+export type ActivityType = 'MEETING' | 'TASK' | 'DEADLINE' | 'BIRTHDAY' | 'POLICY_ADD' | 'MORTGAGE_ADD' | 'DOCUMENT_UPLOAD' | 'SYSTEM_LOGIN' | 'NOTE';
 
 export interface ActivityLog {
-    id: string;
-    clientId: string;
-    type: ActivityType;
-    title: string;
-    description: string;
-    timestamp: string;
-    authorName?: string;
+  id: string;
+  clientId: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  timestamp: string;
+  authorName: string;
 }
 
-// --- NEW: Lead Exchange Marketplace ---
+// Added LeadOffer interface
 export interface LeadOffer {
-    id: string;
-    type: 'MORTGAGE' | 'INSURANCE' | 'INVESTMENT';
-    title: string;
-    description: string;
-    volume: number; // Estimated value of deal
-    price: number; // Cost to buy this lead
-    canton: string;
-    datePosted: string;
-    status: 'AVAILABLE' | 'SOLD';
-    sellerTenantId: string;
-    sellerName: string; // e.g. "Broker AG"
-    
-    // TRUST & QUALITY FIELDS
-    sellerRating: number; // 1.0 - 5.0
-    sellerDealCount: number; // How many deals sold
-    qualityScore: number; // 0 - 100
-    verificationStatus: {
-        phoneVerified: boolean;
-        emailVerified: boolean;
-        intentVerified: boolean; // "Kunde erwartet Anruf"
-    };
-    guaranteeIncluded: boolean; // Money-back guarantee
+  id: string;
+  type: 'MORTGAGE' | 'INSURANCE' | 'INVESTMENT';
+  title: string;
+  description: string;
+  volume: number;
+  price: number;
+  canton: string;
+  datePosted: string;
+  status: 'AVAILABLE' | 'SOLD';
+  sellerTenantId: string;
+  sellerName: string;
+  sellerRating: number;
+  sellerDealCount: number;
+  qualityScore: number;
+  verificationStatus: {
+    phoneVerified: boolean;
+    emailVerified: boolean;
+    intentVerified: boolean;
+  };
+  guaranteeIncluded: boolean;
+}
+
+// Added WebSection interfaces
+export type WebSectionType = 'HERO' | 'SERVICES' | 'CALCULATOR' | 'CONTACT' | 'ABOUT' | 'TESTIMONIALS';
+
+export interface WebSection {
+  id: string;
+  type: WebSectionType;
+  title: string;
+  content: string;
+  isVisible: boolean;
+  order: number;
+  image?: string;
+  config?: any;
+}
+
+// Added InsuranceSwitchScenario placeholder
+export interface InsuranceSwitchScenario {
+  // Logic for insurance switch scenarios
 }

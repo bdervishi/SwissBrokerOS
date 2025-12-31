@@ -33,6 +33,7 @@ import { SaaSTestimonials } from './pages/SaaSTestimonials';
 import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance';
 import { SaaSTeams } from './pages/SaaSTeams';
 import { SaaSPages } from './pages/SaaSPages';
+import { SaaSCaseStudies } from './pages/SaaSCaseStudies'; // NEW
 import { BrokerAIConfig } from './pages/BrokerAIConfig';
 import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
@@ -83,7 +84,7 @@ const App = () => {
             {/* Standard Router components wrapped with children as required by some TS environments */}
             <Router>
               <Routes>
-                {/* Fix: Cleaned up Routes to use self-closing tags and removed internal comments/null children which can cause issues with strict Route types */}
+                {/* Fix: Cleaned up Routes to use self-closing syntax without internal comments/null children which can cause issues with strict Route types */}
                 <Route path="/" element={<Landing />} />
                 <Route path="/register" element={<OnboardingWizard />} />
                 <Route path="/login/:role" element={<Login />} />
@@ -111,6 +112,7 @@ const App = () => {
                 <Route path="/saas/email-config" element={<ProtectedRoute><SaaSEmailConfig /></ProtectedRoute>} />
                 <Route path="/saas/newsletter" element={<ProtectedRoute><SaaSNewsletter /></ProtectedRoute>} />
                 <Route path="/saas/testimonials" element={<ProtectedRoute><SaaSTestimonials /></ProtectedRoute>} />
+                <Route path="/saas/case-studies" element={<ProtectedRoute><SaaSCaseStudies /></ProtectedRoute>} /> {/* NEW */}
                 <Route path="/saas/call-agent" element={<ProtectedRoute><CallAgent /></ProtectedRoute>} />
                 <Route path="/saas/embedded-finance" element={<ProtectedRoute><SaaSEmbeddedFinance /></ProtectedRoute>} />
                 <Route path="/saas/teams" element={<ProtectedRoute><SaaSTeams /></ProtectedRoute>} />

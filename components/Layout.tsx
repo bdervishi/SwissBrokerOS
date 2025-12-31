@@ -45,7 +45,8 @@ import {
   Users2,
   FileText,
   Monitor,
-  ShoppingBag // New Icon for Marketplace
+  ShoppingBag,
+  Rocket // New Icon for Case Studies
 } from 'lucide-react';
 
 interface NavItem {
@@ -156,6 +157,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     { name: 'Broker Radar', path: '/leads', icon: <Target size={20} /> },
                     { name: 'AI Call Agent', path: '/saas/call-agent', icon: <PhoneCall size={20} /> },
                     { name: 'Newsletter', path: '/saas/newsletter', icon: <MailCheck size={20} /> },
+                    { name: 'Success Stories', path: '/saas/case-studies', icon: <Rocket size={20} /> }, // NEW
                     { name: 'Testimonials', path: '/saas/testimonials', icon: <MessageSquareQuote size={20} /> },
                     { name: 'CMS / Seiten', path: '/saas/cms', icon: <FileText size={20} /> }, 
                 ]
@@ -440,6 +442,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       )}
 
+      {/* Desktop Layout */}
       <div className="flex flex-1 pt-16 md:pt-0">
         {/* Desktop Sidebar */}
         <aside className={`hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed h-full z-30 transition-colors duration-500 ${isImpersonating ? 'top-[40px]' : 'top-0'}`} style={{height: isImpersonating ? 'calc(100% - 40px)' : '100%'}}>
