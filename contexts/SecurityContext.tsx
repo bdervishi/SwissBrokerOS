@@ -6,6 +6,10 @@ interface SecurityContextType {
   togglePrivacyMode: () => void;
   isAIEnabled: boolean;
   toggleAI: () => void;
+  isMaintenanceMode: boolean;
+  toggleMaintenance: (active: boolean) => void;
+  maintenanceMessage: string;
+  setMaintenanceMessage: (msg: string) => void;
 }
 
 const SecurityContext = createContext<SecurityContextType>({
@@ -13,17 +17,27 @@ const SecurityContext = createContext<SecurityContextType>({
   togglePrivacyMode: () => {},
   isAIEnabled: false,
   toggleAI: () => {},
+  isMaintenanceMode: false,
+  toggleMaintenance: () => {},
+  maintenanceMessage: '',
+  setMaintenanceMessage: () => {},
 });
 
 export const useSecurity = () => useContext(SecurityContext);
 
-// Fix: children made optional
 export const SecurityProvider: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
   
-  // Initialize from localStorage or default to false (Opt-In)
   const [isAIEnabled, setIsAIEnabled] = useState(() => {
       return localStorage.getItem('app_ai_enabled') === 'true';
+  });
+
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(() => {
+      return localStorage.getItem('app_maintenance_mode') === 'true';
+  });
+
+  const [maintenanceMessage, setMaintenanceMessageState] = useState(() => {
+      return localStorage.getItem('app_maintenance_msg') || 'Wir führen aktuell geplante Wartungsarbeiten durch, um SwissBroker OS noch besser zu machen.';
   });
 
   const togglePrivacyMode = () => {
@@ -38,8 +52,27 @@ export const SecurityProvider: React.FC<{ children?: React.ReactNode }> = ({ chi
       });
   };
 
+  const toggleMaintenance = (active: boolean) => {
+      setIsMaintenanceMode(active);
+      localStorage.setItem('app_maintenance_mode', String(active));
+  };
+
+  const setMaintenanceMessage = (msg: string) => {
+      setMaintenanceMessageState(msg);
+      localStorage.setItem('app_maintenance_msg', msg);
+  };
+
   return (
-    <SecurityContext.Provider value={{ isPrivacyMode, togglePrivacyMode, isAIEnabled, toggleAI }}>
+    <SecurityContext.Provider value={{ 
+        isPrivacyMode, 
+        togglePrivacyMode, 
+        isAIEnabled, 
+        toggleAI,
+        isMaintenanceMode,
+        toggleMaintenance,
+        maintenanceMessage,
+        setMaintenanceMessage
+    }}>
       {children}
     </SecurityContext.Provider>
   );
