@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
-import { UserRole } from '../types';
+import { UserRole, AIProviderType } from '../types';
 import { Navigate } from 'react-router-dom';
+/* Fix: Added ShieldCheck to imports */
 import { 
     BrainCircuit, 
     MessageSquare, 
@@ -17,63 +19,41 @@ import {
     Bot,
     Sparkles,
     CheckCircle,
-    AlertTriangle
+    AlertTriangle,
+    Globe,
+    Server,
+    Lock,
+    Cpu,
+    Activity,
+    Key,
+    ShieldCheck
 } from 'lucide-react';
 
 export const BrokerAIConfig: React.FC = () => {
     const { role, user } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'PERSONA' | 'KNOWLEDGE' | 'MODEL'>('PERSONA');
+    const [activeTab, setActiveTab] = useState<'PROVIDER' | 'KNOWLEDGE' | 'PERSONA'>('PROVIDER');
 
-    // --- State: Persona ---
-    const [persona, setPersona] = useState({
-        tone: 'FORMAL', // FORMAL, CASUAL, EMPATHETIC
-        roleName: 'Senior Risk Consultant',
-        customInstructions: 'Antworte immer präzise. Vermeide Fachjargon, wo möglich. Erwähne immer, dass wir unabhängig sind.',
-        forbiddenWords: 'Billig, Garantie, Versprechen'
+    // --- State: Provider & Model ---
+    const [aiSettings, setAiSettings] = useState({
+        provider: 'GOOGLE_GEMINI' as AIProviderType,
+        modelName: 'gemini-3-pro-preview',
+        customEndpoint: '',
+        customApiKey: '',
+        useFallback: true
     });
 
-    // --- State: Knowledge Base (Context Caching Mock) ---
-    const [documents, setDocuments] = useState([
-        { id: 1, name: 'AGB Muster Broker AG 2024.pdf', size: '1.2 MB', tokens: 4500, status: 'CACHED' },
-        { id: 2, name: 'Rahmenvertrag Allianz Spezial.pdf', size: '3.4 MB', tokens: 12500, status: 'CACHED' },
-        { id: 3, name: 'Interner Leitfaden Hypotheken.pdf', size: '0.8 MB', tokens: 2100, status: 'PROCESSING' }
-    ]);
+    const [persona, setPersona] = useState({
+        tone: 'FORMAL',
+        roleName: 'Senior Risk Consultant',
+        customInstructions: 'Antworte immer präzise. Erwähne immer unsere Unabhängigkeit.',
+    });
 
-    // --- State: Model Selection ---
-    const [selectedModel, setSelectedModel] = useState('gemini-3-flash-preview');
-
-    // Access Control: Only Broker Admins (Inhaber)
-    if (role !== UserRole.BROKER_ADMIN) {
-        return <Navigate to="/dashboard" />;
-    }
+    if (role !== UserRole.BROKER_ADMIN) return <Navigate to="/dashboard" />;
 
     const handleSave = () => {
         setIsSaving(true);
-        setTimeout(() => {
-            setIsSaving(false);
-            console.log("Broker AI Config Saved");
-        }, 1000);
-    };
-
-    const handleDeleteDoc = (id: number) => {
-        setDocuments(prev => prev.filter(d => d.id !== id));
-    };
-
-    const handleUploadMock = () => {
-        const newDoc = {
-            id: Date.now(),
-            name: 'Neues Dokument.pdf',
-            size: '1.5 MB',
-            tokens: 0,
-            status: 'PROCESSING'
-        };
-        setDocuments([...documents, newDoc]);
-        
-        // Simulate Processing
-        setTimeout(() => {
-            setDocuments(prev => prev.map(d => d.id === newDoc.id ? { ...d, status: 'CACHED', tokens: 5000 } : d));
-        }, 2000);
+        setTimeout(() => setIsSaving(false), 1200);
     };
 
     return (
@@ -82,227 +62,182 @@ export const BrokerAIConfig: React.FC = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                         <BrainCircuit className="text-brand-600" />
-                        AI Studio: {user?.organizationName}
+                        AI Studio & Orchestration
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400">Konfigurieren Sie Ihr firmeneigenes KI-Gehirn.</p>
+                    <p className="text-slate-500 dark:text-slate-400">Verwalten Sie Provider, eigene Modelle und die KI-Persönlichkeit.</p>
                 </div>
-                <Button 
-                    onClick={handleSave} 
-                    icon={isSaving ? <RefreshCw className="animate-spin" size={18}/> : <Save size={18} />}
-                    disabled={isSaving}
-                >
-                    {isSaving ? 'Trainieren & Speichern' : 'Modell aktualisieren'}
+                <Button onClick={handleSave} disabled={isSaving} icon={isSaving ? <Loader2 className="animate-spin" /> : <Save />}>
+                    {isSaving ? 'Konfiguration wird geladen...' : 'System synchronisieren'}
                 </Button>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto">
-                <button
-                    onClick={() => setActiveTab('PERSONA')}
-                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'PERSONA' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                >
-                    <MessageSquare size={16} /> Persona & Tonfall
-                </button>
-                <button
-                    onClick={() => setActiveTab('KNOWLEDGE')}
-                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'KNOWLEDGE' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                >
-                    <FileText size={16} /> Wissensdatenbank (Context)
-                </button>
-                <button
-                    onClick={() => setActiveTab('MODEL')}
-                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'MODEL' ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                >
-                    <Bot size={16} /> Basis-Modell
-                </button>
+            <div className="flex border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto no-scrollbar">
+                <TabButton active={activeTab === 'PROVIDER'} onClick={() => setActiveTab('PROVIDER')} icon={<Server size={16}/>} label="AI Provider & Infrastruktur" />
+                <TabButton active={activeTab === 'PERSONA'} onClick={() => setActiveTab('PERSONA')} icon={<MessageSquare size={16}/>} label="Persona & Tuning" />
+                <TabButton active={activeTab === 'KNOWLEDGE'} onClick={() => setActiveTab('KNOWLEDGE')} icon={<FileText size={16}/>} label="Wissensdatenbank" />
             </div>
 
-            <div className="max-w-5xl">
-                {/* --- PERSONA TAB --- */}
-                {activeTab === 'PERSONA' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-6">
-                            <Card title="System Instruktionen">
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">KI Rollenname</label>
-                                        <input 
-                                            type="text" 
-                                            value={persona.roleName}
-                                            onChange={(e) => setPersona({...persona, roleName: e.target.value})}
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
-                                        />
-                                        <p className="text-xs text-slate-500 mt-1">Wie soll sich die KI intern nennen?</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Verhaltensregeln (System Prompt)</label>
-                                        <textarea 
-                                            value={persona.customInstructions}
-                                            onChange={(e) => setPersona({...persona, customInstructions: e.target.value})}
-                                            className="w-full h-32 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Verbotene Begriffe</label>
-                                        <input 
-                                            type="text" 
-                                            value={persona.forbiddenWords}
-                                            onChange={(e) => setPersona({...persona, forbiddenWords: e.target.value})}
-                                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg border-red-200 dark:border-red-900/30 text-sm"
-                                        />
-                                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                    {activeTab === 'PROVIDER' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
+                            <Card title="Provider Auswahl">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <ProviderCard 
+                                        id="GOOGLE_GEMINI" 
+                                        active={aiSettings.provider === 'GOOGLE_GEMINI'} 
+                                        title="Google Gemini (Standard)" 
+                                        desc="Native Audio & Google Search Integration."
+                                        icon={<Zap className="text-amber-500" />}
+                                        onClick={() => setAiSettings({...aiSettings, provider: 'GOOGLE_GEMINI'})}
+                                    />
+                                    <ProviderCard 
+                                        id="CUSTOM_OPEN_SOURCE" 
+                                        active={aiSettings.provider === 'CUSTOM_OPEN_SOURCE'} 
+                                        title="Eigenes Modell (Private)" 
+                                        desc="Llama 3 / Mistral via OpenAI-kompatibler API."
+                                        icon={<Cpu className="text-blue-500" />}
+                                        onClick={() => setAiSettings({...aiSettings, provider: 'CUSTOM_OPEN_SOURCE'})}
+                                    />
                                 </div>
-                            </Card>
-                        </div>
-                        
-                        <div className="space-y-6">
-                            <Card title="Tonalität">
-                                <div className="space-y-2">
-                                    {[
-                                        { id: 'FORMAL', label: 'Formell & Distanziert', desc: '"Sehr geehrter Herr..."' },
-                                        { id: 'EMPATHETIC', label: 'Empathisch & Beratend', desc: '"Wir verstehen Ihre Sorge..."' },
-                                        { id: 'CASUAL', label: 'Modern & Direkt', desc: '"Hallo Max, hier ist..."' }
-                                    ].map(opt => (
-                                        <div 
-                                            key={opt.id}
-                                            onClick={() => setPersona({...persona, tone: opt.id})}
-                                            className={`p-3 rounded-lg border cursor-pointer transition-all ${persona.tone === opt.id ? 'bg-brand-50 border-brand-500 ring-1 ring-brand-500 dark:bg-brand-900/20' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-brand-300'}`}
-                                        >
-                                            <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{opt.label}</div>
-                                            <div className="text-xs text-slate-500 italic mt-1">{opt.desc}</div>
+
+                                {aiSettings.provider === 'CUSTOM_OPEN_SOURCE' && (
+                                    <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
+                                        <div className="flex items-center gap-2 text-blue-600 font-bold text-sm mb-2">
+                                            <Globe size={16} /> Endpoint Konfiguration
                                         </div>
-                                    ))}
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Base URL</label>
+                                                <input 
+                                                    className="w-full p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-mono"
+                                                    placeholder="https://ai.ihre-firma.ch/v1"
+                                                    value={aiSettings.customEndpoint}
+                                                    onChange={e => setAiSettings({...aiSettings, customEndpoint: e.target.value})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Custom API Key</label>
+                                                <div className="relative">
+                                                    <Key className="absolute left-3 top-2.5 text-slate-400" size={14} />
+                                                    <input 
+                                                        type="password"
+                                                        className="w-full pl-9 pr-2 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm"
+                                                        placeholder="sk-..."
+                                                        value={aiSettings.customApiKey}
+                                                        onChange={e => setAiSettings({...aiSettings, customApiKey: e.target.value})}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </Card>
+
+                            <Card title="Sicherheits-Layer">
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <Lock className="text-emerald-600" />
+                                            <div>
+                                                <p className="font-bold text-sm">PII Masking (Anonymisierung)</p>
+                                                <p className="text-xs text-slate-500">Namen und Beträge werden vor dem Senden an die KI maskiert.</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-10 h-5 bg-emerald-500 rounded-full relative"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl opacity-50">
+                                        <div className="flex items-center gap-3">
+                                            <ShieldCheck className="text-slate-400" />
+                                            <div>
+                                                <p className="font-bold text-sm">Enterprise Data Shield</p>
+                                                <p className="text-xs text-slate-500">Modell-Training mit Ihren Daten ist global deaktiviert.</p>
+                                            </div>
+                                        </div>
+                                        <CheckCircle size={20} className="text-emerald-500" />
+                                    </div>
                                 </div>
                             </Card>
-                            
-                            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
-                                <h4 className="flex items-center gap-2 text-indigo-800 dark:text-indigo-300 font-bold text-sm mb-2">
-                                    <Sparkles size={16} /> Live Vorschau
-                                </h4>
-                                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg text-sm text-slate-600 dark:text-slate-400 shadow-sm border border-slate-100 dark:border-slate-800">
-                                    "Guten Tag Herr Müller, basierend auf Ihren Angaben zur Hypothek empfehle ich eine Festhypothek..."
+                        </div>
+                    )}
+
+                    {activeTab === 'PERSONA' && (
+                        <Card title="Modell-Verhalten" className="animate-in fade-in slide-in-from-left-4">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-black uppercase text-slate-400 mb-1 block">Rollenname</label>
+                                    <input className="w-full p-2 border rounded-lg" value={persona.roleName} onChange={e => setPersona({...persona, roleName: e.target.value})} />
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* --- KNOWLEDGE BASE TAB --- */}
-                {activeTab === 'KNOWLEDGE' && (
-                    <div className="space-y-6">
-                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 p-4 rounded-xl flex gap-4">
-                            <Zap className="text-amber-500 shrink-0" />
-                            <div>
-                                <h3 className="font-bold text-amber-900 dark:text-amber-200">Gemini Context Caching</h3>
-                                <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
-                                    Dokumente, die hier hochgeladen werden, sind für die KI <strong>sofort verfügbar</strong>, ohne dass sie bei jeder Anfrage neu gesendet werden müssen. Ideal für AGBs, Produktblätter und interne Richtlinien.
-                                </p>
-                            </div>
-                        </div>
-
-                        <Card title={`Aktiver Kontext (${documents.length} Dateien)`}>
-                            <div className="mb-4 flex justify-end">
-                                <Button variant="outline" icon={<Upload size={16}/>} onClick={handleUploadMock}>Dokument hochladen</Button>
-                            </div>
-                            
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-medium border-b border-slate-200 dark:border-slate-800">
-                                    <tr>
-                                        <th className="px-6 py-3">Dateiname</th>
-                                        <th className="px-6 py-3">Grösse</th>
-                                        <th className="px-6 py-3">Tokens (Est.)</th>
-                                        <th className="px-6 py-3">Status</th>
-                                        <th className="px-6 py-3"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {documents.map(doc => (
-                                        <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                                            <td className="px-6 py-4 flex items-center gap-3">
-                                                <FileText size={18} className="text-slate-400" />
-                                                <span className="font-medium text-slate-900 dark:text-slate-100">{doc.name}</span>
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-500">{doc.size}</td>
-                                            <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-400">{doc.tokens > 0 ? doc.tokens : '-'}</td>
-                                            <td className="px-6 py-4">
-                                                {doc.status === 'CACHED' ? (
-                                                    <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-bold bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">
-                                                        <CheckCircle size={12} /> Im Cache
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-bold bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded animate-pulse">
-                                                        <RefreshCw size={12} className="animate-spin" /> Verarbeite...
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button onClick={() => handleDeleteDoc(doc.id)} className="text-slate-400 hover:text-red-500 transition-colors">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 flex justify-between">
-                                <span>Total Cache Usage: ~19k Tokens</span>
-                                <span>Kosten: CHF 0.50 / Tag (Geschätzt)</span>
+                                <div>
+                                    <label className="text-xs font-black uppercase text-slate-400 mb-1 block">Basis Instruktionen</label>
+                                    <textarea className="w-full p-2 border rounded-lg h-32" value={persona.customInstructions} onChange={e => setPersona({...persona, customInstructions: e.target.value})} />
+                                </div>
                             </div>
                         </Card>
-                    </div>
-                )}
+                    )}
+                </div>
 
-                {/* --- MODEL SELECTION TAB --- */}
-                {activeTab === 'MODEL' && (
-                    <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Flash Model */}
-                            <div 
-                                onClick={() => setSelectedModel('gemini-3-flash-preview')}
-                                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all ${selectedModel === 'gemini-3-flash-preview' ? 'bg-white dark:bg-slate-900 border-brand-500 ring-4 ring-brand-500/10' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-brand-300'}`}
-                            >
-                                {selectedModel === 'gemini-3-flash-preview' && <div className="absolute top-4 right-4 text-brand-500"><CheckCircle size={24} /></div>}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-2 bg-yellow-100 text-yellow-700 rounded-lg"><Zap size={24} /></div>
-                                    <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Gemini 3 Flash</h3>
-                                </div>
-                                <p className="text-slate-500 text-sm mb-4">
-                                    Das schnellste Modell. Ideal für einfache Aufgaben wie E-Mail Zusammenfassungen, Terminplanung und Extraktion von Daten.
-                                </p>
-                                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Günstigste Option</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Extrem niedrige Latenz</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Context Caching Support</li>
-                                </ul>
+                {/* SIDEBAR: Performance & Health */}
+                <div className="space-y-6">
+                    <Card title="AI Health Status">
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500">Latenz (P95)</span>
+                                <span className="font-bold text-emerald-600">420ms</span>
                             </div>
-
-                            {/* Pro Model */}
-                            <div 
-                                onClick={() => setSelectedModel('gemini-3-pro-preview')}
-                                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all ${selectedModel === 'gemini-3-pro-preview' ? 'bg-white dark:bg-slate-900 border-purple-500 ring-4 ring-purple-500/10' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-purple-300'}`}
-                            >
-                                {selectedModel === 'gemini-3-pro-preview' && <div className="absolute top-4 right-4 text-purple-500"><CheckCircle size={24} /></div>}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-2 bg-purple-100 text-purple-700 rounded-lg"><BrainCircuit size={24} /></div>
-                                    <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Gemini 3 Pro</h3>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500">Uptime</span>
+                                <span className="font-bold">99.98%</span>
+                            </div>
+                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase">Token Budget (Monat)</span>
+                                    <span className="text-[10px] font-bold">75%</span>
                                 </div>
-                                <p className="text-slate-500 text-sm mb-4">
-                                    Das intelligente Modell für komplexe Analysen. Notwendig für Steueroptimierung, Vertragsprüfung und komplexe Argumentation.
-                                </p>
-                                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Tiefes Verständnis</li>
-                                    <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Besserer Schreibstil</li>
-                                    <li className="flex items-center gap-2"><AlertTriangle size={14} className="text-amber-500"/> Höhere Kosten pro Token</li>
-                                </ul>
+                                <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-brand-500 w-[75%]"></div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg text-center text-xs text-slate-500">
-                            Hinweis: Kosten werden basierend auf der SaaS-Konfiguration verrechnet (siehe Admin Dashboard).
+                    </Card>
+
+                    <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden">
+                        <div className="relative z-10">
+                            <h4 className="font-black text-xl mb-4">Enterprise Hub</h4>
+                            <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                                Durch die Nutzung eigener Modelle behalten Sie die volle Souveränität über Ihre Datenflüsse. Ideal für Firmen mit strengen Compliance-Vorgaben.
+                            </p>
+                            <Button variant="secondary" size="sm" className="w-full bg-white/10 border-none text-white hover:bg-white/20">
+                                Dokumentation ansehen
+                            </Button>
                         </div>
+                        <Activity className="absolute right-0 bottom-0 p-8 opacity-10" size={140} />
                     </div>
-                )}
+                </div>
             </div>
         </Layout>
     );
 };
+
+const TabButton = ({ active, onClick, icon, label }: any) => (
+    <button onClick={onClick} className={`flex items-center gap-2 px-6 py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${active ? 'text-brand-600 border-brand-600' : 'text-slate-400 border-transparent hover:text-slate-600'}`}>
+        {icon} {label}
+    </button>
+);
+
+const ProviderCard = ({ active, title, desc, icon, onClick }: any) => (
+    <div 
+        onClick={onClick}
+        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${active ? 'bg-white dark:bg-slate-950 border-brand-500 ring-4 ring-brand-500/10 shadow-lg' : 'bg-slate-50 dark:bg-slate-900 border-transparent grayscale opacity-70'}`}
+    >
+        <div className="flex justify-between items-start mb-2">
+            <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm">{icon}</div>
+            {active && <CheckCircle size={16} className="text-brand-500" />}
+        </div>
+        <h4 className="font-bold text-sm">{title}</h4>
+        <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">{desc}</p>
+    </div>
+);
+
+const Loader2 = ({ className }: any) => <RefreshCw className={`animate-spin ${className}`} size={18} />;

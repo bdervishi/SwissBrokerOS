@@ -1,615 +1,669 @@
 
-/**
- * Enums representing Database Enums
- */
 export enum UserRole {
-  // SAAS Roles
-  SAAS_SUPER_ADMIN = 'SAAS_SUPER_ADMIN',
-  SAAS_SALES = 'SAAS_SALES',
-  SAAS_MARKETING = 'SAAS_MARKETING',
-  SAAS_FINANCE = 'SAAS_FINANCE',
-  SAAS_ACQUISITION = 'SAAS_ACQUISITION', // NEW: Hunting Brokers & Partners (Garagen)
-
-  // BROKER Roles
-  BROKER_ADMIN = 'BROKER_ADMIN', // Inhaber
-  BROKER_ADMINISTRATION = 'BROKER_ADMINISTRATION', // Backoffice
-  BROKER_MARKETING = 'BROKER_MARKETING',
-  BROKER_AGENT = 'BROKER_AGENT', // NEW: Externe Vermittler / Aussendienst
-
-  // CLIENT Roles
-  CLIENT = 'CLIENT'
+    CLIENT = 'CLIENT',
+    BROKER_ADMIN = 'BROKER_ADMIN',
+    BROKER_ADMINISTRATION = 'BROKER_ADMINISTRATION',
+    BROKER_AGENT = 'BROKER_AGENT',
+    BROKER_MARKETING = 'BROKER_MARKETING',
+    SAAS_SUPER_ADMIN = 'SAAS_SUPER_ADMIN',
+    SAAS_ACQUISITION = 'SAAS_ACQUISITION',
+    SAAS_SALES = 'SAAS_SALES',
+    SAAS_FINANCE = 'SAAS_FINANCE',
+    SAAS_MARKETING = 'SAAS_MARKETING'
 }
 
-export type EmployeeModule = 'INSURANCE' | 'MORTGAGE' | 'TAX' | 'PENSION' | 'CREDIT';
+export type AIProviderType = 'GOOGLE_GEMINI' | 'OPENAI' | 'ANTHROPIC' | 'CUSTOM_OPEN_SOURCE';
 
-export enum PolicyStatus {
-  ACTIVE = 'ACTIVE',
-  PENDING = 'PENDING',
-  CANCELLED = 'CANCELLED',
-  EXPIRED = 'EXPIRED'
+export interface AIModelConfig {
+    provider: AIProviderType;
+    modelName: string;
+    apiKey?: string; // Managed via Environment or Tenant Vault
+    baseUrl?: string; // For Custom/Local Models
+    capabilities: {
+        canProcessAudio: boolean;
+        canProcessVision: boolean;
+        canGroundSearch: boolean;
+    };
+    costPer1kTokens: number;
 }
 
-export enum MortgageType {
-  FIXED = 'FIXED',
-  SARON = 'SARON',
-  MIXED = 'MIXED'
+/* Fix: Added BrandingConfig interface */
+export interface BrandingConfig {
+    primaryColor: string;
+    logoText: string;
+    logoUrl?: string;
 }
 
-export enum CreditType {
-    PRIVATE = 'PRIVATE',
-    LEASING = 'LEASING'
+/* Fix: Added HRConfig interface */
+export interface HRConfig {
+    requireTimeSubmission: boolean;
+    requireTimeApproval: boolean;
+    workWeekHours: number;
 }
 
+/* Fix: Added ComplianceStats interface */
+export interface ComplianceStats {
+    finmaStatus: string;
+    ciceroNumber?: string;
+    churnRisk: string;
+}
+
+/* Fix: Expanded Tenant interface to include plan, status, and other missing properties */
+export interface Tenant {
+    id: string;
+    name: string;
+    plan: string;
+    status: string;
+    usersCount: number;
+    mrr: number;
+    joinedDate: string;
+    aiConfig?: {
+        activeProvider: AIProviderType;
+        selectedModel: string;
+        customEndpoint?: string;
+        useFallback: boolean;
+    };
+    branding: BrandingConfig;
+    activeAddons: string[];
+    hrConfig?: HRConfig;
+    complianceStats?: ComplianceStats;
+}
+
+export interface LeadActivity {
+    id: string;
+    type: 'CALL' | 'EMAIL' | 'MEETING' | 'NOTE' | 'SYSTEM' | 'AI_GENERATION';
+    title: string;
+    description: string;
+    timestamp: string;
+    authorName: string;
+    metadata?: {
+        duration?: number;
+        sentiment?: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
+        tokenUsage?: number;
+        aiProvider?: AIProviderType; // Track which AI was used
+        aiModel?: string;
+    };
+}
+
+/* Fix: Added missing AssetType enum */
 export enum AssetType {
-  CASH = 'CASH',
-  SECURITIES = 'SECURITIES',
-  REAL_ESTATE = 'REAL_ESTATE',
-  PILLAR_3A = 'PILLAR_3A',
-  PENSION_FUND = 'PENSION_FUND' // BVG
+    CASH = 'CASH',
+    PILLAR_3A = 'PILLAR_3A',
+    REAL_ESTATE = 'REAL_ESTATE',
+    SECURITIES = 'SECURITIES',
+    PENSION_FUND = 'PENSION_FUND'
 }
 
+/* Fix: Added missing Asset interface */
+export interface Asset {
+    id: string;
+    clientId: string;
+    name: string;
+    type: AssetType;
+    value: number;
+    lastUpdated: string;
+    provider?: string;
+}
+
+/* Fix: Added missing Client interface */
+export interface Client {
+    id: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    avatarUrl: string;
+    tenantId: string;
+    address: string;
+    zipCity: string;
+    birthDate: string;
+    advisorId: string;
+    taxDomicile: string;
+    companyName?: string;
+    trustScore?: TrustScore;
+}
+
+/* Fix: Added missing MortgageType enum */
+export enum MortgageType {
+    FIXED = 'FIXED',
+    SARON = 'SARON',
+    MIXED = 'MIXED'
+}
+
+/* Fix: Added missing PolicyStatus enum */
+export enum PolicyStatus {
+    ACTIVE = 'ACTIVE',
+    PENDING = 'PENDING',
+    CANCELLED = 'CANCELLED'
+}
+
+/* Fix: Added missing Policy interface */
+export interface Policy {
+    id: string;
+    clientId: string;
+    insurer: string;
+    type: string;
+    policyNumber: string;
+    startDate: string;
+    endDate: string;
+    premiumAmount: number;
+    premiumFrequency: string;
+    status: PolicyStatus;
+    cancellationNoticePeriod: number;
+    deductible?: number;
+    coverageDetails?: string[];
+    initialCommission?: number;
+    liabilityDurationMonths?: number;
+    marketBenchmarkDelta?: number;
+    contractFlags?: string[];
+}
+
+/* Fix: Added missing AIAdvice interface */
+export interface AIAdvice {
+    id: string;
+    clientId: string;
+    category: string;
+    title: string;
+    description: string;
+    severity: string;
+    actionItem: string;
+}
+
+/* Fix: Added missing MortgageScenario interface */
+export interface MortgageScenario {
+    id: string;
+    clientId: string;
+    propertyName: string;
+    propertyValue: number;
+    loanAmount: number;
+    ownCapital: number;
+    interestRate: number;
+    durationYears: number;
+    type: MortgageType;
+    monthlyCost: number;
+    startDate: string;
+    endDate: string;
+    amortizationMethod: string;
+    applicationStatus: string;
+}
+
+/* Fix: Added missing IntegrationCategory enum */
 export enum IntegrationCategory {
-  ACCOUNTING = 'ACCOUNTING',
-  COMMUNICATION = 'COMMUNICATION',
-  CRM = 'CRM',
-  BANKING = 'BANKING',
-  FINANCE_PROVIDER = 'FINANCE_PROVIDER'
+    ACCOUNTING = 'ACCOUNTING',
+    COMMUNICATION = 'COMMUNICATION',
+    BANKING = 'BANKING'
 }
 
+/* Fix: Added missing IntegrationStatus enum */
 export enum IntegrationStatus {
-  CONNECTED = 'CONNECTED',
-  DISCONNECTED = 'DISCONNECTED',
-  ERROR = 'ERROR'
+    CONNECTED = 'CONNECTED',
+    DISCONNECTED = 'DISCONNECTED',
+    ERROR = 'ERROR'
 }
 
+/* Fix: Added missing Integration interface */
+export interface Integration {
+    id: string;
+    name: string;
+    description: string;
+    category: IntegrationCategory;
+    status: IntegrationStatus;
+    iconUrl: string;
+    lastSync: string;
+    connectionType: string;
+    errorMessage?: string;
+}
+
+/* Fix: Added missing PolicyDocument interface */
+export interface PolicyDocument {
+    id: string;
+    policyId: string;
+    title: string;
+    type: string;
+    date: string;
+    size: string;
+}
+
+/* Fix: Added missing Claim interface */
+export interface Claim {
+    id: string;
+    policyId: string;
+    date: string;
+    description: string;
+    status: string;
+    amount: number;
+}
+
+/* Fix: Added missing PartnerCategory enum */
 export enum PartnerCategory {
-  INSURANCE = 'INSURANCE',
-  BANK = 'BANK',
-  LEGAL = 'LEGAL',
-  SERVICE = 'SERVICE',
-  LEASING = 'LEASING'
+    INSURANCE = 'INSURANCE',
+    BANK = 'BANK',
+    LEGAL = 'LEGAL',
+    SERVICE = 'SERVICE'
 }
 
+/* Fix: Added missing PartnerStatus enum */
 export enum PartnerStatus {
-  ACTIVE = 'ACTIVE',
-  PENDING = 'PENDING',
-  INACTIVE = 'INACTIVE'
+    ACTIVE = 'ACTIVE',
+    PENDING = 'PENDING',
+    INACTIVE = 'INACTIVE'
 }
 
+/* Fix: Added missing Partner interface */
+export interface Partner {
+    id: string;
+    name: string;
+    category: PartnerCategory;
+    status: PartnerStatus;
+    description: string;
+    website: string;
+    brokerNumber: string;
+    contacts: { name: string; role: string; email: string; phone: string; }[];
+    products: { name: string; category: string; commissionRate: string; description: string; }[];
+    logoUrl?: string;
+}
+
+/* Fix: Added missing EventType enum */
 export enum EventType {
-  MEETING = 'MEETING',
-  TASK = 'TASK',
-  DEADLINE = 'DEADLINE', // e.g. Policy Expiry
-  BIRTHDAY = 'BIRTHDAY'
+    MEETING = 'MEETING',
+    DEADLINE = 'DEADLINE',
+    TASK = 'TASK',
+    BIRTHDAY = 'BIRTHDAY'
 }
 
+/* Fix: Added missing RelatedEntityType enum */
 export enum RelatedEntityType {
-  CLIENT = 'CLIENT',
-  POLICY = 'POLICY',
-  MORTGAGE = 'MORTGAGE',
-  PARTNER = 'PARTNER',
-  NONE = 'NONE'
+    CLIENT = 'CLIENT',
+    POLICY = 'POLICY',
+    MORTGAGE = 'MORTGAGE',
+    PARTNER = 'PARTNER'
 }
 
+/* Fix: Added missing CalendarEvent interface */
+export interface CalendarEvent {
+    id: string;
+    title: string;
+    start: Date;
+    end: Date;
+    type: EventType;
+    relatedId: string;
+    relatedType: RelatedEntityType;
+    isAllDay: boolean;
+    description?: string;
+}
+
+/* Fix: Added missing CommissionType enum */
 export enum CommissionType {
-  RECURRING = 'RECURRING', // Bestandspflege (jährlich)
-  ACQUISITION = 'ACQUISITION', // Abschluss (einmalig)
-  ONE_OFF = 'ONE_OFF' // Tippgeber / Finder's Fee
-  ,
-    SUBSCRIPTION = "SUBSCRIPTION"
+    ACQUISITION = 'ACQUISITION',
+    RECURRING = 'RECURRING',
+    ONE_OFF = 'ONE_OFF'
 }
 
+/* Fix: Added missing CommissionStatus enum */
 export enum CommissionStatus {
-  PAID = 'PAID',
-  PENDING = 'PENDING',
-  FORECAST = 'FORECAST'
+    PAID = 'PAID',
+    PENDING = 'PENDING'
 }
 
-export type TaxReturnStatus = 'OPEN' | 'DOCS_MISSING' | 'IN_PROGRESS' | 'REVIEW' | 'SUBMITTED' | 'ARCHIVED';
-
-export interface Testimonial {
-  id: string;
-  quote: string;
-  author: string;
-  role: string;
-  company: string;
-  avatar: string;
+/* Fix: Added missing Commission interface */
+export interface Commission {
+    id: string;
+    date: string;
+    amount: number;
+    currency: string;
+    type: CommissionType;
+    status: CommissionStatus;
+    source: string;
+    partnerName: string;
+    description: string;
+    agentId: string;
+    agentSplitPercentage: number;
 }
 
-// --- NEW: Marketing Case Study Types ---
-export interface CaseStudyStat {
-  label: string;
-  label_de: string;
-  value: string;
+/* Fix: Added missing User interface */
+export interface User {
+    id: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    avatarUrl?: string;
+    tenantId?: string;
+    teamId?: string;
+    organizationName?: string;
+    modules?: EmployeeModule[];
+    position?: string;
+    phone?: string;
+    street?: string;
+    zipCode?: string;
+    city?: string;
+    birthDate?: string;
+    familyStatus?: string;
+    childrenCount?: number;
+    bankName?: string;
+    iban?: string;
+    ahvNumber?: string;
+    baseSalary?: number;
+    entryDate?: string;
+    employmentPercentage?: number;
+    noticePeriod?: string;
+    bonusAgreement?: string;
 }
 
-export interface CaseStudy {
-  id: string;
-  title: string;
-  title_de: string;
-  client: string;
-  category: 'AI' | 'Web3' | 'Automation' | 'Design' | 'Consulting';
-  year: string;
-  description: string;
-  description_de: string;
-  challenge: string;
-  challenge_de: string;
-  solution: string;
-  solution_de: string;
-  result: string;
-  result_de: string;
-  technologies: string[];
-  stats: CaseStudyStat[];
-  image_prompt: string;
-  createdAt: string;
+/* Fix: Added missing SaaSPackage interface */
+export interface SaaSPackage {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    billingCycle: string;
+    features: string[];
+    maxUsers: number;
+    supportLevel: string;
+    includedAddons: string[];
+    isPopular?: boolean;
 }
 
-/**
- * Interfaces mirroring the Prisma Schema for the Frontend
- */
+/* Fix: Added missing Email interface */
+export interface Email {
+    id: string;
+    senderName: string;
+    senderEmail: string;
+    subject: string;
+    preview: string;
+    content: string;
+    date: Date;
+    isRead: boolean;
+    folder: string;
+    source: string;
+    priority: string;
+    tags: string[];
+    category: string;
+    snoozedUntil?: Date;
+    attachments?: { name: string; type: string; }[];
+}
 
+/* Fix: Added missing Team interface */
 export interface Team {
     id: string;
     name: string;
-    description?: string;
-    leaderId?: string; // Links to User
+    description: string;
+    leaderId: string;
 }
 
+/* Fix: Added missing TimeEntryStatus type */
 export type TimeEntryStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
 
+/* Fix: Added missing TimeEntry interface */
 export interface TimeEntry {
     id: string;
     userId: string;
     date: string;
     hours: number;
-    activity: string; // e.g., "Kundenberatung", "Administration", "Reisezeit"
-    description?: string;
+    activity: string;
+    description: string;
     relatedClientId?: string;
-    status: TimeEntryStatus; // NEW
-    rejectionReason?: string; // NEW
+    status: TimeEntryStatus;
+    rejectionReason?: string;
 }
 
-export interface User {
-  id: string;
-  username: string; // NEW
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  avatarUrl?: string;
-  organizationName?: string; // For Brokers
-  tenantId?: string; // Link to Tenant
-  teamId?: string; // Link to Team
-  position?: string; // Job Title
-  phone?: string;
-  
-  // New: Responsibilities / Access Areas
-  modules?: EmployeeModule[]; 
-
-  // HR Specific Fields
-  birthDate?: string;
-  
-  // Address
-  street?: string;
-  zipCode?: string;
-  city?: string;
-  country?: string;
-
-  // Personal
-  familyStatus?: string; // e.g. "Ledig", "Verheiratet"
-  childrenCount?: number;
-  
-  // Financial / HR
-  ahvNumber?: string;
-  bankName?: string;
-  iban?: string;
-  entryDate?: string;
-  noticePeriod?: string; // e.g. "3 Monate"
-  employmentPercentage?: number; // e.g 100
-  baseSalary?: number;
-  bonusAgreement?: string;
+/* Fix: Added missing TaxSummary interface */
+export interface TaxSummary {
+    clientId: string;
+    year: number;
+    deductiblePremiums: number;
+    pillar3aContributions: number;
+    debtInterest: number;
+    medicalExpenses: number;
+    status: string;
 }
 
-// DUE DILIGENCE TYPES
+/* Fix: Added missing TaxReturnStatus type */
+export type TaxReturnStatus = 'OPEN' | 'DOCS_MISSING' | 'IN_PROGRESS' | 'REVIEW' | 'SUBMITTED' | 'ARCHIVED';
+
+/* Fix: Added missing TaxReturn interface */
+export interface TaxReturn {
+    id: string;
+    clientId: string;
+    year: number;
+    canton: string;
+    status: TaxReturnStatus;
+    deadline: string;
+    documentsCount: number;
+    taxableIncome: number;
+    deductionsTotal: number;
+    notes?: string;
+}
+
+/* Fix: Added missing Testimonial interface */
+export interface Testimonial {
+    id: string;
+    quote: string;
+    author: string;
+    role: string;
+    company: string;
+    avatar: string;
+}
+
+/* Fix: Added missing CreditType enum */
+export enum CreditType {
+    PRIVATE = 'PRIVATE',
+    LEASING = 'LEASING'
+}
+
+/* Fix: Added missing BankOffer interface */
+export interface BankOffer {
+    id: string;
+    bankName: string;
+    productName: string;
+    interestRateRange: [number, number];
+    maxDuration: number;
+    commissionPercentage: number;
+    type: CreditType;
+}
+
+/* Fix: Added missing LocalizedContent interface */
+export interface LocalizedContent {
+    de: string;
+    en: string;
+    fr: string;
+    it: string;
+}
+
+/* Fix: Added missing StaticPage interface */
+export interface StaticPage {
+    id: string;
+    slug: string;
+    isPublished: boolean;
+    lastUpdated: string;
+    title: LocalizedContent;
+    content: LocalizedContent;
+}
+
+/* Fix: Added missing MegaMenuLink interface */
+export interface MegaMenuLink {
+    id: string;
+    title: string;
+    description: string;
+    path: string;
+    iconName: string;
+}
+
+/* Fix: Added missing MegaMenuCategory interface */
+export interface MegaMenuCategory {
+    id: string;
+    title: string;
+    links: MegaMenuLink[];
+}
+
+/* Fix: Added missing SaaSAddon interface */
+export interface SaaSAddon {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    iconName: string;
+}
+
+/* Fix: Added missing ClientNote interface */
+export interface ClientNote {
+    id: string;
+    clientId: string;
+    authorId: string;
+    authorName: string;
+    content: string;
+    createdAt: string;
+}
+
+/* Fix: Added missing ActivityType type */
+export type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'NOTE' | 'SYSTEM' | 'AI_GENERATION' | 'POLICY_ADD' | 'MORTGAGE_ADD' | 'DOCUMENT_UPLOAD' | 'SYSTEM_LOGIN';
+
+/* Fix: Added missing ActivityLog interface */
+export interface ActivityLog {
+    id: string;
+    clientId: string;
+    type: ActivityType;
+    title: string;
+    description: string;
+    timestamp: string;
+    authorName: string;
+}
+
+/* Fix: Added missing LeadOffer interface */
+export interface LeadOffer {
+    id: string;
+    type: 'MORTGAGE' | 'INSURANCE' | 'INVESTMENT';
+    title: string;
+    description: string;
+    volume: number;
+    price: number;
+    canton: string;
+    datePosted: string;
+    status: 'AVAILABLE' | 'SOLD';
+    sellerTenantId: string;
+    sellerName: string;
+    sellerRating: number;
+    sellerDealCount: number;
+    qualityScore: number;
+    verificationStatus: { phoneVerified: boolean; emailVerified: boolean; intentVerified: boolean; };
+    guaranteeIncluded: boolean;
+}
+
+/* Fix: Added missing InsuranceSwitchScenario interface */
+export interface InsuranceSwitchScenario {
+    id: string;
+    policyId: string;
+    currentPremium: number;
+    newOffer: {
+        insurer: string;
+        premium: number;
+        deductible: number;
+        highlights: string;
+    };
+}
+
+/* Fix: Added missing ComplianceCheck interface */
 export interface ComplianceCheck {
     id: string;
-    checkName: string; // e.g. "PEP Check", "Zefix Validation"
-    status: 'PASSED' | 'WARNING' | 'FAILED' | 'PENDING';
+    checkName: string;
+    status: 'PASSED' | 'WARNING' | 'FAILED';
     lastChecked: string;
     details?: string;
 }
 
+/* Fix: Added missing TrustScore interface */
 export interface TrustScore {
-    score: number; // 0-100
+    score: number;
     level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-    checks: ComplianceCheck[];
     lastUpdated: string;
+    checks: ComplianceCheck[];
 }
 
-// Added Client interface
-export interface Client {
-  id: string;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  address: string;
-  zipCity: string;
-  birthDate: string;
-  advisorId: string;
-  taxDomicile: string;
-  avatarUrl: string;
-  tenantId?: string;
-  trustScore?: TrustScore; // NEW
-  companyName?: string; // NEW for B2B Clients
+/* Fix: Added missing EmployeeModule type */
+export type EmployeeModule = 'INSURANCE' | 'MORTGAGE' | 'TAX' | 'PENSION';
+
+/* Fix: Added missing LeadContact interface */
+export interface LeadContact {
+    id: string;
+    name: string;
+    role: string;
+    email: string;
+    phone: string;
+    isPrimary: boolean;
 }
 
-// Added Policy interface
-export interface Policy {
-  id: string;
-  clientId: string;
-  insurer: string;
-  type: string;
-  policyNumber: string;
-  startDate: string;
-  endDate: string;
-  premiumAmount: number;
-  premiumFrequency: string;
-  status: PolicyStatus;
-  cancellationNoticePeriod: number;
-  deductible?: number;
-  coverageDetails?: string[];
-  initialCommission?: number;
-  liabilityDurationMonths?: number;
-  marketBenchmarkDelta?: number; // NEW: % difference to market average
-  contractFlags?: string[]; // NEW: "Fine Print" warnings
+/* Fix: Added missing LeadTask interface */
+export interface LeadTask {
+    id: string;
+    label: string;
+    dueDate: string;
+    isCompleted: boolean;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
-// Added AIAdvice interface
-export interface AIAdvice {
-  id: string;
-  clientId: string;
-  category: 'RISK' | 'SAVING';
-  title: string;
-  description: string;
-  severity: 'HIGH' | 'MEDIUM' | 'LOW';
-  actionItem: string;
+/* Fix: Added missing LeadOfferConfig interface */
+export interface LeadOfferConfig {
+    id: string;
+    name: string;
 }
 
-// Added Asset interface
-export interface Asset {
-  id: string;
-  clientId: string;
-  name: string;
-  type: AssetType;
-  value: number;
-  lastUpdated: string;
-  provider?: string;
+/* Fix: Added missing Lead interface */
+export interface Lead {
+    id: string;
+    tenantId: string;
+    name: string;
+    city: string;
+    address: string;
+    status: 'NEW' | 'CONTACTED' | 'OFFER' | 'WON' | 'LOST';
+    potentialValue: number;
+    type: string;
+    website?: string;
+    createdAt: string;
+    updatedAt: string;
+    source: string;
+    aiInsightScore: number;
+    contacts: LeadContact[];
+    activities: LeadActivity[];
+    interests: string[];
+    tasks: LeadTask[];
+    offers: any[];
 }
 
-// Added MortgageScenario interface
-export interface MortgageScenario {
-  id: string;
-  clientId: string;
-  propertyName: string;
-  propertyValue: number;
-  loanAmount: number;
-  ownCapital: number;
-  interestRate: number;
-  durationYears: number;
-  type: MortgageType;
-  monthlyCost: number;
-  startDate: string;
-  endDate: string;
-  amortizationMethod: 'DIRECT' | 'INDIRECT';
-  applicationStatus: 'DRAFT' | 'APPROVED';
-  bankTransactionId?: string;
-}
-
-// Added Integration interface
-export interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  category: IntegrationCategory;
-  status: IntegrationStatus;
-  iconUrl: string;
-  lastSync: string;
-  connectionType: 'OAUTH' | 'API_KEY';
-  errorMessage?: string;
-}
-
-// Added PolicyDocument interface
-export interface PolicyDocument {
-  id: string;
-  policyId: string;
-  title: string;
-  type: string;
-  date: string;
-  size: string;
-}
-
-// Added Claim interface
-export interface Claim {
-  id: string;
-  policyId: string;
-  date: string;
-  description: string;
-  status: string;
-  amount: number;
-}
-
-// Added Partner interfaces
-export interface PartnerContact {
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-}
-
-export interface PartnerProduct {
-  name: string;
-  category: string;
-  commissionRate: string;
-  description: string;
-}
-
-export interface Partner {
-  id: string;
-  name: string;
-  category: PartnerCategory;
-  status: PartnerStatus;
-  description: string;
-  website: string;
-  brokerNumber: string;
-  contacts: PartnerContact[];
-  products: PartnerProduct[];
-  logoUrl?: string;
-}
-
-// Added CalendarEvent interface
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  type: EventType;
-  relatedId: string;
-  relatedType: RelatedEntityType;
-  description?: string;
-  isAllDay: boolean;
-}
-
-// Added Commission interface
-export interface Commission {
-  id: string;
-  date: string;
-  amount: number;
-  currency: string;
-  type: CommissionType;
-  status: CommissionStatus;
-  source: string;
-  partnerName: string;
-  description: string;
-  agentId?: string;
-  agentSplitPercentage?: number;
-}
-
-// Added BrandingConfig interface
-export interface BrandingConfig {
-  primaryColor: string;
-  logoText: string;
-  logoUrl?: string;
-}
-
-// HR Configuration for Tenants
-export interface HrConfig {
-    requireTimeSubmission: boolean; // Employees must "submit" times
-    requireTimeApproval: boolean; // Managers must "approve" times
-    workWeekHours: number; // e.g. 42
-}
-
-// Added Tenant interface
-export interface Tenant {
-  id: string;
-  name: string;
-  plan: string;
-  status: string;
-  usersCount: number;
-  mrr: number;
-  joinedDate: string;
-  branding: BrandingConfig;
-  hrConfig?: HrConfig; // NEW
-  activeAddons: string[];
-  complianceStats?: { // NEW
-      ciceroNumber?: string;
-      finmaStatus: 'REGISTERED' | 'WARNING' | 'UNKNOWN';
-      churnRisk: 'LOW' | 'MEDIUM' | 'HIGH';
-  };
-}
-
-// Added SaaSPackage interface
-export interface SaaSPackage {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  billingCycle: string;
-  features: string[];
-  maxUsers: number;
-  supportLevel: string;
-  includedAddons: string[];
-  isPopular?: boolean;
-}
-
-// Added Email interfaces
-export interface EmailAttachment {
-  name: string;
-  type: string;
-}
-
-export interface Email {
-  id: string;
-  senderName: string;
-  senderEmail: string;
-  subject: string;
-  preview: string;
-  content: string;
-  date: Date;
-  isRead: boolean;
-  folder: 'INBOX' | 'ARCHIVE';
-  relatedClientId?: string;
-  relatedPolicyId?: string;
-  attachments?: EmailAttachment[];
-  source: string;
-  priority: 'HIGH' | 'NORMAL' | 'LOW';
-  tags?: string[];
-  category: string;
-  snoozedUntil?: Date;
-}
-
-// Added TaxSummary interface
-export interface TaxSummary {
-  clientId: string;
-  year: number;
-  deductiblePremiums: number;
-  pillar3aContributions: number;
-  debtInterest: number;
-  medicalExpenses: number;
-  status: string;
-}
-
-// Added TaxReturn interface
-export interface TaxReturn {
-  id: string;
-  clientId: string;
-  year: number;
-  canton: string;
-  status: TaxReturnStatus;
-  deadline: string;
-  assignedUserId?: string;
-  documentsCount: number;
-  notes?: string;
-  taxableIncome: number;
-  deductionsTotal: number;
-}
-
-// Added BankOffer interface
-export interface BankOffer {
-  id: string;
-  bankName: string;
-  productName: string;
-  interestRateRange: [number, number];
-  maxDuration: number;
-  commissionPercentage: number;
-  type: CreditType;
-}
-
-// Added LocalizedContent interface
-export interface LocalizedContent {
-  de: string;
-  en: string;
-  fr: string;
-  it: string;
-}
-
-// Added StaticPage interface
-export interface StaticPage {
-  id: string;
-  slug: string;
-  isPublished: boolean;
-  lastUpdated: string;
-  title: LocalizedContent;
-  content: LocalizedContent;
-}
-
-// Added MegaMenu interfaces
-export interface MegaMenuLink {
-  id: string;
-  title: string;
-  description: string;
-  path: string;
-  iconName: string;
-}
-
-export interface MegaMenuCategory {
-  id: string;
-  title: string;
-  links: MegaMenuLink[];
-}
-
-// Added SaaSAddon interface
-export interface SaaSAddon {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  iconName: string;
-}
-
-// Added ClientNote interface
-export interface ClientNote {
-  id: string;
-  clientId: string;
-  authorId: string;
-  authorName: string;
-  content: string;
-  createdAt: string;
-}
-
-// Added ActivityType and ActivityLog interfaces
-export type ActivityType = 'MEETING' | 'TASK' | 'DEADLINE' | 'BIRTHDAY' | 'POLICY_ADD' | 'MORTGAGE_ADD' | 'DOCUMENT_UPLOAD' | 'SYSTEM_LOGIN' | 'NOTE';
-
-export interface ActivityLog {
-  id: string;
-  clientId: string;
-  type: ActivityType;
-  title: string;
-  description: string;
-  timestamp: string;
-  authorName: string;
-}
-
-// Added LeadOffer interface
-export interface LeadOffer {
-  id: string;
-  type: 'MORTGAGE' | 'INSURANCE' | 'INVESTMENT';
-  title: string;
-  description: string;
-  volume: number;
-  price: number;
-  canton: string;
-  datePosted: string;
-  status: 'AVAILABLE' | 'SOLD';
-  sellerTenantId: string;
-  sellerName: string;
-  sellerRating: number;
-  sellerDealCount: number;
-  qualityScore: number;
-  verificationStatus: {
-    phoneVerified: boolean;
-    emailVerified: boolean;
-    intentVerified: boolean;
-  };
-  guaranteeIncluded: boolean;
-}
-
-// Added WebSection interfaces
+/* Fix: Added missing WebSectionType type */
 export type WebSectionType = 'HERO' | 'SERVICES' | 'CALCULATOR' | 'CONTACT' | 'ABOUT' | 'TESTIMONIALS';
 
+/* Fix: Added missing WebSection interface */
 export interface WebSection {
-  id: string;
-  type: WebSectionType;
-  title: string;
-  content: string;
-  isVisible: boolean;
-  order: number;
-  image?: string;
-  config?: any;
+    id: string;
+    type: WebSectionType;
+    title: string;
+    content: string;
+    isVisible: boolean;
+    order: number;
+    image?: string;
+    config?: any;
 }
 
-// Added InsuranceSwitchScenario placeholder
-export interface InsuranceSwitchScenario {
-  // Logic for insurance switch scenarios
+/* Fix: Added missing CaseStudy interface */
+export interface CaseStudy {
+    id: string;
+    title: string;
+    title_de: string;
+    client: string;
+    category: string;
+    year: string;
+    description: string;
+    description_de: string;
+    challenge: string;
+    challenge_de: string;
+    solution: string;
+    solution_de: string;
+    result: string;
+    result_de: string;
+    technologies: string[];
+    stats: { label: string; label_de: string; value: string; }[];
+    image_prompt: string;
+    createdAt: string;
 }
