@@ -4,9 +4,11 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { ComplianceShield } from '../components/ui/ComplianceShield';
 import { MOCK_CLIENTS, MOCK_POLICIES, MOCK_ASSETS, MOCK_ADVICE, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS } from '../constants';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
+import { GoogleGenAI } from "@google/genai";
 import { 
   ArrowLeft, 
   Shield, 
@@ -26,19 +28,25 @@ import {
   ShieldCheck,
   Calendar,
   FileBox,
-  TrendingUp
+  TrendingUp,
+  Search,
+  Scale
 } from 'lucide-react';
-import { AssetType, ActivityType, ActivityLog, ClientNote } from '../types';
+import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore } from '../types';
 
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL' | 'COMPLIANCE'>('OVERVIEW');
   
   // Note State
   const [noteInput, setNoteInput] = useState('');
   const [localNotes, setLocalNotes] = useState<ClientNote[]>(MOCK_CLIENT_NOTES.filter(n => n.clientId === id));
   
-  const client = MOCK_CLIENTS.find(c => c.id === id);
+  // Compliance State (Local to allow updates)
+  const clientData = MOCK_CLIENTS.find(c => c.id === id);
+  const [client, setClient] = useState(clientData);
+  const [isCheckingCompliance, setIsCheckingCompliance] = useState(false);
+
   const policies = MOCK_POLICIES.filter(p => p.clientId === id);
   const assets = MOCK_ASSETS.filter(a => a.clientId === id);
   const advice = MOCK_ADVICE.filter(a => a.clientId === id);
@@ -58,6 +66,57 @@ export const ClientDetail: React.FC = () => {
       };
       setLocalNotes([newNote, ...localNotes]);
       setNoteInput('');
+  };
+
+  const handleRunKycCheck = async () => {
+      if (!process.env.API_KEY) return;
+      setIsCheckingCompliance(true);
+
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const prompt = `
+            Führe einen simulierten Compliance / Due Diligence Check für folgenden Kunden durch:
+            Name: ${client.firstName} ${client.lastName}
+            Ort: ${client.zipCity}
+            Firma: ${client.companyName || 'Privatperson'}
+
+            Aufgaben:
+            1. Prüfe fiktiv gegen PEP Listen (Politisch Exponierte Personen).
+            2. Prüfe Plausibilität (Wohnort passt zu den vorliegenden Assets?).
+            3. Falls Firma: Simuliere einen Zefix-Abgleich (Handelsregister).
+
+            Gib mir ein JSON Objekt zurück mit:
+            {
+                "score": number (0-100),
+                "level": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+                "checks": [
+                    { "id": "1", "checkName": "Name", "status": "PASSED" | "WARNING" | "FAILED", "details": "Grund" }
+                ]
+            }
+          `;
+
+          const response = await ai.models.generateContent({
+              model: 'gemini-3-flash-preview',
+              contents: prompt,
+              config: { responseMimeType: 'application/json' }
+          });
+
+          const text = response.text;
+          if(text) {
+              const result = JSON.parse(text);
+              const newScore: TrustScore = {
+                  score: result.score,
+                  level: result.level,
+                  lastUpdated: new Date().toLocaleDateString(),
+                  checks: result.checks
+              };
+              setClient({...client, trustScore: newScore});
+          }
+      } catch (e) {
+          console.error("KYC Check failed", e);
+      } finally {
+          setIsCheckingCompliance(false);
+      }
   };
 
   const getActivityIcon = (type: ActivityType) => {
@@ -80,7 +139,10 @@ export const ClientDetail: React.FC = () => {
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{client.firstName} {client.lastName}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              {client.firstName} {client.lastName}
+              {client.companyName && <span className="text-sm font-normal text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">{client.companyName}</span>}
+          </h1>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <span>{client.zipCity}</span>
             <span>•</span>
@@ -99,14 +161,15 @@ export const ClientDetail: React.FC = () => {
         <TabButton active={activeTab === 'POLICIES'} onClick={() => setActiveTab('POLICIES')} icon={<FileText size={16} />} label="Versicherungen" />
         <TabButton active={activeTab === 'WEALTH'} onClick={() => setActiveTab('WEALTH')} icon={<Landmark size={16} />} label="Vermögen & Vorsorge" />
         <TabButton active={activeTab === 'TAX'} onClick={() => setActiveTab('TAX')} icon={<Calculator size={16} />} label="Steuern" />
-        <TabButton active={activeTab === 'JOURNAL'} onClick={() => setActiveTab('JOURNAL')} icon={<History size={16} />} label="Journal & Historie" />
+        <TabButton active={activeTab === 'JOURNAL'} onClick={() => setActiveTab('JOURNAL')} icon={<History size={16} />} label="Journal" />
+        <TabButton active={activeTab === 'COMPLIANCE'} onClick={() => setActiveTab('COMPLIANCE')} icon={<Scale size={16} />} label="Due Diligence" />
       </div>
 
       {/* Content */}
       <div className="space-y-6">
         
         {/* AI ADVICE BANNER (Visible on all tabs) */}
-        {advice.length > 0 && (
+        {advice.length > 0 && activeTab !== 'COMPLIANCE' && (
           <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-4 flex gap-4">
              <div className="p-2 bg-amber-100 dark:bg-amber-800/20 rounded-lg h-fit text-amber-600 dark:text-amber-400">
                <Lightbulb size={24} />
@@ -157,7 +220,13 @@ export const ClientDetail: React.FC = () => {
                 </table>
               </Card>
             </div>
-            <div>
+            <div className="space-y-6">
+              {/* Compliance Widget in Sidebar */}
+              <ComplianceShield 
+                  score={client.trustScore} 
+                  onRunCheck={handleRunKycCheck} 
+                  isLoading={isCheckingCompliance} 
+              />
               <Card title="Haushaltsdaten">
                 <div className="space-y-4">
                    <InfoRow label="Adresse" value={client.address} />
@@ -170,6 +239,79 @@ export const ClientDetail: React.FC = () => {
           </div>
         )}
         
+        {/* COMPLIANCE TAB */}
+        {activeTab === 'COMPLIANCE' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                    <Card title="KYC / AML Status">
+                        <div className="flex items-center gap-6 mb-6">
+                            <ComplianceShield 
+                                score={client.trustScore} 
+                                onRunCheck={handleRunKycCheck} 
+                                isLoading={isCheckingCompliance} 
+                            />
+                            <div className="text-sm text-slate-500">
+                                <p className="mb-2">Der <strong>Trust Score</strong> aggregiert Daten aus öffentlichen Registern (Zefix, SECO) und internen Plausibilitäts-Checks.</p>
+                                <p>Ein hoher Score schützt Ihr Broker-Business vor Reputationsrisiken und Betrug.</p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card title="Plausibilitäts-Check (KI)">
+                        <div className="space-y-4">
+                            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                                    <TrendingUp size={16} className="text-brand-600" /> Einkommen vs. Assets
+                                </h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
+                                    Die angegebenen Vermögenswerte (Immobilien, Konten) stehen in einem realistischen Verhältnis zum geschätzten Einkommen. Keine Anomalien erkannt.
+                                </p>
+                            </div>
+                            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                                    <Search size={16} className="text-brand-600" /> Digital Footprint
+                                </h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
+                                    LinkedIn Profil gefunden (CEO bei Meier Consulting). Übereinstimmung mit Zefix-Eintrag positiv.
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
+                <div className="space-y-6">
+                    <Card title="GwG Dokumente">
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-slate-800 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <FileText size={18} className="text-slate-400" />
+                                    <span className="text-sm font-medium">Passkopie / ID</span>
+                                </div>
+                                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Vorhanden</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-slate-800 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <FileText size={18} className="text-slate-400" />
+                                    <span className="text-sm font-medium">Wirtschaftliche Berechtigung (Form A)</span>
+                                </div>
+                                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Vorhanden</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-slate-800 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                    <FileText size={18} className="text-slate-400" />
+                                    <span className="text-sm font-medium">PEP Abklärung</span>
+                                </div>
+                                <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">N/A</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <Button variant="outline" className="w-full">Dokument hochladen</Button>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        )}
+
         {activeTab === 'POLICIES' && (
             <div className="grid grid-cols-1 gap-6">
                  {policies.map(p => (
@@ -203,6 +345,7 @@ export const ClientDetail: React.FC = () => {
             </div>
         )}
 
+        {/* ... (Existing tabs WEALTH, TAX, JOURNAL unchanged) ... */}
         {activeTab === 'WEALTH' && (
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Visualization Column */}
@@ -393,9 +536,6 @@ export const ClientDetail: React.FC = () => {
                             <div key={note.id} className="group border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{note.createdAt}</span>
-                                    <button className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <X size={14} />
-                                    </button>
                                 </div>
                                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">"{note.content}"</p>
                                 <p className="text-[10px] text-brand-600 font-bold mt-2">— {note.authorName}</p>
@@ -440,9 +580,4 @@ const InfoRow = ({ label, value }: { label: string, value: string }) => (
     <span className="text-slate-500 dark:text-slate-400 text-sm">{label}</span>
     <span className="font-medium text-slate-900 dark:text-slate-100 text-sm">{value}</span>
   </div>
-);
-
-// Utility icon
-const X = ({ className, size = 20 }: any) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 );

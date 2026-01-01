@@ -40,6 +40,7 @@ import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
 import { TeamDetail } from './pages/TeamDetail';
 import { EmployeeDetail } from './pages/EmployeeDetail';
+import { MyProfile } from './pages/MyProfile'; // NEW
 import { LeadFinder } from './pages/LeadFinder';
 import { DataImport } from './pages/DataImport';
 import { WebEngine } from './pages/WebEngine'; 
@@ -148,6 +149,8 @@ const App = () => {
                     <Route path="/team" element={<ProtectedRoute><TeamOverview /></ProtectedRoute>} />
                     <Route path="/team/:id" element={<ProtectedRoute><TeamDetail /></ProtectedRoute>} />
                     <Route path="/team/member/:id" element={<ProtectedRoute><EmployeeDetail /></ProtectedRoute>} />
+                    
+                    <Route path="/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
 
                     <Route path="/broker/ai-config" element={<ProtectedRoute><BrokerAIConfig /></ProtectedRoute>} />
                     <Route path="/web-engine" element={<ProtectedRoute><WebEngine /></ProtectedRoute>} /> 

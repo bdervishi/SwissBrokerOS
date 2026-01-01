@@ -1,19 +1,29 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ShieldCheck, Server, FileText, Lock, Download, Palette, Type, Image, Sparkles } from 'lucide-react';
+import { ShieldCheck, Server, FileText, Lock, Download, Palette, Type, Image, Sparkles, Briefcase, CheckCircle, Clock } from 'lucide-react';
 import { useBranding } from '../contexts/BrandingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
 import { UserRole } from '../types';
 
 export const Settings: React.FC = () => {
-  const { branding, updateBranding, tenant } = useBranding();
+  const { branding, updateBranding, tenant, updateTenant } = useBranding();
   const { role } = useAuth();
   const { isAIEnabled, toggleAI } = useSecurity();
 
   const isBrokerAdmin = role === UserRole.BROKER_ADMIN;
+
+  // HR Config Local State
+  const handleHrUpdate = (key: string, value: any) => {
+      if(tenant && tenant.hrConfig) {
+          updateTenant({
+              hrConfig: { ...tenant.hrConfig, [key]: value }
+          });
+      }
+  };
 
   return (
     <Layout>
@@ -23,6 +33,7 @@ export const Settings: React.FC = () => {
 
         {/* White Labeling Settings (Only for Broker Admins) */}
         {isBrokerAdmin && tenant && (
+            <>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm border-l-4 border-l-brand-500">
                 <div className="flex justify-between items-start mb-4">
                      <div>
@@ -77,6 +88,44 @@ export const Settings: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* HR Automation Config */}
+            {tenant.hrConfig && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm border-l-4 border-l-emerald-500">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+                        <Briefcase className="text-emerald-600" />
+                        HR & Zeiterfassung
+                    </h3>
+                    
+                    <div className="space-y-4">
+                        <ToggleRow 
+                            label="Wochenrapporte einreichen" 
+                            description="Mitarbeiter müssen ihre Zeiten am Ende der Woche explizit zur Prüfung senden." 
+                            active={tenant.hrConfig.requireTimeSubmission}
+                            onClick={() => handleHrUpdate('requireTimeSubmission', !tenant.hrConfig?.requireTimeSubmission)}
+                        />
+                        <ToggleRow 
+                            label="Genehmigungspflicht (Vorgesetzter)" 
+                            description="Zeiten sind erst gültig, wenn sie vom Teamleiter oder Admin genehmigt wurden." 
+                            active={tenant.hrConfig.requireTimeApproval}
+                            onClick={() => handleHrUpdate('requireTimeApproval', !tenant.hrConfig?.requireTimeApproval)}
+                        />
+                        <div className="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-800">
+                            <div>
+                                <p className="font-medium text-slate-900 dark:text-slate-100">Soll-Stunden (Woche)</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Standardarbeitszeit für Vollzeit (100%).</p>
+                            </div>
+                            <input 
+                                type="number" 
+                                value={tenant.hrConfig.workWeekHours}
+                                onChange={(e) => handleHrUpdate('workWeekHours', Number(e.target.value))}
+                                className="w-20 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-center"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+            </>
         )}
         
         {/* Compliance Card */}
@@ -179,25 +228,27 @@ export const Settings: React.FC = () => {
             </div>
         </Card>
 
-        <Card title="Benachrichtigungen">
-            <div className="space-y-4">
-                <ToggleRow label="Neue Policen-Dokumente" description="Benachrichtigung wenn Klienten Dokumente hochladen." active />
-                <ToggleRow label="Fristen-Alarm" description="Erinnerung 30 Tage vor Ablauf von Kündigungsfristen." active />
-                <ToggleRow label="Wöchentlicher Report" description="Zusammenfassung der Aktivitäten per Email." active={false} />
-            </div>
-        </Card>
+        {!isBrokerAdmin && (
+            <Card title="Benachrichtigungen">
+                <div className="space-y-4">
+                    <ToggleRow label="Neue Policen-Dokumente" description="Benachrichtigung wenn Klienten Dokumente hochladen." active />
+                    <ToggleRow label="Fristen-Alarm" description="Erinnerung 30 Tage vor Ablauf von Kündigungsfristen." active />
+                    <ToggleRow label="Wöchentlicher Report" description="Zusammenfassung der Aktivitäten per Email." active={false} />
+                </div>
+            </Card>
+        )}
       </div>
     </Layout>
   );
 };
 
-const ToggleRow = ({ label, description, active }: { label: string, description: string, active: boolean }) => (
-    <div className="flex items-center justify-between py-2">
+const ToggleRow = ({ label, description, active, onClick }: { label: string, description: string, active: boolean, onClick?: () => void }) => (
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0 cursor-pointer" onClick={onClick}>
         <div>
             <p className="font-medium text-slate-900 dark:text-slate-100">{label}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
         </div>
-        <div className={`w-11 h-6 rounded-full relative transition-colors cursor-pointer ${active ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}>
+        <div className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${active ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}>
             <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${active ? 'left-6' : 'left-1'}`} />
         </div>
     </div>

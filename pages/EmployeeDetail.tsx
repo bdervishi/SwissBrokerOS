@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
@@ -6,8 +5,9 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { MOCK_USERS, MOCK_TEAMS, MOCK_TIME_ENTRIES, MOCK_CLIENTS, MOCK_POLICIES, MOCK_TAX_RETURNS } from '../constants';
-import { UserRole, EmployeeModule } from '../types';
+import { UserRole, EmployeeModule, TimeEntryStatus, TimeEntry } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useBranding } from '../contexts/BrandingContext';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { 
     ArrowLeft, 
@@ -17,41 +17,53 @@ import {
     Users, 
     ShieldAlert, 
     Calculator, 
-    Briefcase,
-    Calendar,
-    Download,
-    FileText,
-    Shield,
-    Home,
-    Landmark,
-    User as UserIcon,
-    FileSignature,
-    Wallet,
-    Heart,
-    BadgeCheck,
-    Key,
-    AlertCircle,
-    CheckCircle,
-    // Add missing Loader2 import
-    Loader2
+    Briefcase, 
+    Calendar, 
+    Download, 
+    FileText, 
+    Shield, 
+    Home, 
+    Landmark, 
+    User as UserIcon, 
+    FileSignature, 
+    Wallet, 
+    Heart, 
+    BadgeCheck, 
+    Key, 
+    AlertCircle, 
+    CheckCircle, 
+    XCircle, 
+    MapPin, 
+    CreditCard, 
+    Loader2 
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const EmployeeDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { role, adminResetPassword } = useAuth();
+    const { tenant } = useBranding();
     
+    // Check Plan for Time Tracking Feature
+    const hasTimeTracking = tenant?.plan === 'PROFESSIONAL' || tenant?.plan === 'ENTERPRISE';
+
     // Available Tab Keys
     type TabKey = 'TIME' | 'CLIENTS' | 'POLICIES' | 'TAX' | 'HR';
     
-    const [activeTab, setActiveTab] = useState<TabKey>('TIME');
+    // Default active tab based on availability
+    const [activeTab, setActiveTab] = useState<TabKey>(hasTimeTracking ? 'TIME' : 'CLIENTS');
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     const [newTempPassword, setNewTempPassword] = useState<string | null>(null);
     const [isResetting, setIsResetting] = useState(false);
+    
+    // Time Approval State
+    const [localTimeEntries, setLocalTimeEntries] = useState<TimeEntry[]>([]);
 
     // Access Control: Broker Admins or SaaS Admins
     const canAccess = role?.includes('SAAS_') || role === UserRole.BROKER_ADMIN || role === UserRole.BROKER_ADMINISTRATION;
-    const canSeeHR = role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.BROKER_ADMIN;
+    
+    // HR Visibility: Only Admins AND only if plan allows (Professional/Enterprise)
+    const canSeeHR = (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.BROKER_ADMIN) && hasTimeTracking;
 
     if (!canAccess) {
         return <Navigate to="/dashboard" />;
@@ -60,18 +72,30 @@ export const EmployeeDetail: React.FC = () => {
     const employee = MOCK_USERS.find(u => u.id === id);
     const team = MOCK_TEAMS.find(t => t.id === employee?.teamId);
 
+    // Initial Load of Time Entries
+    useEffect(() => {
+        if(employee) {
+            setLocalTimeEntries(MOCK_TIME_ENTRIES.filter(t => t.userId === employee.id));
+        }
+    }, [employee]);
+
     // Filter available tabs based on employee modules
     const getAvailableTabs = (): TabKey[] => {
-        if (!employee) return ['TIME'];
+        if (!employee) return hasTimeTracking ? ['TIME'] : ['CLIENTS'];
         
-        const tabs: TabKey[] = ['TIME'];
+        const tabs: TabKey[] = [];
+        
+        // Time tracking only if plan allows
+        if (hasTimeTracking) {
+            tabs.push('TIME');
+        }
 
-        // HR tab only for admins
+        // HR tab only for admins and if plan allows
         if (canSeeHR) tabs.push('HR');
 
         // SaaS Employees usually only see Time tracking for now
         if (employee.role.startsWith('SAAS_')) {
-            return tabs;
+            return hasTimeTracking ? ['TIME'] : []; // Fallback empty if no time tracking
         }
 
         tabs.push('CLIENTS');
@@ -89,7 +113,7 @@ export const EmployeeDetail: React.FC = () => {
 
     // Ensure active tab is valid
     useEffect(() => {
-        if (!availableTabs.includes(activeTab)) {
+        if (!availableTabs.includes(activeTab) && availableTabs.length > 0) {
             setActiveTab(availableTabs[0]);
         }
     }, [id, employee, availableTabs, activeTab]);
@@ -102,6 +126,9 @@ export const EmployeeDetail: React.FC = () => {
         setIsResetting(false);
     };
 
+    const updateTimeStatus = (entryId: string, status: TimeEntryStatus) => {
+        setLocalTimeEntries(prev => prev.map(e => e.id === entryId ? { ...e, status } : e));
+    };
 
     if (!employee) {
         return (
@@ -116,8 +143,7 @@ export const EmployeeDetail: React.FC = () => {
 
     // --- DATA AGGREGATION ---
     
-    const timeEntries = MOCK_TIME_ENTRIES.filter(t => t.userId === employee.id);
-    const totalHours = timeEntries.reduce((sum, t) => sum + t.hours, 0);
+    const totalHours = localTimeEntries.reduce((sum, t) => sum + t.hours, 0);
     
     const timeData = [
         { name: 'Mo', hours: 8.5 },
@@ -146,6 +172,15 @@ export const EmployeeDetail: React.FC = () => {
             case 'MORTGAGE': return 'Hypotheken';
             case 'TAX': return 'Steuern';
             case 'PENSION': return 'Vorsorge';
+        }
+    }
+
+    const getStatusBadge = (status: TimeEntryStatus) => {
+        switch(status) {
+            case 'DRAFT': return <span className="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Entwurf</span>;
+            case 'SUBMITTED': return <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Eingereicht</span>;
+            case 'APPROVED': return <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase flex items-center gap-1"><CheckCircle size={10}/> Genehmigt</span>;
+            case 'REJECTED': return <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase flex items-center gap-1"><AlertCircle size={10}/> Abgelehnt</span>;
         }
     }
 
@@ -211,10 +246,13 @@ export const EmployeeDetail: React.FC = () => {
                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div> Aktiv
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div className="text-slate-500 text-xs font-medium uppercase mb-1">Stunden (Woche)</div>
-                    <div className="text-2xl font-bold text-brand-600">{totalHours}h</div>
-                </div>
+                
+                {hasTimeTracking && (
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="text-slate-500 text-xs font-medium uppercase mb-1">Stunden (Woche)</div>
+                        <div className="text-2xl font-bold text-brand-600">{totalHours}h</div>
+                    </div>
+                )}
                 
                 {availableTabs.includes('CLIENTS') && (
                     <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -233,7 +271,9 @@ export const EmployeeDetail: React.FC = () => {
 
             {/* Tabs */}
             <div className="flex border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
-                <TabButton active={activeTab === 'TIME'} onClick={() => setActiveTab('TIME')} icon={<Clock size={16} />} label="Stundenraport" />
+                {availableTabs.includes('TIME') && (
+                    <TabButton active={activeTab === 'TIME'} onClick={() => setActiveTab('TIME')} icon={<Clock size={16} />} label="Stundenraport" />
+                )}
                 
                 {availableTabs.includes('HR') && (
                     <TabButton active={activeTab === 'HR'} onClick={() => setActiveTab('HR')} icon={<UserIcon size={16} />} label="Personal & Vertrag" />
@@ -255,17 +295,22 @@ export const EmployeeDetail: React.FC = () => {
             {/* Tab Content */}
             <div className="space-y-6">
                 
-                {/* 1. HR / CONTRACT FILE */}
+                {/* 1. HR / CONTRACT FILE (Enhanced) */}
                 {activeTab === 'HR' && canSeeHR && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
                         <div className="lg:col-span-2 space-y-6">
-                            <Card title="Personalien" noPadding>
+                            <Card title="Adressdaten" noPadding>
                                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    <DetailRow label="Vollständiger Name" value={`${employee.firstName} ${employee.lastName}`} />
-                                    <DetailRow label="Geburtsdatum" value={employee.birthDate || 'Nicht hinterlegt'} />
-                                    <DetailRow label="Familiensituation" value={employee.familyStatus || 'Nicht hinterlegt'} icon={<Heart size={14} className="text-pink-500"/>} />
-                                    <DetailRow label="AHV-Nummer" value={employee.ahvNumber || 'Nicht hinterlegt'} />
-                                    <DetailRow label="Nationalität" value="Schweiz" />
+                                    <DetailRow label="Strasse / Nr." value={employee.street || 'Nicht hinterlegt'} icon={<MapPin size={14} />} />
+                                    <DetailRow label="PLZ / Ort" value={`${employee.zipCode || ''} ${employee.city || ''}`} />
+                                    <DetailRow label="Land" value={employee.country || 'Schweiz'} />
+                                </div>
+                            </Card>
+
+                            <Card title="Bankverbindung" noPadding>
+                                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <DetailRow label="Bank" value={employee.bankName || 'Nicht hinterlegt'} icon={<CreditCard size={14} />} />
+                                    <DetailRow label="IBAN" value={employee.iban || 'Nicht hinterlegt'} />
                                 </div>
                             </Card>
 
@@ -281,9 +326,16 @@ export const EmployeeDetail: React.FC = () => {
                         </div>
 
                         <div className="space-y-6">
-                            <Card title="Lohn & Provision" className="border-l-4 border-l-emerald-500">
-                                <div className="space-y-6">
+                            <Card title="Personalien & Lohn" className="border-l-4 border-l-emerald-500">
+                                <div className="space-y-4">
                                     <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                            <Heart size={14} /> Zivilstand & Kinder
+                                        </p>
+                                        <p className="font-medium text-slate-900 dark:text-slate-100">{employee.familyStatus || 'Ledig'}, {employee.childrenCount || 0} Kinder</p>
+                                    </div>
+                                    
+                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                                         <p className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
                                             <Wallet size={14} /> Grundgehalt (monatlich)
                                         </p>
@@ -291,6 +343,13 @@ export const EmployeeDetail: React.FC = () => {
                                             <SensitiveData>CHF {employee.baseSalary?.toLocaleString() || '0'}.00</SensitiveData>
                                         </div>
                                         <p className="text-[10px] text-slate-400 mt-1">Exkl. 13. Monatslohn</p>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <p className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
+                                            <Shield size={14} /> AHV Nummer
+                                        </p>
+                                        <SensitiveData>{employee.ahvNumber || 'N/A'}</SensitiveData>
                                     </div>
 
                                     <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -323,12 +382,54 @@ export const EmployeeDetail: React.FC = () => {
                     </div>
                 )}
 
-                {/* 2. TIME TRACKING */}
+                {/* 2. TIME TRACKING (Enhanced with Approval) */}
                 {activeTab === 'TIME' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
                         <div className="lg:col-span-2">
+                            <Card title="Eingereichte Zeiten & Genehmigung">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-medium border-b border-slate-200 dark:border-slate-800">
+                                            <tr>
+                                                <th className="px-4 py-3">Datum</th>
+                                                <th className="px-4 py-3">Aktivität</th>
+                                                <th className="px-4 py-3 text-right">Stunden</th>
+                                                <th className="px-4 py-3">Status</th>
+                                                <th className="px-4 py-3 text-right">Aktion</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                            {localTimeEntries.map(entry => (
+                                                <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                    <td className="px-4 py-3 whitespace-nowrap">{entry.date}</td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-bold text-sm">{entry.activity}</div>
+                                                        <div className="text-xs text-slate-500">{entry.description}</div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-mono">{entry.hours}</td>
+                                                    <td className="px-4 py-3">{getStatusBadge(entry.status)}</td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        {entry.status === 'SUBMITTED' && (
+                                                            <div className="flex justify-end gap-2">
+                                                                <button onClick={() => updateTimeStatus(entry.id, 'APPROVED')} className="p-1 hover:bg-emerald-100 text-emerald-600 rounded" title="Genehmigen">
+                                                                    <CheckCircle size={16} />
+                                                                </button>
+                                                                <button onClick={() => updateTimeStatus(entry.id, 'REJECTED')} className="p-1 hover:bg-red-100 text-red-600 rounded" title="Ablehnen">
+                                                                    <XCircle size={16} />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Card>
+                        </div>
+                        <div className="space-y-6">
                             <Card title="Wochenübersicht">
-                                <div className="h-[300px] w-full mt-4">
+                                <div className="h-[200px] w-full mt-4">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={timeData}>
                                             <XAxis dataKey="name" stroke="#94a3b8" />
@@ -340,20 +441,6 @@ export const EmployeeDetail: React.FC = () => {
                                 </div>
                             </Card>
                         </div>
-                        <Card title="Letzte Aktivitäten">
-                            <div className="space-y-4">
-                                {timeEntries.map(entry => (
-                                    <div key={entry.id} className="border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <p className="font-bold text-sm text-slate-900 dark:text-slate-100">{entry.activity}</p>
-                                            <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-mono">{entry.hours}h</span>
-                                        </div>
-                                        <p className="text-xs text-slate-500">{entry.date}</p>
-                                        <p className="text-xs text-slate-400 mt-1 italic">{entry.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
                     </div>
                 )}
 

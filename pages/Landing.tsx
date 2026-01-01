@@ -31,8 +31,17 @@ import {
   X,
   ShieldAlert,
   UserCheck,
-  // Fixed: added missing Building2 icon import
-  Building2
+  Building2,
+  FileText,
+  Smartphone,
+  User,
+  Newspaper,
+  Star,
+  HelpCircle,
+  BookOpen,
+  Layout,
+  Award,
+  Zap
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { BackToTop } from '../components/ui/BackToTop';
@@ -42,7 +51,8 @@ import { StaticPage, MegaMenuCategory } from '../types';
 
 // Helper to map icon names to Lucide components
 const IconMap: Record<string, any> = {
-  Users, BrainCircuit, Calculator, ShieldCheck, Database, Blocks, Handshake, Info, Briefcase, DollarSign
+  Users, BrainCircuit, Calculator, ShieldCheck, Database, Blocks, Handshake, Info, Briefcase, DollarSign,
+  FileText, Smartphone, User, Building2, TrendingUp, Newspaper, Star, HelpCircle, Mail, BookOpen, Layout, Award, Zap
 };
 
 export const Landing: React.FC = () => {
@@ -86,8 +96,13 @@ export const Landing: React.FC = () => {
     const storedPages = localStorage.getItem('app_static_pages');
     if (storedPages) setStaticPages(JSON.parse(storedPages));
     
+    // We prefer the constants for navigation unless overridden to ensure structure restoration
     const storedNav = localStorage.getItem('app_navigation');
-    if (storedNav) setNavigation(JSON.parse(storedNav));
+    if (storedNav) {
+        setNavigation(JSON.parse(storedNav));
+    } else {
+        setNavigation(MOCK_NAVIGATION);
+    }
   }, []);
 
   const toggleTheme = () => {
@@ -404,7 +419,7 @@ export const Landing: React.FC = () => {
                 {getStaticLink('datenschutz')}
                 <Link to="/legal/terms" className="hover:text-brand-600 dark:hover:text-slate-300">AGB</Link>
             </div>
-            <p className="font-medium">© {new Date().getFullYear()} SwissBroker OS (Fintech Switzerland AG). Alle Rechte vorbehalten.</p>
+            <p className="font-medium">© {new Date().getFullYear()} SwissBroker OS. Alle Rechte vorbehalten.</p>
           </div>
         </div>
       </footer>

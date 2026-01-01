@@ -1,5 +1,4 @@
 
-
 /**
  * Enums representing Database Enums
  */
@@ -156,6 +155,8 @@ export interface Team {
     leaderId?: string; // Links to User
 }
 
+export type TimeEntryStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+
 export interface TimeEntry {
     id: string;
     userId: string;
@@ -164,6 +165,8 @@ export interface TimeEntry {
     activity: string; // e.g., "Kundenberatung", "Administration", "Reisezeit"
     description?: string;
     relatedClientId?: string;
+    status: TimeEntryStatus; // NEW
+    rejectionReason?: string; // NEW
 }
 
 export interface User {
@@ -185,13 +188,42 @@ export interface User {
 
   // HR Specific Fields
   birthDate?: string;
-  familyStatus?: string; // e.g. "Ledig", "Verheiratet, 2 Kinder"
+  
+  // Address
+  street?: string;
+  zipCode?: string;
+  city?: string;
+  country?: string;
+
+  // Personal
+  familyStatus?: string; // e.g. "Ledig", "Verheiratet"
+  childrenCount?: number;
+  
+  // Financial / HR
   ahvNumber?: string;
+  bankName?: string;
+  iban?: string;
   entryDate?: string;
   noticePeriod?: string; // e.g. "3 Monate"
   employmentPercentage?: number; // e.g 100
   baseSalary?: number;
   bonusAgreement?: string;
+}
+
+// DUE DILIGENCE TYPES
+export interface ComplianceCheck {
+    id: string;
+    checkName: string; // e.g. "PEP Check", "Zefix Validation"
+    status: 'PASSED' | 'WARNING' | 'FAILED' | 'PENDING';
+    lastChecked: string;
+    details?: string;
+}
+
+export interface TrustScore {
+    score: number; // 0-100
+    level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    checks: ComplianceCheck[];
+    lastUpdated: string;
 }
 
 // Added Client interface
@@ -209,6 +241,8 @@ export interface Client {
   taxDomicile: string;
   avatarUrl: string;
   tenantId?: string;
+  trustScore?: TrustScore; // NEW
+  companyName?: string; // NEW for B2B Clients
 }
 
 // Added Policy interface
@@ -228,6 +262,8 @@ export interface Policy {
   coverageDetails?: string[];
   initialCommission?: number;
   liabilityDurationMonths?: number;
+  marketBenchmarkDelta?: number; // NEW: % difference to market average
+  contractFlags?: string[]; // NEW: "Fine Print" warnings
 }
 
 // Added AIAdvice interface
@@ -367,6 +403,13 @@ export interface BrandingConfig {
   logoUrl?: string;
 }
 
+// HR Configuration for Tenants
+export interface HrConfig {
+    requireTimeSubmission: boolean; // Employees must "submit" times
+    requireTimeApproval: boolean; // Managers must "approve" times
+    workWeekHours: number; // e.g. 42
+}
+
 // Added Tenant interface
 export interface Tenant {
   id: string;
@@ -377,7 +420,13 @@ export interface Tenant {
   mrr: number;
   joinedDate: string;
   branding: BrandingConfig;
+  hrConfig?: HrConfig; // NEW
   activeAddons: string[];
+  complianceStats?: { // NEW
+      ciceroNumber?: string;
+      finmaStatus: 'REGISTERED' | 'WARNING' | 'UNKNOWN';
+      churnRisk: 'LOW' | 'MEDIUM' | 'HIGH';
+  };
 }
 
 // Added SaaSPackage interface

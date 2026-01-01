@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
@@ -23,7 +24,11 @@ import {
   Clock,
   Lock,
   Sparkles,
-  Loader2
+  Loader2,
+  Scale,
+  TrendingDown,
+  TrendingUp,
+  Search
 } from 'lucide-react';
 
 export const PolicyDetail: React.FC = () => {
@@ -33,11 +38,15 @@ export const PolicyDetail: React.FC = () => {
   const { isAIEnabled } = useSecurity();
 
   const activeTabDefault = 'DETAILS';
-  const [activeTab, setActiveTab] = useState<'DETAILS' | 'DOCUMENTS' | 'CLAIMS'>(activeTabDefault);
+  const [activeTab, setActiveTab] = useState<'DETAILS' | 'DOCUMENTS' | 'CLAIMS' | 'REVIEW'>('DETAILS');
   
   // AI Summary State
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+  // Contract Review State
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewResult, setReviewResult] = useState<string | null>(null);
 
   const policy = MOCK_POLICIES.find(p => p.id === id);
   
@@ -100,6 +109,41 @@ export const PolicyDetail: React.FC = () => {
     } finally {
       setIsGeneratingSummary(false);
     }
+  };
+
+  const handleContractReview = async () => {
+      if (!policy || !process.env.API_KEY) return;
+      setIsReviewing(true);
+      setReviewResult(null);
+
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const prompt = `
+            Führe eine Due Diligence Prüfung (Contract Review) für diese Police durch.
+            Suche nach "Red Flags" oder unüblichen Klauseln.
+            
+            Police: ${JSON.stringify(policy)}
+            
+            Prüfpunkte:
+            1. Selbstbehalt im Marktvergleich (Ist er ungewöhnlich hoch?)
+            2. Kündigungsfrist (Standard ist 3 Monate, alles darüber ist eine Warnung).
+            3. Laufzeit (Verträge > 3 Jahre sind oft nachteilig).
+            
+            Gib das Ergebnis als HTML-Liste zurück. Markiere kritische Punkte mit einem ⚠️ Emoji.
+          `;
+
+          const response = await ai.models.generateContent({
+              model: 'gemini-3-flash-preview',
+              contents: prompt,
+          });
+
+          setReviewResult(response.text || "Prüfung fehlgeschlagen.");
+      } catch (e) {
+          console.error("Review Error", e);
+          setReviewResult("Fehler bei der KI-Analyse.");
+      } finally {
+          setIsReviewing(false);
+      }
   };
 
   // Only show AI button if User is Client AND AI is enabled in Settings
@@ -168,6 +212,7 @@ export const PolicyDetail: React.FC = () => {
         <TabButton active={activeTab === 'DETAILS'} onClick={() => setActiveTab('DETAILS')} icon={<FileText size={16} />} label="Vertragsdetails" />
         <TabButton active={activeTab === 'DOCUMENTS'} onClick={() => setActiveTab('DOCUMENTS')} icon={<FileBox size={16} />} label={`Dokumente (${documents.length})`} />
         <TabButton active={activeTab === 'CLAIMS'} onClick={() => setActiveTab('CLAIMS')} icon={<Activity size={16} />} label={`Schadenfälle (${claims.length})`} />
+        {role !== UserRole.CLIENT && <TabButton active={activeTab === 'REVIEW'} onClick={() => setActiveTab('REVIEW')} icon={<Scale size={16} />} label="Due Diligence" />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -321,6 +366,69 @@ export const PolicyDetail: React.FC = () => {
                    <Button className="w-full">Neuen Schaden melden</Button>
                 </div>
              </Card>
+          )}
+
+          {activeTab === 'REVIEW' && (
+              <div className="space-y-6">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4 flex gap-4">
+                      <Search className="text-indigo-600 shrink-0" />
+                      <div>
+                          <h3 className="font-bold text-indigo-900 dark:text-indigo-200">AI Contract Review</h3>
+                          <p className="text-sm text-indigo-800 dark:text-indigo-300">
+                              Prüfen Sie das Kleingedruckte und vergleichen Sie die Konditionen mit dem Marktstandard.
+                          </p>
+                      </div>
+                  </div>
+
+                  <Card title="Automatische Prüfung (Due Diligence)">
+                      {!reviewResult ? (
+                          <div className="text-center py-8">
+                              <p className="text-slate-500 mb-4">Lassen Sie die KI nach kritischen Klauseln und Markt-Anomalien suchen.</p>
+                              <Button 
+                                onClick={handleContractReview} 
+                                disabled={isReviewing}
+                                icon={isReviewing ? <Loader2 className="animate-spin" /> : <Search />}
+                              >
+                                  {isReviewing ? 'Prüfe Vertrag...' : 'Analyse starten'}
+                              </Button>
+                          </div>
+                      ) : (
+                          <div className="prose dark:prose-invert prose-sm">
+                              <div dangerouslySetInnerHTML={{ __html: reviewResult }} />
+                              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                  <Button size="sm" variant="outline" onClick={() => setReviewResult(null)}>Reset</Button>
+                              </div>
+                          </div>
+                      )}
+                  </Card>
+
+                  <Card title="Markt-Benchmark (Preis/Leistung)">
+                      <div className="flex items-center justify-between mb-4">
+                          <span className="text-sm font-medium">Prämie vs. Markt</span>
+                          {policy.marketBenchmarkDelta && (
+                              <span className={`text-sm font-bold ${policy.marketBenchmarkDelta < 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                  {policy.marketBenchmarkDelta > 0 ? '+' : ''}{policy.marketBenchmarkDelta}%
+                              </span>
+                          )}
+                      </div>
+                      <div className="relative h-4 bg-slate-200 dark:bg-slate-700 rounded-full mb-2">
+                          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-400"></div>
+                          {/* Marker based on delta */}
+                          <div 
+                            className={`absolute top-0 bottom-0 w-2 rounded-full ${policy.marketBenchmarkDelta && policy.marketBenchmarkDelta < 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                            style={{ 
+                                left: `${50 + (policy.marketBenchmarkDelta || 0)}%`, 
+                                transform: 'translateX(-50%)'
+                            }}
+                          ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-400">
+                          <span>Günstiger</span>
+                          <span>Markt-Schnitt</span>
+                          <span>Teurer</span>
+                      </div>
+                  </Card>
+              </div>
           )}
 
         </div>

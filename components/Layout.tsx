@@ -47,7 +47,8 @@ import {
   Monitor,
   ShoppingBag,
   Rocket,
-  Power // Added for Maintenance Link
+  Power,
+  User // Added for Profile Link
 } from 'lucide-react';
 
 interface NavItem {
@@ -248,6 +249,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     brokerSections.push({
         title: "Settings",
         items: [
+            { name: 'Mein Profil & HR', path: '/profile', icon: <User size={20} /> }, // NEW for Agents
             { name: 'Mein Abo', path: '/plans', icon: <Package size={20} /> },
             { name: 'Integrationen', path: '/integrations', icon: <Blocks size={20} /> },
             { name: 'Einstellungen', path: '/settings', icon: <Settings size={20} /> },
