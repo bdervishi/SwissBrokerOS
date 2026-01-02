@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
-import { MOCK_CLIENTS, MOCK_EVENTS, MOCK_COMMISSIONS, MOCK_POLICIES } from '../constants';
+import { MOCK_CLIENTS, MOCK_EVENTS, MOCK_COMMISSIONS, MOCK_POLICIES, MOCK_TENANTS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, CommissionStatus, EventType, PolicyStatus } from '../types';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -21,7 +22,12 @@ import {
   Server,
   Shield,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Target,
+  Zap,
+  PhoneCall,
+  CheckCircle2,
+  Trophy
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 
@@ -42,6 +48,13 @@ const saasGrowthData = [
     { name: 'Apr', value: 190 },
     { name: 'Mai', value: 240 },
     { name: 'Jun', value: 310 },
+];
+
+const hunterPipelineData = [
+    { stage: 'Prospects', count: 45, value: 4500 }, // CHF MRR Potential
+    { stage: 'Demo', count: 12, value: 3800 },
+    { stage: 'Contract', count: 4, value: 1200 },
+    { stage: 'Won (MTD)', count: 2, value: 450 },
 ];
 
 export const Dashboard: React.FC = () => {
@@ -96,6 +109,112 @@ export const Dashboard: React.FC = () => {
                           </div>
                       </div>
                   </Card>
+              </div>
+          </Layout>
+      );
+  }
+
+  // --- HUNTER (SALES) DASHBOARD ---
+  if (role === UserRole.SAAS_ACQUISITION) {
+      return (
+          <Layout>
+              <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <Target className="text-red-600" /> 
+                          Hunter Cockpit
+                      </h1>
+                      <p className="text-slate-500 dark:text-slate-400">Jage den Schweizer Brokermarkt. Fokus: Neukunden-Akquise.</p>
+                  </div>
+                  <div className="flex gap-3">
+                      <Link to="/leads">
+                          <Button className="bg-red-600 hover:bg-red-700 text-white border-none shadow-lg shadow-red-500/20" icon={<Zap size={18}/>}>
+                              Broker Radar starten
+                          </Button>
+                      </Link>
+                      <Link to="/saas/demo">
+                          <Button variant="outline" icon={<Briefcase size={18}/>}>Demo Center</Button>
+                      </Link>
+                  </div>
+              </div>
+
+              {/* Sales KPIs */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                  <KPICard title="Pipeline Value (MRR)" value="CHF 9,950" change="+12% WoM" icon={<TrendingUp className="text-emerald-500"/>} />
+                  <KPICard title="Demos Scheduled" value="8" change="Diese Woche" icon={<Calendar className="text-blue-500"/>} />
+                  <KPICard title="Hot Leads" value="12" change="High Priority" icon={<Zap className="text-amber-500"/>} highlight />
+                  <KPICard title="Provision (Q2)" value="CHF 4,200" change="On Track" icon={<Trophy className="text-yellow-500"/>} />
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  
+                  {/* Pipeline Funnel */}
+                  <div className="lg:col-span-2 space-y-6">
+                      <Card title="Sales Pipeline (B2B)">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                              {hunterPipelineData.map((stage, idx) => (
+                                  <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-center relative overflow-hidden group hover:border-red-200 dark:hover:border-red-900 transition-colors">
+                                      <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{stage.stage}</div>
+                                      <div className="text-2xl font-black text-slate-900 dark:text-white mb-1">{stage.count}</div>
+                                      <div className="text-xs font-medium text-emerald-600">CHF {stage.value}</div>
+                                      <div className="absolute bottom-0 left-0 h-1 bg-red-500 transition-all duration-500" style={{width: `${(idx+1)*25}%`}}></div>
+                                  </div>
+                              ))}
+                          </div>
+                          
+                          <h4 className="font-bold text-sm mb-4">Hot Prospects (Action Required)</h4>
+                          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                              {[
+                                  { name: 'Zürichsee Finanz AG', status: 'Demo geplant', date: 'Morgen 14:00', prob: '80%' },
+                                  { name: 'Berner Oberland Treuhand', status: 'Rückruf', date: 'Heute 16:00', prob: '60%' },
+                                  { name: 'Geneva Risk Solutions', status: 'Offerte gesendet', date: 'Vor 2 Tagen', prob: '90%' },
+                              ].map((prospect, i) => (
+                                  <div key={i} className="py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/50 -mx-4 px-4 transition-colors cursor-pointer">
+                                      <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-xs">{prospect.name.substring(0,1)}</div>
+                                          <div>
+                                              <p className="font-bold text-sm text-slate-900 dark:text-slate-100">{prospect.name}</p>
+                                              <p className="text-xs text-slate-500">{prospect.status} • {prospect.date}</p>
+                                          </div>
+                                      </div>
+                                      <div className="text-right">
+                                          <div className="text-xs font-bold text-emerald-600">{prospect.prob} Win</div>
+                                          <Button size="sm" variant="ghost" className="h-6 text-xs">Aktion</Button>
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      </Card>
+                  </div>
+
+                  {/* Sidebar Tools */}
+                  <div className="space-y-6">
+                      <div className="bg-gradient-to-br from-red-600 to-orange-700 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                          <div className="relative z-10">
+                              <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><PhoneCall size={20}/> Call Blitz</h3>
+                              <p className="text-red-100 text-sm mb-4">Du hast noch 5 Anrufe offen, um dein Tagesziel zu erreichen.</p>
+                              <Link to="/saas/call-agent">
+                                  <Button size="sm" className="bg-white text-red-600 hover:bg-red-50 border-none font-bold w-full">
+                                      AI Call Agent öffnen
+                                  </Button>
+                              </Link>
+                          </div>
+                          <Target className="absolute -right-6 -bottom-6 w-32 h-32 text-red-900 opacity-30" />
+                      </div>
+
+                      <Card title="Quick Links">
+                          <div className="space-y-2">
+                              <Link to="/saas/pitch" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded"><FileText size={16}/></div>
+                                  <span className="text-sm font-medium">Pitch Deck (Investor)</span>
+                              </Link>
+                              <Link to="/saas/case-studies" className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded"><CheckCircle2 size={16}/></div>
+                                  <span className="text-sm font-medium">Case Studies</span>
+                              </Link>
+                          </div>
+                      </Card>
+                  </div>
               </div>
           </Layout>
       );
@@ -370,16 +489,16 @@ export const Dashboard: React.FC = () => {
   );
 };
 
-const KPICard = ({ title, value, change, icon, urgent }: any) => (
-  <div className={`bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm flex items-start justify-between transition-shadow hover:shadow-md ${urgent ? 'border-amber-200 dark:border-amber-900/50' : 'border-slate-200 dark:border-slate-800'}`}>
+const KPICard = ({ title, value, change, icon, urgent, highlight }: any) => (
+  <div className={`p-6 rounded-xl border shadow-sm flex items-start justify-between transition-shadow hover:shadow-md ${urgent ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-900/50' : highlight ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/50' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
     <div>
       <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{title}</p>
       <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{value}</h3>
-      <p className={`text-xs font-medium ${urgent ? 'text-amber-600' : 'text-emerald-600'}`}>
+      <p className={`text-xs font-medium ${urgent ? 'text-amber-600' : highlight ? 'text-red-600' : 'text-emerald-600'}`}>
         {change}
       </p>
     </div>
-    <div className={`p-3 rounded-lg ${urgent ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
+    <div className={`p-3 rounded-lg ${urgent ? 'bg-amber-100 dark:bg-amber-900/30' : highlight ? 'bg-red-100 dark:bg-red-900/30' : 'bg-slate-50 dark:bg-slate-800'}`}>
       {icon}
     </div>
   </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
@@ -45,13 +46,14 @@ import {
     Quote,
     Scale,
     ShieldAlert,
-    // Add missing Search icon import
-    Search
+    Search,
+    BarChart3
 } from 'lucide-react';
 import { OnepagerView, OnepagerContent } from '../components/ui/OnepagerView';
 
 type OfferStep = 'LEAD' | 'CONFIG' | 'REVIEW' | 'SENDING';
 
+// --- ONEPAGERS (Existing) ---
 const ONEPAGERS: OnepagerContent[] = [
     {
         id: 'op_broker',
@@ -106,7 +108,6 @@ const ONEPAGERS: OnepagerContent[] = [
             { title: 'Vertical SaaS Moat', desc: 'Tief integrierte Compliance-Logik.', icon: <ShieldCheck size={20}/> },
             { title: 'AI Moat', desc: 'Eigene Modelle für Schweizer AVB.', icon: <Cpu size={20}/> },
             { title: 'Expansion Ready', desc: 'Modularer Aufbau (Add-ons).', icon: <Plus size={20}/> },
-            // Fix: Changed property 'value' to 'desc' to match OnepagerContent interface
             { title: 'TAM (CH)', desc: '1.2B', icon: <Globe size={20}/> }
         ],
         stats: [
@@ -122,10 +123,6 @@ const ONEPAGERS: OnepagerContent[] = [
 export const SaaSDemo: React.FC = () => {
     const { role, impersonateUser } = useAuth();
     
-    // UI Modals
-    const [isGuideOpen, setIsGuideOpen] = useState(false);
-    const [isPricesOpen, setIsPricesOpen] = useState(false);
-    
     // Onepager state
     const [selectedOnepager, setSelectedOnepager] = useState<OnepagerContent | null>(null);
 
@@ -134,17 +131,19 @@ export const SaaSDemo: React.FC = () => {
     const [handlingResult, setHandlingResult] = useState<string | null>(null);
     const [isHandlingLoading, setIsHandlingLoading] = useState(false);
 
-    // Offer Wizard State
-    const [isOfferWizardOpen, setIsOfferWizardOpen] = useState(false);
-    const [offerStep, setOfferStep] = useState<OfferStep>('LEAD');
-    const [offerData, setOfferData] = useState({
-        leadName: '',
-        company: '',
-        selectedPlan: 'Professional',
-        price: 249,
-        addOns: [] as string[],
-        notes: ''
-    });
+    // ROI Calculator State (Live Sales Tool)
+    const [calcUsers, setCalcUsers] = useState(5);
+    const [calcClients, setCalcClients] = useState(250);
+    const [calcRevenue, setCalcRevenue] = useState(850000); // Annual Broker Revenue
+
+    // ROI Logic
+    const hoursSavedPerEmployee = 4; // per week
+    const hourlyRateInternal = 120; // CHF
+    const weeklySavings = calcUsers * hoursSavedPerEmployee * hourlyRateInternal;
+    const annualSavings = weeklySavings * 50;
+    const softwareCost = (calcUsers * 249) * 12; // Pro plan approx
+    const netBenefit = annualSavings - softwareCost;
+    const roiPercent = (netBenefit / softwareCost) * 100;
 
     if (role !== UserRole.SAAS_SUPER_ADMIN && role !== UserRole.SAAS_SALES && role !== UserRole.SAAS_ACQUISITION) {
         return <Navigate to="/dashboard" />;
@@ -215,10 +214,10 @@ export const SaaSDemo: React.FC = () => {
             <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <Play className="text-brand-600" /> Demo Center
+                        <Play className="text-brand-600" /> Demo Center & Sales Tools
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400">
-                        Inklusive neuer Module: Compliance Shield & HR Operations.
+                        Inklusive Live-ROI Rechner und Einwand-Behandlung.
                     </p>
                 </div>
                 <Link to="/saas/pitch">
@@ -226,6 +225,59 @@ export const SaaSDemo: React.FC = () => {
                         Vollbild Pitch starten
                     </Button>
                 </Link>
+            </div>
+
+            {/* ROI CALCULATOR - NEW */}
+            <div className="mb-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                    <Calculator size={200} />
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10">
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <BarChart3 className="text-emerald-500" /> Live ROI Rechner
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-2">Nutzen Sie diesen Rechner live im Gespräch mit dem Prospect.</p>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold uppercase text-slate-400">Anzahl Mitarbeiter</label>
+                                <div className="flex items-center gap-4 mt-1">
+                                    <input type="range" min="1" max="50" value={calcUsers} onChange={e => setCalcUsers(Number(e.target.value))} className="flex-1" />
+                                    <span className="font-mono font-bold w-12 text-right">{calcUsers}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold uppercase text-slate-400">Anzahl Klienten</label>
+                                <div className="flex items-center gap-4 mt-1">
+                                    <input type="range" min="50" max="5000" step="50" value={calcClients} onChange={e => setCalcClients(Number(e.target.value))} className="flex-1" />
+                                    <span className="font-mono font-bold w-12 text-right">{calcClients}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center">
+                            <div className="text-xs font-black uppercase text-slate-400 mb-2">Zeitersparnis / Jahr</div>
+                            <div className="text-3xl font-black text-slate-900 dark:text-white">{(weeklySavings * 50 / hourlyRateInternal).toLocaleString('de-CH', {maximumFractionDigits: 0})} Std.</div>
+                            <div className="text-xs text-emerald-600 font-bold mt-2">~{hoursSavedPerEmployee}h pro MA/Woche</div>
+                        </div>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center border-2 border-emerald-500/20">
+                            <div className="text-xs font-black uppercase text-slate-400 mb-2">Netto Vorteil / Jahr</div>
+                            <div className="text-3xl font-black text-emerald-600">CHF {(netBenefit/1000).toFixed(1)}k</div>
+                            <div className="text-xs text-emerald-600 font-bold mt-2">Nach Softwarekosten</div>
+                        </div>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-2xl text-center">
+                            <div className="text-xs font-black uppercase text-slate-400 mb-2">ROI Faktor</div>
+                            <div className="text-3xl font-black text-blue-600">{roiPercent.toFixed(0)}%</div>
+                            <div className="text-xs text-blue-600 font-bold mt-2">Amortisation in {Math.round(12 / (roiPercent/100))} Wochen</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* PERSONAS GRID */}

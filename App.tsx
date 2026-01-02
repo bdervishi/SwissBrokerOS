@@ -42,6 +42,7 @@ import { TeamDetail } from './pages/TeamDetail';
 import { EmployeeDetail } from './pages/EmployeeDetail';
 import { MyProfile } from './pages/MyProfile'; // NEW
 import { LeadFinder } from './pages/LeadFinder';
+import { SocialSelling } from './pages/SocialSelling'; // NEW
 import { DataImport } from './pages/DataImport';
 import { WebEngine } from './pages/WebEngine'; 
 import { CallAgent } from './pages/CallAgent';
@@ -114,6 +115,7 @@ const App = () => {
                     
                     <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
                     <Route path="/leads" element={<ProtectedRoute><LeadFinder /></ProtectedRoute>} />
+                    <Route path="/social-selling" element={<ProtectedRoute><SocialSelling /></ProtectedRoute>} /> 
                     <Route path="/import" element={<ProtectedRoute><DataImport /></ProtectedRoute>} />
                     <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
                     

@@ -339,6 +339,7 @@ export interface User {
     street?: string;
     zipCode?: string;
     city?: string;
+    country?: string;
     birthDate?: string;
     familyStatus?: string;
     childrenCount?: number;
@@ -666,4 +667,13 @@ export interface CaseStudy {
     stats: { label: string; label_de: string; value: string; }[];
     image_prompt: string;
     createdAt: string;
+}
+
+/* NEW: Objection Types */
+export interface SalesObjection {
+    id: string;
+    category: 'PRICE' | 'COMPETITION' | 'TIMING' | 'TRUST' | 'NEED';
+    label: string;
+    commonPhrases: string[];
+    counterTactics: string[];
 }

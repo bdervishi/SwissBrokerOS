@@ -48,7 +48,8 @@ import {
   ShoppingBag,
   Rocket,
   Power,
-  User // Added for Profile Link
+  User,
+  Linkedin // Added Linkedin Icon
 } from 'lucide-react';
 
 interface NavItem {
@@ -126,6 +127,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 title: "Sales Tools",
                 items: [
                     { name: 'Lead Radar (B2B)', path: '/leads', icon: <Target size={20} /> },
+                    { name: 'Social Selling (LI)', path: '/social-selling', icon: <Linkedin size={20} /> }, // NEW LINK
                     { name: 'Onboarding Links', path: '/saas/demo', icon: <Play size={20} /> },
                 ]
             },
@@ -157,6 +159,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 title: "Growth & Marketing",
                 items: [
                     { name: 'Broker Radar', path: '/leads', icon: <Target size={20} /> },
+                    { name: 'Social Selling', path: '/social-selling', icon: <Linkedin size={20} /> }, // NEW LINK
                     { name: 'AI Call Agent', path: '/saas/call-agent', icon: <PhoneCall size={20} /> },
                     { name: 'Newsletter', path: '/saas/newsletter', icon: <MailCheck size={20} /> },
                     { name: 'Success Stories', path: '/saas/case-studies', icon: <Rocket size={20} /> }, 
