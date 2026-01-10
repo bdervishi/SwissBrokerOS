@@ -4,7 +4,7 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { GoogleGenAI } from "@google/genai";
+import { generateContentWithRetry } from '../services/aiService';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, Lead, LeadContact, LeadActivity } from '../types';
 import { Navigate } from 'react-router-dom';
@@ -75,12 +75,10 @@ export const LeadFinder: React.FC = () => {
     const selectedLead = useMemo(() => leads.find(l => l.id === selectedLeadId), [selectedLeadId, leads]);
 
     const handleSearch = async () => {
-        if (!process.env.API_KEY) return;
         setIsSearching(true);
         setSearchResults([]);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             let prompt = "";
 
             if (searchMode === 'COMPANIES') {
@@ -122,20 +120,22 @@ export const LeadFinder: React.FC = () => {
                 `;
             }
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-pro-preview',
-                contents: prompt,
-                config: { 
+            // Use the new Rate-Limit protected service
+            const response = await generateContentWithRetry(
+                'gemini-3-pro-preview',
+                prompt,
+                { 
                     tools: [{ googleSearch: {} }], 
                     responseMimeType: 'application/json' 
                 }
-            });
+            );
 
             if (response.text) {
                 setSearchResults(JSON.parse(response.text));
             }
         } catch (e) { 
-            console.error(e); 
+            console.error("Search failed after retries:", e);
+            // Optional: Show UI Error Toast here
         } finally { 
             setIsSearching(false); 
         }
@@ -173,14 +173,22 @@ export const LeadFinder: React.FC = () => {
     };
 
     const handleObjectionHelp = async () => {
-        if (!objection.trim() || !process.env.API_KEY) return;
+        if (!objection.trim()) return;
         setIsAiLoading(true);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const context = `Einwand: "${objection}". Kontext: B2B Sales (SwissBroker OS). Gib 3 kurze, knackige Antworten.`;
-            const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: context });
-            setAiTip(response.text);
-        } catch (e) { console.error(e); } finally { setIsAiLoading(false); }
+            // Using protected service here too
+            const response = await generateContentWithRetry(
+                'gemini-3-flash-preview', 
+                context
+            );
+            setAiTip(response.text || "Keine Antwort generiert.");
+        } catch (e) { 
+            console.error(e); 
+            setAiTip("Service überlastet. Bitte warten.");
+        } finally { 
+            setIsAiLoading(false); 
+        }
     };
 
     if (role === UserRole.CLIENT) return <Navigate to="/dashboard" />;

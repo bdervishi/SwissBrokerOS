@@ -164,7 +164,7 @@ export const WebEngine: React.FC = () => {
             if (!sections.find(s => s.type === 'ABOUT')) {
                 setSections(prev => [...prev, { 
                     id: 'sec_about_imported', 
-                    type: 'ABOUT', 
+                    type: 'ABOUT' as WebSectionType, 
                     title: 'Über Uns', 
                     content: 'Wir sind Ihr unabhängiger Partner in der Region.', 
                     isVisible: true, 

@@ -165,7 +165,9 @@ export const SaaSPitch: React.FC = () => {
             }
         };
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
     }, [currentIdx, persona]);
 
     const nextSlide = () => {
