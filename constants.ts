@@ -409,9 +409,145 @@ export const MOCK_BANK_OFFERS: BankOffer[] = [
     { id: 'bo4', bankName: 'Gowago', productName: 'All-in-One', interestRateRange: [4.2, 6.5], maxDuration: 48, commissionPercentage: 2.0, type: CreditType.LEASING },
 ];
 
+// --- UPDATED STATIC PAGES WITH CONTENT FOR CMS ---
 export const MOCK_STATIC_PAGES: StaticPage[] = [
-    { id: 'p_imprint', slug: 'impressum', isPublished: true, lastUpdated: '01.01.2024', title: { de: 'Impressum', en: 'Imprint', fr: 'Empreinte', it: 'Impronta' }, content: { de: '<h1>Impressum</h1><p>Angaben gemäss...</p>', en: '<h1>Imprint</h1>', fr: '<h1>Empreinte</h1>', it: '<h1>Impronta</h1>' } },
-    { id: 'p_privacy', slug: 'datenschutz', isPublished: true, lastUpdated: '01.01.2024', title: { de: 'Datenschutz', en: 'Privacy', fr: 'Confidentialité', it: 'Privacy' }, content: { de: '<h1>Datenschutz</h1><p>Wir nehmen...</p>', en: '<h1>Privacy</h1>', fr: '<h1>Confidentialité</h1>', it: '<h1>Privacy</h1>' } },
+    { 
+        id: 'p_imprint', 
+        slug: 'impressum', 
+        isPublished: true, 
+        lastUpdated: '01.01.2024', 
+        title: { de: 'Impressum', en: 'Imprint', fr: 'Empreinte', it: 'Impronta' }, 
+        content: { de: '<h1>Impressum</h1><p>Angaben gemäss...</p>', en: '<h1>Imprint</h1>', fr: '<h1>Empreinte</h1>', it: '<h1>Impronta</h1>' } 
+    },
+    { 
+        id: 'p_privacy', 
+        slug: 'datenschutz', 
+        isPublished: true, 
+        lastUpdated: '01.01.2024', 
+        title: { de: 'Datenschutz', en: 'Privacy', fr: 'Confidentialité', it: 'Privacy' }, 
+        content: { de: '<h1>Datenschutz</h1><p>Wir nehmen...</p>', en: '<h1>Privacy</h1>', fr: '<h1>Confidentialité</h1>', it: '<h1>Privacy</h1>' } 
+    },
+    { 
+        id: 'p_contact', 
+        slug: 'contact', 
+        isPublished: true, 
+        lastUpdated: '01.06.2024', 
+        title: { de: 'Kontakt', en: 'Contact', fr: 'Contact', it: 'Contatto' }, 
+        content: { 
+            de: `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-12">
+                    <div>
+                        <h2 class="text-3xl font-black mb-6 tracking-tight">Sprechen wir über Ihre Zukunft.</h2>
+                        <p class="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                            Ob Sie eine Frage zu unseren Funktionen haben, eine Partnerschaft anstreben oder einfach nur "Hallo" sagen wollen – wir sind für Sie da.
+                        </p>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 dark:text-white">Rufen Sie uns an</h4>
+                                    <p class="text-sm text-slate-500 mb-1">Mo-Fr von 8:00 bis 18:00 Uhr</p>
+                                    <a href="tel:+41441234567" class="text-blue-600 font-bold hover:underline">+41 44 123 45 67</a>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 dark:text-white">Schreiben Sie uns</h4>
+                                    <p class="text-sm text-slate-500 mb-1">Unser Team antwortet in der Regel innerhalb von 2 Stunden.</p>
+                                    <a href="mailto:support@swissbroker-os.ch" class="text-emerald-600 font-bold hover:underline">support@swissbroker-os.ch</a>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 dark:text-white">Besuchen Sie uns</h4>
+                                    <p class="text-sm text-slate-500 mb-1">Hauptsitz Zürich</p>
+                                    <p class="font-medium text-slate-700 dark:text-slate-300">Bahnhofstrasse 1<br/>8001 Zürich, Schweiz</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
+                        <div class="mb-6">
+                            <span class="text-xs font-black uppercase text-brand-600 tracking-widest">Support & Sales</span>
+                            <h3 class="text-2xl font-bold mt-2">Wie können wir helfen?</h3>
+                        </div>
+                        <p class="text-sm text-slate-500 mb-8">
+                            Starten Sie den interaktiven Kontakt-Assistenten, um Ihr Anliegen direkt an die richtige Abteilung zu leiten.
+                        </p>
+                        <!-- Button will be injected via React Portal logic in PublicPage.tsx -->
+                        <div id="contact-wizard-container"></div>
+                    </div>
+                </div>
+            `, 
+            en: '<h1>Contact Us</h1><p>We are here for you.</p>', 
+            fr: '<h1>Contact</h1>', 
+            it: '<h1>Contatto</h1>' 
+        } 
+    },
+    { 
+        id: 'p_about', 
+        slug: 'about', 
+        isPublished: true, 
+        lastUpdated: '01.06.2024', 
+        title: { de: 'Über uns', en: 'About us', fr: 'À propos', it: 'Chi siamo' }, 
+        content: { 
+            de: '<h1>Über SwissBroker OS</h1><p>Wir sind das Betriebssystem für den modernen Schweizer Finanzmarkt. Unsere Mission ist es, Brokern durch Technologie den Rücken freizuhalten.</p><h2>Unsere Werte</h2><ul><li>Innovation</li><li>Sicherheit (Swiss Made)</li><li>Unabhängigkeit</li></ul>', 
+            en: '<h1>About SwissBroker OS</h1>', 
+            fr: '<h1>À propos</h1>', 
+            it: '<h1>Chi siamo</h1>' 
+        } 
+    },
+    { 
+        id: 'sol_broker', 
+        slug: 'solutions-broker', 
+        isPublished: true, 
+        lastUpdated: '01.06.2024', 
+        title: { de: 'Lösung für Einzelmakler', en: 'For Brokers', fr: 'Courtiers', it: 'Broker' }, 
+        content: { 
+            de: '<h1>Effizienz für Einzelkämpfer</h1><p>Als Einzelmakler zählt jede Minute. SwissBroker OS automatisiert Ihre Administration, damit Sie mehr Zeit für Ihre Kunden haben.</p><h2>Features</h2><ul><li>Mobiles Büro</li><li>Automatisierte Termine</li><li>Digitaler Kundenordner</li></ul>', 
+            en: '<h1>For Brokers</h1>', 
+            fr: '<h1>Courtiers</h1>', 
+            it: '<h1>Broker</h1>' 
+        } 
+    },
+    { 
+        id: 'sol_enterprise', 
+        slug: 'solutions-enterprise', 
+        isPublished: true, 
+        lastUpdated: '01.06.2024', 
+        title: { de: 'Für Grossbetriebe', en: 'Enterprise', fr: 'Entreprise', it: 'Impresa' }, 
+        content: { 
+            de: '<h1>Skalierbarkeit & Compliance</h1><p>Managen Sie grosse Teams mit komplexen Hierarchien. Unsere Enterprise-Features decken HR, Abrechnung und Compliance ab.</p>', 
+            en: '<h1>Enterprise</h1>', 
+            fr: '<h1>Entreprise</h1>', 
+            it: '<h1>Impresa</h1>' 
+        } 
+    },
+    { 
+        id: 'sol_sales', 
+        slug: 'solutions-sales', 
+        isPublished: true, 
+        lastUpdated: '01.06.2024', 
+        title: { de: 'Für Vertriebe', en: 'Sales Orgs', fr: 'Ventes', it: 'Vendite' }, 
+        content: { 
+            de: '<h1>Lead-Management & Provisionen</h1><p>Optimieren Sie Ihren Vertriebstrichter und rechnen Sie Provisionen transparent ab.</p>', 
+            en: '<h1>Sales Orgs</h1>', 
+            fr: '<h1>Ventes</h1>', 
+            it: '<h1>Vendite</h1>' 
+        } 
+    }
 ];
 
 export const MOCK_NAVIGATION: MegaMenuCategory[] = [
@@ -430,25 +566,25 @@ export const MOCK_NAVIGATION: MegaMenuCategory[] = [
         id: 'nav_solutions',
         title: 'Lösungen',
         links: [
-            { id: 'l4', title: 'Für Einzelmakler', description: 'Effizienz für One-Man-Shows', path: '/solutions/broker', iconName: 'User' },
-            { id: 'l5', title: 'Für Grossbetriebe', description: 'Teams, Hierarchien & HR', path: '/solutions/enterprise', iconName: 'Building2' },
-            { id: 'l6', title: 'Für Vertriebe', description: 'Strukturvertrieb & Leads', path: '/solutions/sales', iconName: 'TrendingUp' },
+            { id: 'l4', title: 'Für Einzelmakler', description: 'Effizienz für One-Man-Shows', path: '/p/solutions-broker', iconName: 'User' },
+            { id: 'l5', title: 'Für Grossbetriebe', description: 'Teams, Hierarchien & HR', path: '/p/solutions-enterprise', iconName: 'Building2' },
+            { id: 'l6', title: 'Für Vertriebe', description: 'Strukturvertrieb & Leads', path: '/p/solutions-sales', iconName: 'TrendingUp' },
         ]
     },
     {
         id: 'nav_prices',
         title: 'Preise',
         links: [
-            { id: 'p1', title: 'Pakete & Preise', description: 'Starter bis Enterprise', path: '/plans', iconName: 'DollarSign' },
-            { id: 'p2', title: 'Add-ons', description: 'Modulare Erweiterungen', path: '/plans#addons', iconName: 'Zap' },
+            { id: 'p1', title: 'Pakete & Preise', description: 'Starter bis Enterprise', path: '/public/plans', iconName: 'DollarSign' },
+            { id: 'p2', title: 'Add-ons', description: 'Modulare Erweiterungen', path: '/public/plans#addons', iconName: 'Zap' },
         ]
     },
     {
         id: 'nav_resources',
         title: 'Ressourcen',
         links: [
-            { id: 'r1', title: 'Blog & News', description: 'Aktuelles aus der Branche', path: '/blog', iconName: 'BookOpen' },
-            { id: 'r2', title: 'Success Stories', description: 'Erfolgsgeschichten', path: '/saas/case-studies', iconName: 'Award' },
+            { id: 'r1', title: 'Blog & News', description: 'Aktuelles aus der Branche', path: '/public/blog', iconName: 'BookOpen' },
+            { id: 'r2', title: 'Success Stories', description: 'Erfolgsgeschichten', path: '/public/success-stories', iconName: 'Award' },
             { id: 'r3', title: 'Hilfe Center', description: 'Anleitungen & Support', path: '/faq', iconName: 'HelpCircle' },
             { id: 'r4', title: 'Partner werden', description: 'Affiliate Programm', path: '/affiliate', iconName: 'Handshake' },
         ]
@@ -459,7 +595,7 @@ export const MOCK_NAVIGATION: MegaMenuCategory[] = [
         links: [
             { id: 'c1', title: 'Über uns', description: 'Unsere Mission & Werte', path: '/p/about', iconName: 'Info' },
             { id: 'c2', title: 'Karriere', description: 'Wir stellen ein!', path: '/career', iconName: 'Briefcase' },
-            { id: 'c3', title: 'Kontakt', description: 'Sprechen Sie mit uns', path: '/contact', iconName: 'Mail' },
+            { id: 'c3', title: 'Kontakt', description: 'Sprechen Sie mit uns', path: '/p/contact', iconName: 'Mail' },
         ]
     }
 ];

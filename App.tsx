@@ -1,12 +1,11 @@
-
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Landing } from './pages/Landing';
-import { Login } from './pages/Login'; // NEW
+import { Login } from './pages/Login'; 
 import { Dashboard } from './pages/Dashboard';
 import { ClientDetail } from './pages/ClientDetail';
 import { Clients } from './pages/Clients';
-import { TenantDetail } from './pages/TenantDetail'; // NEW
+import { TenantDetail } from './pages/TenantDetail';
 import { Policies } from './pages/Policies';
 import { PolicyDetail } from './pages/PolicyDetail';
 import { Analytics } from './pages/Analytics';
@@ -34,15 +33,15 @@ import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance';
 import { SaaSTeams } from './pages/SaaSTeams';
 import { SaaSPages } from './pages/SaaSPages';
 import { SaaSCaseStudies } from './pages/SaaSCaseStudies'; 
-import { SaaSMaintenance } from './pages/SaaSMaintenance'; // NEW
+import { SaaSMaintenance } from './pages/SaaSMaintenance';
 import { BrokerAIConfig } from './pages/BrokerAIConfig';
 import { AgentDashboard } from './pages/AgentDashboard';
 import { TeamOverview } from './pages/TeamOverview';
 import { TeamDetail } from './pages/TeamDetail';
 import { EmployeeDetail } from './pages/EmployeeDetail';
-import { MyProfile } from './pages/MyProfile'; // NEW
+import { MyProfile } from './pages/MyProfile'; 
 import { LeadFinder } from './pages/LeadFinder';
-import { SocialSelling } from './pages/SocialSelling'; // NEW
+import { SocialSelling } from './pages/SocialSelling'; 
 import { DataImport } from './pages/DataImport';
 import { WebEngine } from './pages/WebEngine'; 
 import { CallAgent } from './pages/CallAgent';
@@ -53,7 +52,16 @@ import { Career } from './pages/Career';
 import { AffiliateProgram } from './pages/AffiliateProgram';
 import { FAQPage } from './pages/FAQ'; 
 import { OnboardingWizard } from './pages/OnboardingWizard';
-import { MaintenanceView } from './components/MaintenanceView'; // NEW
+import { MaintenanceView } from './components/MaintenanceView'; 
+import { PublicPlans } from './pages/PublicPlans'; 
+import { PublicCaseStudies } from './pages/PublicCaseStudies'; 
+import { PublicBlog } from './pages/PublicBlog'; 
+import { AboutUs } from './pages/AboutUs'; 
+// Solution Pages
+import { SolutionBroker } from './pages/solutions/SolutionBroker';
+import { SolutionEnterprise } from './pages/solutions/SolutionEnterprise';
+import { SolutionSales } from './pages/solutions/SolutionSales';
+
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SecurityProvider, useSecurity } from './contexts/SecurityContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -70,7 +78,6 @@ const DashboardRouter = () => {
 }
 
 // Global Application Controller to handle Maintenance
-// Fix: Made children prop optional to resolve TypeScript property missing error
 const ApplicationController = ({ children }: { children?: React.ReactNode }) => {
     const { isMaintenanceMode } = useSecurity();
     const { role, isAuthenticated } = useAuth();
@@ -135,7 +142,7 @@ const App = () => {
                     <Route path="/saas/newsletter" element={<ProtectedRoute><SaaSNewsletter /></ProtectedRoute>} />
                     <Route path="/saas/testimonials" element={<ProtectedRoute><SaaSTestimonials /></ProtectedRoute>} />
                     <Route path="/saas/case-studies" element={<ProtectedRoute><SaaSCaseStudies /></ProtectedRoute>} />
-                    <Route path="/saas/maintenance" element={<ProtectedRoute><SaaSMaintenance /></ProtectedRoute>} /> {/* NEW */}
+                    <Route path="/saas/maintenance" element={<ProtectedRoute><SaaSMaintenance /></ProtectedRoute>} /> 
                     <Route path="/saas/call-agent" element={<ProtectedRoute><CallAgent /></ProtectedRoute>} />
                     <Route path="/saas/embedded-finance" element={<ProtectedRoute><SaaSEmbeddedFinance /></ProtectedRoute>} />
                     <Route path="/saas/teams" element={<ProtectedRoute><SaaSTeams /></ProtectedRoute>} />
@@ -169,7 +176,20 @@ const App = () => {
                     <Route path="/career" element={<Career />} />
                     <Route path="/affiliate" element={<AffiliateProgram />} />
                     <Route path="/faq" element={<FAQPage />} />
+                    
+                    {/* Specific Routes for Solution Landing Pages */}
+                    <Route path="/p/about" element={<AboutUs />} />
+                    <Route path="/p/solutions-broker" element={<SolutionBroker />} />
+                    <Route path="/p/solutions-enterprise" element={<SolutionEnterprise />} />
+                    <Route path="/p/solutions-sales" element={<SolutionSales />} />
+                    
+                    {/* Fallback for other CMS pages */}
                     <Route path="/p/:slug" element={<PublicPage />} />
+                    
+                    {/* NEW PUBLIC ROUTES */}
+                    <Route path="/public/plans" element={<PublicPlans />} />
+                    <Route path="/public/success-stories" element={<PublicCaseStudies />} />
+                    <Route path="/public/blog" element={<PublicBlog />} />
 
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

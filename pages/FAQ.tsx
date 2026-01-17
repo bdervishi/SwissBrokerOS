@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
@@ -11,6 +10,7 @@ import {
 } from '../components/ui/Accordion';
 import { FAQS as DEFAULT_FAQS } from '../constants';
 import { BackToTop } from '../components/ui/BackToTop';
+import { PublicNavigation } from '../components/PublicNavigation';
 import { 
   Search, 
   ThumbsUp, 
@@ -19,14 +19,11 @@ import {
   ArrowLeft,
   MessageSquare,
   HelpCircle,
-  Sun,
-  Moon,
   Loader2
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 export const FAQPage: React.FC = () => {
-  const [isDark, setIsDark] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("Alle");
   const [feedback, setFeedback] = useState<{ [q: string]: "up" | "down" | undefined }>({});
@@ -39,14 +36,6 @@ export const FAQPage: React.FC = () => {
   const [faqs, setFaqs] = useState<{category: string, question: string, answer: string}[]>(DEFAULT_FAQS);
 
   useEffect(() => {
-    if (localStorage.theme === 'light') {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
-    } else {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    }
-
     // Dynamic FAQ Load from SaaS Admin
     const storedFaqs = localStorage.getItem('app_faqs');
     if (storedFaqs) {
@@ -102,30 +91,12 @@ export const FAQPage: React.FC = () => {
     [...faqs].sort(() => 0.5 - Math.random()).slice(0, 3)
   , [faqs]);
 
-  const toggleTheme = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    document.documentElement.classList.toggle('dark', newDark);
-    localStorage.setItem('theme', newDark ? 'dark' : 'light');
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-500 font-sans">
       <BackToTop />
-      
-      <nav className="fixed w-full z-50 border-b border-slate-200 dark:border-white/10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="font-bold text-2xl tracking-tight flex items-center gap-2">
-            <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-serif font-bold text-lg shadow-sm">+</div>
-            <span>SwissBroker</span>
-          </Link>
-          <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400">
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-        </div>
-      </nav>
+      <PublicNavigation />
 
-      <main className="pt-32 pb-20 px-4">
+      <main className="pb-20 px-4 pt-8">
         <div className="max-w-4xl mx-auto">
           <Link to="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-brand-600 dark:hover:text-white transition-colors mb-12 font-medium">
             <ArrowLeft size={16} /> Zurück zur Startseite

@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { BackToTop } from '../components/ui/BackToTop';
+import { PublicNavigation } from '../components/PublicNavigation';
 import { 
     ArrowLeft, 
     TrendingUp, 
     Users, 
     DollarSign, 
-    CheckCircle, 
     ShieldCheck, 
-    Send,
-    Sun,
-    Moon
+    Send
 } from 'lucide-react';
 
 export const AffiliateProgram: React.FC = () => {
-    const [isDark, setIsDark] = useState(true);
     
     // Calculator State
     const [referrals, setReferrals] = useState(10);
@@ -25,47 +22,12 @@ export const AffiliateProgram: React.FC = () => {
     const monthlyCommission = referrals * avgPlanPrice * commissionRate;
     const yearlyCommission = monthlyCommission * 12;
 
-    useEffect(() => {
-        if (localStorage.theme === 'light') {
-            setIsDark(false);
-            document.documentElement.classList.remove('dark');
-        } else {
-            setIsDark(true);
-            document.documentElement.classList.add('dark');
-        }
-    }, []);
-
-    const toggleTheme = () => {
-        if (isDark) {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-            setIsDark(false);
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-            setIsDark(true);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-500 font-sans">
             <BackToTop />
-            
-            <nav className="fixed w-full z-50 border-b border-slate-200 dark:border-white/10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                    <Link to="/" className="font-bold text-2xl tracking-tight flex items-center gap-2">
-                        <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white font-serif font-bold text-lg shadow-sm">+</div>
-                        <span className="text-slate-900 dark:text-white">SwissBroker</span>
-                    </Link>
-                    <div className="flex items-center gap-4">
-                        <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400">
-                            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                        </button>
-                    </div>
-                </div>
-            </nav>
+            <PublicNavigation />
 
-            <main className="pt-32 pb-20 px-4">
+            <main className="pb-20 px-4 pt-8">
                 <div className="max-w-5xl mx-auto">
                     <Link to="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-brand-600 dark:hover:text-white transition-colors mb-12 font-medium">
                         <ArrowLeft size={16} /> Zurück zur Startseite
