@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -19,7 +21,8 @@ import {
     Coins,
     ChevronRight,
     UserCircle,
-    Zap
+    Zap,
+    Briefcase
 } from 'lucide-react';
 import { MOCK_USERS } from '../constants';
 
@@ -36,6 +39,15 @@ export const SaaSTeams: React.FC = () => {
     const navigate = useNavigate();
     const [teams, setTeams] = useState(INITIAL_SAAS_TEAMS);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // Modal States
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedTeam, setSelectedTeam] = useState<typeof INITIAL_SAAS_TEAMS[0] | null>(null);
+    
+    // Form States
+    const [newTeamName, setNewTeamName] = useState('');
+    const [newTeamDesc, setNewTeamDesc] = useState('');
 
     if (role !== UserRole.SAAS_SUPER_ADMIN && role !== UserRole.SAAS_FINANCE && role !== UserRole.SAAS_SALES) {
         return <Navigate to="/dashboard" />;
@@ -44,8 +56,32 @@ export const SaaSTeams: React.FC = () => {
     const saasUsers = MOCK_USERS.filter(u => u.role.startsWith('SAAS_'));
 
     const handleDelete = (id: string) => {
-        setTeams(prev => prev.filter(t => t.id !== id));
+        if(window.confirm("Sind Sie sicher, dass Sie dieses Team löschen möchten?")) {
+            setTeams(prev => prev.filter(t => t.id !== id));
+        }
     };
+
+    const handleCreateTeam = () => {
+        if (!newTeamName.trim()) return;
+        
+        const newTeam = {
+            id: `saas_team_${Date.now()}`,
+            name: newTeamName,
+            description: newTeamDesc,
+            memberCount: 0,
+            icon: <Briefcase className="text-slate-500" />
+        };
+        
+        setTeams([...teams, newTeam]);
+        setNewTeamName('');
+        setNewTeamDesc('');
+        setIsCreateModalOpen(false);
+    };
+
+    const handleOpenEdit = (team: typeof INITIAL_SAAS_TEAMS[0]) => {
+        setSelectedTeam(team);
+        setIsEditModalOpen(true);
+    }
 
     return (
         <Layout>
@@ -57,7 +93,7 @@ export const SaaSTeams: React.FC = () => {
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400">Verwalten Sie interne Abteilungen der SwissBroker OS Organisation.</p>
                 </div>
-                <Button icon={<Plus size={18}/>}>Neues Team erstellen</Button>
+                <Button icon={<Plus size={18}/>} onClick={() => setIsCreateModalOpen(true)}>Neues Team erstellen</Button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -72,7 +108,7 @@ export const SaaSTeams: React.FC = () => {
                                         {team.icon}
                                     </div>
                                     <div className="flex gap-1">
-                                        <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                        <button onClick={() => handleOpenEdit(team)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                                             <Settings size={18} />
                                         </button>
                                         <button onClick={() => handleDelete(team.id)} className="p-2 text-slate-400 hover:text-red-500">
@@ -91,7 +127,7 @@ export const SaaSTeams: React.FC = () => {
                                             </div>
                                         ))}
                                     </div>
-                                    <Button variant="ghost" size="sm" className="text-xs group-hover:text-brand-600">Team-Details <ChevronRight size={14} /></Button>
+                                    <Button variant="ghost" size="sm" className="text-xs group-hover:text-brand-600" onClick={() => handleOpenEdit(team)}>Team-Details <ChevronRight size={14} /></Button>
                                 </div>
                             </div>
                         ))}
@@ -176,6 +212,82 @@ export const SaaSTeams: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* CREATE TEAM MODAL */}
+            <Modal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Neues SaaS Team erstellen"
+                maxWidth="max-w-md"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs font-black uppercase text-slate-400 mb-1 block">Team Name</label>
+                        <input 
+                            className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm"
+                            placeholder="z.B. Marketing & Growth"
+                            value={newTeamName}
+                            onChange={e => setNewTeamName(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-black uppercase text-slate-400 mb-1 block">Beschreibung</label>
+                        <textarea 
+                            className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm h-24"
+                            placeholder="Aufgabenbereich..."
+                            value={newTeamDesc}
+                            onChange={e => setNewTeamDesc(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex justify-end pt-4">
+                        <Button onClick={handleCreateTeam} disabled={!newTeamName}>Erstellen</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* DETAILS / EDIT MODAL */}
+            {selectedTeam && (
+                <Modal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    title={`Team verwalten: ${selectedTeam.name}`}
+                    maxWidth="max-w-lg"
+                >
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div className="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm text-slate-600 dark:text-slate-300">
+                                {selectedTeam.icon}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 dark:text-slate-100">{selectedTeam.name}</h3>
+                                <p className="text-sm text-slate-500">{selectedTeam.description}</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-xs font-black uppercase text-slate-400 mb-3 tracking-widest">Mitglieder (Mock)</h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {[...Array(selectedTeam.memberCount)].map((_, i) => (
+                                    <div key={i} className="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500">
+                                                {String.fromCharCode(65 + i)}
+                                            </div>
+                                            <div className="text-sm font-medium">SaaS User {i + 1}</div>
+                                        </div>
+                                        <Button size="sm" variant="ghost" className="text-xs">Entfernen</Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Schliessen</Button>
+                            <Button>Mitglied hinzufügen</Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </Layout>
     );
 };

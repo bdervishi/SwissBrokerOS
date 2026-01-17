@@ -4,7 +4,7 @@ import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_TENANTS, MOCK_USERS, MOCK_CLIENTS, MOCK_POLICIES } from '../constants';
+import { MOCK_TENANTS, MOCK_USERS, MOCK_CLIENTS, MOCK_POLICIES, MOCK_SAAS_PACKAGES } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { 
@@ -29,7 +29,12 @@ import {
     Monitor,
     MoreHorizontal,
     XCircle,
-    Search
+    Search,
+    Download,
+    FileText,
+    Key,
+    UserX,
+    Filter
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -42,11 +47,20 @@ const USAGE_HISTORY = [
     { name: 'Mai', tokens: 2100, clients: 152 },
 ];
 
+// Mock Invoices for Billing Tab
+const MOCK_INVOICES = [
+    { id: 'inv-001', date: '01.05.2024', amount: 850.00, status: 'PAID', pdf: 'inv_may.pdf', period: 'Mai 2024' },
+    { id: 'inv-002', date: '01.04.2024', amount: 850.00, status: 'PAID', pdf: 'inv_apr.pdf', period: 'April 2024' },
+    { id: 'inv-003', date: '01.03.2024', amount: 820.00, status: 'PAID', pdf: 'inv_mar.pdf', period: 'März 2024' },
+    { id: 'inv-004', date: '01.02.2024', amount: 820.00, status: 'PAID', pdf: 'inv_feb.pdf', period: 'Februar 2024' },
+];
+
 export const TenantDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { role, impersonateUser } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'BILLING' | 'TECH' | 'DUE_DILIGENCE'>('OVERVIEW');
+    const [userSearch, setUserSearch] = useState('');
 
     // Access Control
     if (role !== UserRole.SAAS_SUPER_ADMIN && role !== UserRole.SAAS_SALES && role !== UserRole.SAAS_FINANCE) {
@@ -56,6 +70,7 @@ export const TenantDetail: React.FC = () => {
     const tenant = MOCK_TENANTS.find(t => t.id === id);
     const tenantUsers = MOCK_USERS.filter(u => u.tenantId === id);
     const tenantClients = MOCK_CLIENTS.filter(c => c.tenantId === id);
+    const currentPlan = MOCK_SAAS_PACKAGES.find(p => p.id === (tenant?.plan === 'ENTERPRISE' ? 'pkg_enterprise' : tenant?.plan === 'STARTER' ? 'pkg_starter' : 'pkg_pro'));
     
     // Simple Health Score Mock
     const healthScore = tenant?.status === 'ACTIVE' ? 88 : tenant?.status === 'TRIAL' ? 45 : 12;
@@ -65,6 +80,12 @@ export const TenantDetail: React.FC = () => {
     }
 
     const tenantOwner = tenantUsers.find(u => u.role === UserRole.BROKER_ADMIN);
+
+    const filteredUsers = tenantUsers.filter(u => 
+        u.username.toLowerCase().includes(userSearch.toLowerCase()) || 
+        u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(userSearch.toLowerCase())
+    );
 
     return (
         <Layout>
@@ -174,7 +195,170 @@ export const TenantDetail: React.FC = () => {
                     </div>
                 )}
 
-                {/* ... (USERS and BILLING tabs remain unchanged for brevity, focusing on new feature) ... */}
+                {activeTab === 'USERS' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                        <Card title="Benutzerverwaltung" noPadding>
+                            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex gap-4">
+                                <div className="relative flex-1 max-w-md">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Benutzer suchen..." 
+                                        className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+                                        value={userSearch}
+                                        onChange={(e) => setUserSearch(e.target.value)}
+                                    />
+                                </div>
+                                <Button variant="outline" icon={<Filter size={16}/>}>Filter</Button>
+                            </div>
+                            
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                                        <tr>
+                                            <th className="px-6 py-4">Name</th>
+                                            <th className="px-6 py-4">Rolle</th>
+                                            <th className="px-6 py-4">Kontakt</th>
+                                            <th className="px-6 py-4">Letzter Login</th>
+                                            <th className="px-6 py-4 text-right">Aktionen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {filteredUsers.map(user => (
+                                            <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <img src={user.avatarUrl} className="w-8 h-8 rounded-full bg-slate-200" alt="" />
+                                                        <div>
+                                                            <div className="font-bold text-slate-900 dark:text-slate-100">{user.firstName} {user.lastName}</div>
+                                                            <div className="text-xs text-slate-500">@{user.username}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${user.role === UserRole.BROKER_ADMIN ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                        {user.role.replace('BROKER_', '')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                                                    <div className="flex items-center gap-2"><Mail size={12}/> {user.email}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-500">
+                                                    Vor 2 Stunden
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button className="p-2 text-slate-400 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" title="Passwort Reset">
+                                                            <Key size={16} />
+                                                        </button>
+                                                        <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full" title="Sperren">
+                                                            <UserX size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {filteredUsers.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                                                    Keine Benutzer gefunden.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </div>
+                )}
+
+                {activeTab === 'BILLING' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-300">
+                        {/* Plan Details */}
+                        <div className="lg:col-span-1 space-y-6">
+                            <Card title="Aktives Abonnement">
+                                <div className="space-y-6">
+                                    <div className="text-center p-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <p className="text-xs font-black uppercase text-slate-400 mb-2">Plan</p>
+                                        <h3 className="text-2xl font-black text-brand-600 mb-1">{currentPlan?.name || tenant.plan}</h3>
+                                        <p className="text-slate-900 dark:text-white font-bold text-lg">
+                                            CHF {tenant.mrr} <span className="text-sm font-normal text-slate-500">/ Monat</span>
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Nächste Rechnung</span>
+                                            <span className="font-medium">01.06.2024</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Zahlungsmethode</span>
+                                            <span className="font-medium flex items-center gap-1"><CreditCard size={12}/> Visa •••• 4242</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm pt-3 border-t border-slate-100 dark:border-slate-800">
+                                            <span className="text-slate-500">Status</span>
+                                            <span className="text-emerald-600 font-bold flex items-center gap-1"><CheckCircle size={12}/> Bezahlt</span>
+                                        </div>
+                                    </div>
+                                    <Button variant="outline" className="w-full">Abo ändern</Button>
+                                </div>
+                            </Card>
+
+                            <Card title="Aktive Add-ons">
+                                <div className="space-y-3">
+                                    {tenant.activeAddons?.length ? tenant.activeAddons.map(addon => (
+                                        <div key={addon} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
+                                            <span className="text-sm font-medium">{addon}</span>
+                                            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">Aktiv</span>
+                                        </div>
+                                    )) : (
+                                        <p className="text-sm text-slate-500 italic">Keine Add-ons gebucht.</p>
+                                    )}
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Invoices */}
+                        <div className="lg:col-span-2">
+                            <Card title="Rechnungshistorie" noPadding>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                                            <tr>
+                                                <th className="px-6 py-4">Rechnungs-Nr.</th>
+                                                <th className="px-6 py-4">Periode</th>
+                                                <th className="px-6 py-4">Datum</th>
+                                                <th className="px-6 py-4 text-right">Betrag</th>
+                                                <th className="px-6 py-4">Status</th>
+                                                <th className="px-6 py-4 text-right">Download</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                            {MOCK_INVOICES.map(inv => (
+                                                <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                    <td className="px-6 py-4 font-mono text-xs">{inv.id}</td>
+                                                    <td className="px-6 py-4 font-medium">{inv.period}</td>
+                                                    <td className="px-6 py-4 text-slate-500">{inv.date}</td>
+                                                    <td className="px-6 py-4 text-right font-mono font-bold">CHF {inv.amount.toFixed(2)}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-700">
+                                                            {inv.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <button className="text-brand-600 hover:text-brand-800 p-2 hover:bg-brand-50 rounded-full transition-colors">
+                                                            <Download size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                )}
                 
                 {activeTab === 'DUE_DILIGENCE' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-bottom-2">
