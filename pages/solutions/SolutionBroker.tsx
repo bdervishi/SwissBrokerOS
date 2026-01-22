@@ -11,7 +11,8 @@ import {
     FileCheck, 
     Coffee, 
     ArrowRight, 
-    CheckCircle2
+    CheckCircle2,
+    HardDrive
 } from 'lucide-react';
 
 export const SolutionBroker: React.FC = () => {
@@ -92,7 +93,7 @@ export const SolutionBroker: React.FC = () => {
                         </p>
                     </div>
                     
-                    <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <FeatureCard 
                             icon={<Smartphone size={32} />}
                             title="Büro in der Hosentasche"
@@ -107,6 +108,11 @@ export const SolutionBroker: React.FC = () => {
                             icon={<Clock size={32} />}
                             title="KI-Assistent"
                             desc="Lassen Sie die KI E-Mails schreiben, Termine koordinieren und Vergleichsofferten erstellen. Ihr digitaler Mitarbeiter."
+                        />
+                        <FeatureCard 
+                            icon={<HardDrive size={32} />}
+                            title="BYOS / Zero Migration"
+                            desc="Behalten Sie Ihr OneDrive oder Dropbox. Wir verlinken Ihre bestehende Ablage direkt in die Kundenakte. Kein Umzug nötig."
                         />
                     </div>
                 </section>

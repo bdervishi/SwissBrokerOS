@@ -67,6 +67,12 @@ export interface Tenant {
     activeAddons: string[];
     hrConfig?: HRConfig;
     complianceStats?: ComplianceStats;
+    // NEW: Managed Storage Quota
+    storageQuota?: {
+        usedBytes: number; // in bytes
+        limitBytes: number; // in bytes (based on plan)
+        isManaged: boolean; // true = SwissBroker Vault, false = BYOS
+    };
 }
 
 export interface LeadActivity {
@@ -188,11 +194,12 @@ export interface MortgageScenario {
     applicationStatus: string;
 }
 
-/* Fix: Added missing IntegrationCategory enum */
+/* UPDATED: Integration Categories */
 export enum IntegrationCategory {
     ACCOUNTING = 'ACCOUNTING',
     COMMUNICATION = 'COMMUNICATION',
-    BANKING = 'BANKING'
+    BANKING = 'BANKING',
+    DOCUMENT_STORAGE = 'DOCUMENT_STORAGE' // New
 }
 
 /* Fix: Added missing IntegrationStatus enum */
@@ -211,8 +218,14 @@ export interface Integration {
     status: IntegrationStatus;
     iconUrl: string;
     lastSync: string;
-    connectionType: string;
+    connectionType: 'OAUTH' | 'API_KEY' | 'NATIVE' | 'MANAGED'; // Added MANAGED
     errorMessage?: string;
+    // New Fields for Storage
+    storageConfig?: {
+        rootFolderId?: string;
+        rootFolderName?: string;
+        aiIndexingEnabled?: boolean;
+    };
 }
 
 /* Fix: Added missing PolicyDocument interface */

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Landing } from './pages/Landing';
@@ -62,6 +63,8 @@ import { SolutionBroker } from './pages/solutions/SolutionBroker';
 import { SolutionEnterprise } from './pages/solutions/SolutionEnterprise';
 import { SolutionSales } from './pages/solutions/SolutionSales';
 
+import { ScrollToTop } from './components/ScrollToTop';
+
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SecurityProvider, useSecurity } from './contexts/SecurityContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -112,6 +115,7 @@ const App = () => {
           <SecurityProvider>
             <ApplicationController>
                 <Router>
+                <ScrollToTop />
                 <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/register" element={<OnboardingWizard />} />

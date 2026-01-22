@@ -1,13 +1,14 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
-import { MOCK_CLIENTS, MOCK_EVENTS, MOCK_COMMISSIONS, MOCK_POLICIES, MOCK_TENANTS } from '../constants';
+import { MOCK_CLIENTS, MOCK_EVENTS, MOCK_COMMISSIONS, MOCK_POLICIES, MOCK_TENANTS, MOCK_USERS } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, CommissionStatus, EventType, PolicyStatus } from '../types';
 import { SensitiveData } from '../components/ui/SensitiveData';
+import { Modal } from '../components/ui/Modal';
 import { 
   Users, 
   TrendingUp, 
@@ -27,7 +28,15 @@ import {
   Zap,
   PhoneCall,
   CheckCircle2,
-  Trophy
+  Trophy,
+  Mail,
+  MapPin,
+  Clock,
+  Video,
+  User,
+  Building2,
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 
@@ -62,10 +71,47 @@ export const Dashboard: React.FC = () => {
   const { role, user } = useAuth();
   const today = new Date();
 
+  // Client Dashboard Specific State
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const [appointmentStep, setAppointmentStep] = useState<'TYPE' | 'DATE' | 'SUCCESS'>('TYPE');
+  const [appointmentType, setAppointmentType] = useState<'PHONE' | 'VIDEO' | 'ONSITE'>('VIDEO');
+  
+  // Appointment Selection State
+  const [appointmentDate, setAppointmentDate] = useState('');
+  const [customDateInput, setCustomDateInput] = useState('');
+  const [customTimeInput, setCustomTimeInput] = useState('');
+
+  // Handle custom date inputs
+  useEffect(() => {
+    if (customDateInput && customTimeInput) {
+        // Format date nicely for display
+        const dateObj = new Date(customDateInput);
+        const formattedDate = dateObj.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        setAppointmentDate(`${formattedDate}, ${customTimeInput} Uhr (Wunsch)`);
+    }
+  }, [customDateInput, customTimeInput]);
+
   // --- CLIENT DASHBOARD ---
   if (role === UserRole.CLIENT) {
       const myPolicies = MOCK_POLICIES; // In a real app, filter by user.id
       const totalPremium = myPolicies.reduce((sum, p) => sum + p.premiumAmount, 0);
+      
+      // Find Advisor & Tenant Data
+      const clientProfile = MOCK_CLIENTS.find(c => c.username === user?.username);
+      const advisor = MOCK_USERS.find(u => u.id === clientProfile?.advisorId);
+      const tenant = MOCK_TENANTS.find(t => t.id === clientProfile?.tenantId);
+
+      const handleAppointmentSubmit = () => {
+          setAppointmentStep('SUCCESS');
+      };
+
+      const closeAppointmentModal = () => {
+          setIsAppointmentModalOpen(false);
+          setAppointmentStep('TYPE');
+          setAppointmentDate('');
+          setCustomDateInput('');
+          setCustomTimeInput('');
+      };
 
       return (
           <Layout>
@@ -80,36 +126,231 @@ export const Dashboard: React.FC = () => {
                   <KPICard title="Nächster Termin" value="15. Mai" change="Jahresgespräch" icon={<Calendar className="text-amber-600"/>} />
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <Card title="Meine Policen">
-                      <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                          {myPolicies.map(p => (
-                              <div key={p.id} className="py-4 flex justify-between items-center">
-                                  <div>
-                                      <p className="font-medium text-slate-900 dark:text-slate-100">{p.type}</p>
-                                      <p className="text-xs text-slate-500">{p.insurer}</p>
-                                  </div>
-                                  <Link to={`/policy/${p.id}`}>
-                                    <Button size="sm" variant="outline">Details</Button>
-                                  </Link>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2">
+                    <Card title="Meine Policen">
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {myPolicies.map(p => (
+                                <div key={p.id} className="py-4 flex justify-between items-center">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500">
+                                            {p.insurer.substring(0,2)}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-slate-900 dark:text-slate-100">{p.type}</p>
+                                            <p className="text-xs text-slate-500">{p.insurer} • Nr. {p.policyNumber}</p>
+                                        </div>
+                                    </div>
+                                    <Link to={`/policy/${p.id}`}>
+                                        <Button size="sm" variant="outline">Details</Button>
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* ENHANCED ADVISOR CARD */}
+                    <Card title="Ihr Betreuungsteam">
+                        {advisor && tenant ? (
+                            <div className="space-y-6">
+                                {/* Advisor Profile */}
+                                <div className="flex items-start gap-4">
+                                    <div className="relative">
+                                        <img 
+                                            src={advisor.avatarUrl || "https://ui-avatars.com/api/?name=Berater"} 
+                                            alt="Berater" 
+                                            className="w-14 h-14 rounded-full object-cover border-2 border-slate-100 dark:border-slate-800"
+                                        />
+                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" title="Online"></div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-900 dark:text-slate-100">{advisor.firstName} {advisor.lastName}</h3>
+                                        <p className="text-xs text-slate-500">{advisor.role === UserRole.BROKER_ADMIN ? 'Geschäftsleitung' : 'Senior Berater'}</p>
+                                        <div className="mt-2 flex gap-2">
+                                            <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                Verfügbar
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contact Actions */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <a href={`mailto:${advisor.email}`} className="flex items-center justify-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold transition-colors">
+                                        <Mail size={14} /> E-Mail
+                                    </a>
+                                    <a href={`tel:${advisor.phone || '+41 44 123 45 67'}`} className="flex items-center justify-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold transition-colors">
+                                        <PhoneCall size={14} /> Anrufen
+                                    </a>
+                                </div>
+
+                                <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+                                    <Button className="w-full" onClick={() => setIsAppointmentModalOpen(true)}>
+                                        Termin vereinbaren
+                                    </Button>
+                                </div>
+
+                                {/* Tenant / Company Info */}
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-8 h-8 rounded bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 font-bold text-xs">
+                                            {tenant.branding.logoText.substring(0,2).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{tenant.name}</p>
+                                            <p className="text-xs text-slate-500">Ihr Versicherungspartner</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1 pl-11">
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <MapPin size={12} /> Bahnhofstrasse 100, 8001 Zürich
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <Globe size={12} /> <a href="#" className="hover:underline text-brand-600">Webseite besuchen</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-500">Kein Berater zugewiesen.</p>
+                        )}
+                    </Card>
+                  </div>
+              </div>
+
+              {/* APPOINTMENT WIZARD MODAL */}
+              <Modal
+                isOpen={isAppointmentModalOpen}
+                onClose={closeAppointmentModal}
+                title={appointmentStep === 'SUCCESS' ? 'Termin bestätigt' : 'Termin vereinbaren'}
+                maxWidth="max-w-lg"
+              >
+                  {appointmentStep === 'TYPE' && (
+                      <div className="space-y-4">
+                          <p className="text-sm text-slate-500 mb-4">Wie möchten Sie Ihren Berater sprechen?</p>
+                          
+                          <button 
+                            onClick={() => setAppointmentType('VIDEO')}
+                            className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${appointmentType === 'VIDEO' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-800 hover:border-brand-300'}`}
+                          >
+                              <div className="p-3 bg-white dark:bg-slate-800 rounded-full text-brand-600">
+                                  <Video size={20} />
                               </div>
-                          ))}
-                      </div>
-                  </Card>
-                  <Card title="Kontakt Berater">
-                      <div className="flex items-center gap-4 mb-6">
-                          <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-500">MM</div>
-                          <div>
-                              <p className="font-bold">Max Muster</p>
-                              <p className="text-sm text-slate-500">Ihr persönlicher Betreuer</p>
-                              <div className="flex gap-2 mt-2">
-                                  <Button size="sm">Nachricht</Button>
-                                  <Button size="sm" variant="outline">Termin</Button>
+                              <div className="text-left">
+                                  <h4 className="font-bold text-slate-900 dark:text-slate-100">Video Call (Teams/Zoom)</h4>
+                                  <p className="text-xs text-slate-500">Bequem von zu Hause aus.</p>
                               </div>
+                          </button>
+
+                          <button 
+                            onClick={() => setAppointmentType('PHONE')}
+                            className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${appointmentType === 'PHONE' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-800 hover:border-brand-300'}`}
+                          >
+                              <div className="p-3 bg-white dark:bg-slate-800 rounded-full text-brand-600">
+                                  <PhoneCall size={20} />
+                              </div>
+                              <div className="text-left">
+                                  <h4 className="font-bold text-slate-900 dark:text-slate-100">Telefonat</h4>
+                                  <p className="text-xs text-slate-500">Wir rufen Sie auf Ihrer Nummer an.</p>
+                              </div>
+                          </button>
+
+                          <button 
+                            onClick={() => setAppointmentType('ONSITE')}
+                            className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${appointmentType === 'ONSITE' ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-800 hover:border-brand-300'}`}
+                          >
+                              <div className="p-3 bg-white dark:bg-slate-800 rounded-full text-brand-600">
+                                  <Building2 size={20} />
+                              </div>
+                              <div className="text-left">
+                                  <h4 className="font-bold text-slate-900 dark:text-slate-100">Vor Ort</h4>
+                                  <p className="text-xs text-slate-500">Besuch im Büro oder bei Ihnen.</p>
+                              </div>
+                          </button>
+
+                          <div className="pt-4 flex justify-end">
+                              <Button onClick={() => setAppointmentStep('DATE')} icon={<ArrowRight size={16}/>}>Weiter</Button>
                           </div>
                       </div>
-                  </Card>
-              </div>
+                  )}
+
+                  {appointmentStep === 'DATE' && (
+                      <div className="space-y-6">
+                          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                              <h4 className="text-sm font-bold mb-4 flex items-center gap-2">
+                                  <Calendar size={16} className="text-brand-600"/> Verfügbare Slots (Vorschläge)
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3 mb-4">
+                                  {/* Mock Dates - existing */}
+                                  {['Morgen, 09:00', 'Morgen, 14:00', 'Übermorgen, 10:30', 'Übermorgen, 16:00'].map(date => (
+                                      <button 
+                                        key={date}
+                                        onClick={() => {
+                                            setAppointmentDate(date);
+                                            setCustomDateInput('');
+                                            setCustomTimeInput('');
+                                        }}
+                                        className={`p-2 text-xs font-bold rounded border ${appointmentDate === date ? 'bg-brand-600 text-white border-brand-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-brand-400'}`}
+                                      >
+                                          {date}
+                                      </button>
+                                  ))}
+                              </div>
+
+                              {/* NEW: Custom Date Picker */}
+                              <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-4">
+                                  <p className="text-xs font-bold uppercase text-slate-500 mb-2">Oder eigenen Termin vorschlagen</p>
+                                  <div className="flex gap-2">
+                                      <input 
+                                        type="date" 
+                                        className="flex-1 p-2 text-sm border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-950 focus:ring-1 focus:ring-brand-500 outline-none"
+                                        value={customDateInput}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={(e) => setCustomDateInput(e.target.value)}
+                                      />
+                                      <input 
+                                        type="time" 
+                                        className="w-24 p-2 text-sm border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-950 focus:ring-1 focus:ring-brand-500 outline-none"
+                                        value={customTimeInput}
+                                        onChange={(e) => setCustomTimeInput(e.target.value)}
+                                      />
+                                  </div>
+                              </div>
+
+                              {appointmentDate && (
+                                  <div className="mt-4 text-xs text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded flex items-center gap-2 animate-in fade-in">
+                                      <CheckCircle size={12}/> Gewählt: {appointmentDate}
+                                  </div>
+                              )}
+                          </div>
+
+                          <div className="space-y-2">
+                              <label className="text-xs font-bold text-slate-500 uppercase">Notiz (Optional)</label>
+                              <textarea className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm h-20 outline-none focus:border-brand-500" placeholder="Worum geht es?" />
+                          </div>
+
+                          <div className="pt-4 flex justify-between">
+                              <Button variant="ghost" onClick={() => setAppointmentStep('TYPE')}>Zurück</Button>
+                              <Button onClick={handleAppointmentSubmit} disabled={!appointmentDate}>Termin anfragen</Button>
+                          </div>
+                      </div>
+                  )}
+
+                  {appointmentStep === 'SUCCESS' && (
+                      <div className="text-center py-8">
+                          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in">
+                              <CheckCircle2 size={40} />
+                          </div>
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Anfrage gesendet!</h3>
+                          <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+                              Ihr Berater {advisor?.firstName} {advisor?.lastName} wird den Termin ({appointmentDate}) in Kürze bestätigen.
+                          </p>
+                          <Button className="w-full" onClick={closeAppointmentModal}>Zurück zum Dashboard</Button>
+                      </div>
+                  )}
+              </Modal>
           </Layout>
       );
   }

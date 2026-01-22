@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
@@ -9,6 +10,7 @@ import { MOCK_CLIENTS, MOCK_POLICIES, MOCK_ASSETS, MOCK_ADVICE, MOCK_CLIENT_NOTE
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { generateContentWithRetry } from '../services/aiService';
+import { SignaturePad } from '../components/ui/SignaturePad'; // New Import
 import { 
   ArrowLeft, 
   Shield, 
@@ -62,6 +64,7 @@ export const ClientDetail: React.FC = () => {
       productsDiscussed: ['Privathaftpflicht', 'Säule 3a']
   });
   const [generatedProtocol, setGeneratedProtocol] = useState<string>('');
+  const [signatureData, setSignatureData] = useState<string | null>(null);
 
   const policies = MOCK_POLICIES.filter(p => p.clientId === id);
   const assets = MOCK_ASSETS.filter(a => a.clientId === id);
@@ -174,20 +177,25 @@ export const ClientDetail: React.FC = () => {
   };
 
   const handleSaveProtocol = () => {
+      if (!signatureData) return;
+
       // Mock saving to backend
       const newActivity: ActivityLog = {
           id: Date.now().toString(),
           clientId: client.id,
           type: 'DOCUMENT_UPLOAD',
           title: 'Beratungsprotokoll signiert',
-          description: `Thema: ${protocolInput.topic}. Revisionssicher archiviert.`,
+          description: `Thema: ${protocolInput.topic}. Elektronisch signiert (EES).`,
           timestamp: new Date().toLocaleString('de-CH'),
           authorName: 'Max Muster'
       };
+      
       // In a real app we would push this to the activities list or refresh data
       activities.unshift(newActivity); 
+      
       setIsProtocolModalOpen(false);
       setProtocolInput({ topic: '', notes: '', productsDiscussed: [] });
+      setSignatureData(null);
       setProtocolStep('INPUT');
       setActiveTab('JOURNAL'); // Switch to journal to see it
   };
@@ -574,17 +582,25 @@ export const ClientDetail: React.FC = () => {
                               <p className="font-script text-2xl text-slate-600">Zürich, {new Date().toLocaleDateString()}</p>
                           </div>
                           <div>
-                              <p className="text-xs font-bold uppercase border-b border-slate-300 pb-2 mb-8">Unterschrift Kunde (Digital)</p>
-                              <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg h-24 flex items-center justify-center text-slate-400 text-xs cursor-pointer hover:bg-slate-100 transition-colors">
-                                  Hier klicken zum Signieren
-                              </div>
+                              <p className="text-xs font-bold uppercase border-b border-slate-300 pb-2 mb-4">Unterschrift Kunde (Digital)</p>
+                              
+                              {signatureData ? (
+                                  <div className="relative">
+                                      <img src={signatureData} alt="Unterschrift" className="h-16 object-contain" />
+                                      <div className="absolute top-0 right-0">
+                                          <Button size="sm" variant="ghost" onClick={() => setSignatureData(null)} className="text-xs h-6 text-red-500 hover:bg-red-50">Löschen</Button>
+                                      </div>
+                                  </div>
+                              ) : (
+                                  <SignaturePad onEnd={(data) => setSignatureData(data)} />
+                              )}
                           </div>
                       </div>
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4">
                       <Button variant="outline" onClick={() => setProtocolStep('INPUT')}>Zurück</Button>
-                      <Button onClick={handleSaveProtocol} icon={<FileSignature size={16}/>} className="bg-emerald-600 hover:bg-emerald-700 border-none">
+                      <Button onClick={handleSaveProtocol} disabled={!signatureData} icon={<FileSignature size={16}/>} className="bg-emerald-600 hover:bg-emerald-700 border-none">
                           Signieren & Archivieren
                       </Button>
                   </div>

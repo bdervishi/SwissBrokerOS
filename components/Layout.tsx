@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useBranding } from '../contexts/BrandingContext';
+import { CommandPalette } from './ui/CommandPalette'; // NEW Import
 import { UserRole } from '../types';
 import { 
   LayoutDashboard, 
@@ -49,7 +50,8 @@ import {
   Rocket,
   Power,
   User,
-  Linkedin // Added Linkedin Icon
+  Linkedin,
+  Search // Added Search Icon
 } from 'lucide-react';
 
 interface NavItem {
@@ -64,12 +66,12 @@ interface NavSection {
 }
 
 interface LayoutProps {
-  // Fix: children made optional
   children?: React.ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false); // NEW State for Command Palette
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, switchRole, logout, isImpersonating, stopImpersonation } = useAuth();
@@ -87,6 +89,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       setIsDark(false);
       document.documentElement.classList.remove('dark');
     }
+  }, []);
+
+  // --- NEW: Keyboard Listener for Ctrl+K ---
+  useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+              e.preventDefault();
+              setSearchOpen(prev => !prev);
+          }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const toggleTheme = () => {
@@ -321,6 +335,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const NavLinks = ({ mobile }: { mobile?: boolean }) => (
       <div className={`flex-1 overflow-y-auto py-6 px-4 space-y-8 ${mobile ? '' : 'flex-1'}`}>
+          
+          {/* SEARCH BUTTON IN SIDEBAR */}
+          <button 
+            onClick={() => { setSearchOpen(true); if(mobile) setSidebarOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-sm font-medium transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 mb-6"
+          >
+              <Search size={16} />
+              <span>Suche...</span>
+              <kbd className="hidden md:inline-flex ml-auto items-center h-5 px-1.5 text-[10px] font-medium text-slate-400 border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-900">Ctrl K</kbd>
+          </button>
+
           {navSections.map((section, idx) => (
             <div key={idx} className="space-y-1">
                 {section.title && (
@@ -401,6 +426,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors duration-500">
       
+      {/* Command Palette Overlay */}
+      <CommandPalette isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
       {/* Impersonation Banner */}
       {isImpersonating && (
           <div className="bg-orange-600 text-white px-4 py-2 flex items-center justify-between text-sm font-black z-50 sticky top-0 shadow-md">
@@ -426,6 +454,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <BrandLogo />
           </div>
           <div className="flex items-center gap-2">
+             <button onClick={() => setSearchOpen(true)} className="p-2 text-slate-600 dark:text-slate-300">
+                <Search size={20} />
+             </button>
              <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300">
                 {isDark ? <Moon size={20} /> : <Sun size={20} />}
              </button>

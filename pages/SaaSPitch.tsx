@@ -38,7 +38,8 @@ import {
     ArrowUpRight,
     Handshake,
     // Add missing Wallet icon
-    Wallet
+    Wallet,
+    HardDrive
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
@@ -69,12 +70,12 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
         },
         {
             id: 'b2',
-            title: "The Compliance Shield.",
-            subtitle: "Sicherer Hafen Schweiz",
-            description: "Vermeiden Sie Haftungsfallen. Unser System validiert Zefix-Daten und prüft PEP-Listen in Echtzeit.",
-            icon: <ShieldCheck size={48} />,
+            title: "Data Sovereignty (BYOS).",
+            subtitle: "Ihre Daten bleiben Ihre Daten",
+            description: "Keine Migration nötig. Wir verbinden uns direkt mit Ihrem OneDrive, SharePoint oder Google Drive. Sie behalten die volle Kontrolle.",
+            icon: <HardDrive size={48} />,
             color: "from-emerald-600 to-emerald-800",
-            points: ["Zefix Live-Sync", "Automatisierte GwG-Files", "Haftungs-Radar (Storno)", "Tier IV Hosting Zürich"],
+            points: ["Zero-Migration (Sofortstart)", "Kein Vendor Lock-in", "Volle SharePoint Integration", "Hybrider Swiss Vault"],
             visualType: 'STATS'
         }
     ],
@@ -130,7 +131,7 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
             description: "Wir digitalisieren den Kernmarkt der Schweizer Finanzindustrie. Ein unersetzbares System-of-Record.",
             icon: <TrendingUp size={48} />,
             color: "from-slate-800 to-slate-950",
-            points: ["High Stickiness (Core OS)", "Data Moat (CH Logic)", "Scalable Unit Economics", "Expansion in EU Ready"],
+            points: ["High Stickiness (Core OS)", "Low Churn durch BYOS", "Scalable Unit Economics", "Expansion in EU Ready"],
             visualType: 'STATS'
         },
         {
@@ -140,7 +141,7 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
             description: "Unsere proprietären KI-Modelle für Schweizer AVBs schaffen eine Effizienz-Barriere für Konkurrenten.",
             icon: <BrainCircuit size={48} />,
             color: "from-indigo-900 to-purple-900",
-            points: ["Proprietary AI Pipelines", "Deep Legal Integration", "18% MRR Growth Rate", "Low Churn Ecosystem"],
+            points: ["Proprietary AI Pipelines", "Deep Legal Integration", "18% MRR Growth Rate", "Low Friction Onboarding"],
             visualType: 'NETWORK'
         }
     ]
@@ -204,7 +205,7 @@ export const SaaSPitch: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
                     <PersonaCard 
                         title="Broker / Inhaber" 
-                        desc="Haftungsschutz & Team-Skalierung" 
+                        desc="Haftungsschutz & BYOS Freiheit" 
                         icon={<Building size={32}/>} 
                         color="border-brand-500 hover:bg-brand-500/10" 
                         onClick={() => { setPersona('BROKER'); setCurrentIdx(0); }}
@@ -314,8 +315,8 @@ export const SaaSPitch: React.FC = () => {
                                              <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Swiss Data</div>
                                          </div>
                                          <div className="p-8 bg-white/5 border border-white/10 rounded-3xl text-center mt-8">
-                                             <div className="text-4xl font-black text-emerald-500 mb-2">45%</div>
-                                             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">ROI / Jahr</div>
+                                             <div className="text-4xl font-black text-emerald-500 mb-2">BYOS</div>
+                                             <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Zero Migration</div>
                                          </div>
                                      </div>
                                  )}

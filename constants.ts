@@ -1,3 +1,4 @@
+
 import { 
   AssetType, Client, MortgageType, Policy, PolicyStatus, UserRole, 
   AIAdvice, Asset, MortgageScenario, Integration, IntegrationCategory, 
@@ -272,6 +273,51 @@ export const MOCK_INTEGRATIONS: Integration[] = [
   { id: 'int1', name: 'Bexio', description: 'Buchhaltung & Kontakte synchronisieren.', category: IntegrationCategory.ACCOUNTING, status: IntegrationStatus.CONNECTED, iconUrl: 'B', lastSync: 'Gerade eben', connectionType: 'OAUTH' },
   { id: 'int2', name: 'Abacus', description: 'Enterprise ERP Anbindung.', category: IntegrationCategory.ACCOUNTING, status: IntegrationStatus.DISCONNECTED, iconUrl: 'A', lastSync: '-', connectionType: 'API_KEY' },
   { id: 'int3', name: 'Microsoft 365', description: 'E-Mail & Kalender Sync.', category: IntegrationCategory.COMMUNICATION, status: IntegrationStatus.CONNECTED, iconUrl: 'M', lastSync: 'Vor 1 Std', connectionType: 'OAUTH' },
+  // New Storage Integrations
+  {
+      id: 'int_managed',
+      name: 'SwissBroker Secure Vault',
+      description: 'ISO 27001 zertifizierter Schweizer Cloud-Speicher. Keine externe IT nötig.',
+      category: IntegrationCategory.DOCUMENT_STORAGE,
+      status: IntegrationStatus.CONNECTED, // Initially active for tenant t1
+      iconUrl: 'CH',
+      lastSync: 'Live',
+      connectionType: 'MANAGED',
+      storageConfig: {
+          rootFolderName: 'Muster Broker AG',
+          aiIndexingEnabled: true
+      }
+  },
+  { 
+      id: 'int_drive', 
+      name: 'Google Drive', 
+      description: 'Dokumente direkt aus der Google Cloud laden. Keine Duplikate.', 
+      category: IntegrationCategory.DOCUMENT_STORAGE, 
+      status: IntegrationStatus.DISCONNECTED, 
+      iconUrl: 'GD', 
+      lastSync: '-', 
+      connectionType: 'OAUTH' 
+  },
+  { 
+      id: 'int_onedrive', 
+      name: 'Microsoft OneDrive', 
+      description: 'SharePoint & OneDrive Einbindung für Firmenkunden.', 
+      category: IntegrationCategory.DOCUMENT_STORAGE, 
+      status: IntegrationStatus.DISCONNECTED, 
+      iconUrl: 'OD', 
+      lastSync: '-', 
+      connectionType: 'OAUTH' 
+  },
+  { 
+      id: 'int_dropbox', 
+      name: 'Dropbox', 
+      description: 'Sichere Dokumentenablage für Teams.', 
+      category: IntegrationCategory.DOCUMENT_STORAGE, 
+      status: IntegrationStatus.DISCONNECTED, 
+      iconUrl: 'DB', 
+      lastSync: '-', 
+      connectionType: 'OAUTH' 
+  }
 ];
 
 export const MOCK_DOCUMENTS: PolicyDocument[] = [
@@ -349,7 +395,8 @@ export const MOCK_TENANTS: Tenant[] = [
         branding: { primaryColor: '#0ea5e9', logoText: 'Muster Broker' }, 
         activeAddons: [],
         hrConfig: { requireTimeSubmission: true, requireTimeApproval: true, workWeekHours: 42 },
-        complianceStats: { finmaStatus: 'REGISTERED', ciceroNumber: '12345', churnRisk: 'LOW' }
+        complianceStats: { finmaStatus: 'REGISTERED', ciceroNumber: '12345', churnRisk: 'LOW' },
+        storageQuota: { usedBytes: 4200000000, limitBytes: 5000000000, isManaged: true } // 4.2 of 5 GB
     },
     { 
         id: 't2', 
@@ -362,7 +409,8 @@ export const MOCK_TENANTS: Tenant[] = [
         branding: { primaryColor: '#dc2626', logoText: 'F&P Finance' }, 
         activeAddons: ['addon_website'],
         hrConfig: { requireTimeSubmission: false, requireTimeApproval: false, workWeekHours: 40 },
-        complianceStats: { finmaStatus: 'REGISTERED', ciceroNumber: '99887', churnRisk: 'MEDIUM' }
+        complianceStats: { finmaStatus: 'REGISTERED', ciceroNumber: '99887', churnRisk: 'MEDIUM' },
+        storageQuota: { usedBytes: 15000000000, limitBytes: 50000000000, isManaged: true } // 15 of 50 GB
     },
     { 
         id: 't3', 
@@ -686,4 +734,15 @@ export const MOCK_TESTIMONIALS: Testimonial[] = [
         company: "Muster Finanz",
         avatar: "https://ui-avatars.com/api/?name=Sarah+Muster"
     }
+];
+
+// Mock Folders for Document Storage Integration (Simulation)
+export const MOCK_DRIVE_FOLDERS = [
+    { id: 'root', name: 'My Drive', type: 'folder', children: ['f1', 'f2', 'f3'] },
+    { id: 'f1', name: 'Persönlich', type: 'folder', children: [] },
+    { id: 'f2', name: 'Marketing', type: 'folder', children: [] },
+    { id: 'f3', name: 'Kundenakten (Shared)', type: 'folder', children: ['f3_1', 'f3_2', 'f3_3'] },
+    { id: 'f3_1', name: 'A - G', type: 'folder', children: [] },
+    { id: 'f3_2', name: 'H - N', type: 'folder', children: [] },
+    { id: 'f3_3', name: 'O - Z', type: 'folder', children: [] },
 ];

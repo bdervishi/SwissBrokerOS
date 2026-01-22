@@ -12,7 +12,8 @@ import {
     FileText, 
     Activity, 
     ArrowRight, 
-    Check
+    Check,
+    HardDrive
 } from 'lucide-react';
 
 export const SolutionEnterprise: React.FC = () => {
@@ -131,10 +132,12 @@ export const SolutionEnterprise: React.FC = () => {
                 <section className="py-24 bg-slate-50 dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
                     <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center gap-12">
                         <div className="flex-1">
-                            <h2 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Datenhaltung: Swiss Vault Standard.</h2>
+                            <h2 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white">Hybrid-Cloud & Datenhoheit.</h2>
                             <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                                Ihre Daten verlassen die Schweiz nicht. Wir hosten ausschliesslich in Tier IV Datacentern im Kanton Zürich.
-                                Physische Sicherheit, Redundanz und Disaster Recovery sind garantiert.
+                                Sie müssen Ihre Daten nicht zwingend in unsere Cloud migrieren. 
+                                Mit <strong>BYOS (Bring Your Own Storage)</strong> integrieren wir Ihre bestehende SharePoint- oder Azure-Infrastruktur nahtlos.
+                                <br/><br/>
+                                Alternativ hosten wir für Sie in zertifizierten Tier IV Datacentern im Kanton Zürich.
                             </p>
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="flex items-center gap-3">
@@ -142,8 +145,8 @@ export const SolutionEnterprise: React.FC = () => {
                                     <span className="font-bold text-slate-900 dark:text-slate-100">AES-256 Encrypted</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <FileText className="text-emerald-600" />
-                                    <span className="font-bold text-slate-900 dark:text-slate-100">ISO 27001</span>
+                                    <HardDrive className="text-emerald-600" />
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">SharePoint Native</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <ShieldCheck className="text-emerald-600" />

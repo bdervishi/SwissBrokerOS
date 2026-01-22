@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { HeroScene } from '../components/3d/HeroScene';
@@ -15,7 +16,8 @@ import {
   ArrowRight,
   Building2, 
   UserCheck, 
-  ShieldAlert
+  ShieldAlert,
+  HardDrive
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { BackToTop } from '../components/ui/BackToTop';
@@ -40,9 +42,9 @@ export const Landing: React.FC = () => {
         tagColor: "emerald"
     },
     {
-        title: "Swiss Vault Sicherheit.",
-        subtitle: "Ihre Daten bleiben in der Schweiz. Tier IV Datacenter in Zürich, Ende-zu-Ende verschlüsselt.",
-        tag: "100% Swiss Hosted",
+        title: "BYOS: Ihre Daten, Ihre Regeln.",
+        subtitle: "Keine Migration nötig. Verbinden Sie OneDrive oder SharePoint nahtlos und behalten Sie volle Datenhoheit.",
+        tag: "Zero Lock-In",
         tagColor: "red"
     }
   ];
@@ -153,9 +155,9 @@ export const Landing: React.FC = () => {
               description="Szenario-Rechner für Eigenheimfinanzierung und integrierte Vermögensübersicht."
             />
             <FeatureCard 
-              icon={<Server className="h-8 w-8 text-red-600 dark:text-red-500" />}
-              title="100% Swiss Hosted"
-              description="Physische Datenhaltung in Zürich (Tier IV). Konform mit nDSG und FINMA-Standards."
+              icon={<HardDrive className="h-8 w-8 text-red-600 dark:text-red-500" />}
+              title="BYOS / Swiss Vault"
+              description="Behalten Sie die Datenhoheit. Verbinden Sie OneDrive/SharePoint nahtlos oder nutzen Sie unseren Swiss Vault."
             />
           </div>
         </div>
