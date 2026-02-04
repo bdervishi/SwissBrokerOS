@@ -65,49 +65,6 @@ export const Settings: React.FC = () => {
       
       <div className="max-w-3xl space-y-6">
 
-        {/* Database Diagnostic Card - Only for SaaS Super Admins */}
-        {isSaasAdmin && (
-            <Card title="System Diagnose (SaaS Admin Only)">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-full ${
-                            dbStatus === 'IDLE' ? 'bg-slate-100 text-slate-500' :
-                            dbStatus === 'CHECKING' ? 'bg-blue-100 text-blue-600 animate-pulse' :
-                            dbStatus === 'SUCCESS' ? 'bg-emerald-100 text-emerald-600' :
-                            'bg-red-100 text-red-600'
-                        }`}>
-                            {dbStatus === 'IDLE' && <Database size={24} />}
-                            {dbStatus === 'CHECKING' && <Activity size={24} />}
-                            {dbStatus === 'SUCCESS' && <CheckCircle size={24} />}
-                            {dbStatus === 'ERROR' && <XCircle size={24} />}
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-slate-900 dark:text-slate-100">Datenbank Verbindung</h4>
-                            <p className="text-sm text-slate-500">
-                                {dbMessage || 'Prüfen Sie die Live-Verbindung zur Cloud Datenbank.'}
-                            </p>
-                            {latency && <p className="text-xs text-slate-400 mt-1">Latenz: {latency}ms</p>}
-                        </div>
-                    </div>
-                    <Button 
-                        onClick={handleTestConnection} 
-                        disabled={dbStatus === 'CHECKING'}
-                        variant={dbStatus === 'ERROR' ? 'danger' : 'outline'}
-                    >
-                        {dbStatus === 'CHECKING' ? 'Prüfe...' : 'Verbindung testen'}
-                    </Button>
-                </div>
-                {dbStatus === 'ERROR' && (
-                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-300 flex items-start gap-2">
-                        <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-                        <div>
-                            <strong>Fehler erkannt:</strong> Bitte stellen Sie sicher, dass die Tabellen in Supabase angelegt sind (SQL Script ausführen) und die RLS Policies korrekt sind.
-                        </div>
-                    </div>
-                )}
-            </Card>
-        )}
-
         {/* White Labeling Settings (Only for Broker Admins) */}
         {isBrokerAdmin && tenant && (
             <>
@@ -276,6 +233,49 @@ export const Settings: React.FC = () => {
                 </div>
             </div>
         </div>
+
+        {/* Database Diagnostic Card - Only for SaaS Super Admins */}
+        {isSaasAdmin && (
+            <Card title="System Diagnose (SaaS Admin Only)">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-3 rounded-full ${
+                            dbStatus === 'IDLE' ? 'bg-slate-100 text-slate-500' :
+                            dbStatus === 'CHECKING' ? 'bg-blue-100 text-blue-600 animate-pulse' :
+                            dbStatus === 'SUCCESS' ? 'bg-emerald-100 text-emerald-600' :
+                            'bg-red-100 text-red-600'
+                        }`}>
+                            {dbStatus === 'IDLE' && <Database size={24} />}
+                            {dbStatus === 'CHECKING' && <Activity size={24} />}
+                            {dbStatus === 'SUCCESS' && <CheckCircle size={24} />}
+                            {dbStatus === 'ERROR' && <XCircle size={24} />}
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-slate-900 dark:text-slate-100">Datenbank Verbindung</h4>
+                            <p className="text-sm text-slate-500">
+                                {dbMessage || 'Prüfen Sie die Live-Verbindung zur Cloud Datenbank.'}
+                            </p>
+                            {latency && <p className="text-xs text-slate-400 mt-1">Latenz: {latency}ms</p>}
+                        </div>
+                    </div>
+                    <Button 
+                        onClick={handleTestConnection} 
+                        disabled={dbStatus === 'CHECKING'}
+                        variant={dbStatus === 'ERROR' ? 'danger' : 'outline'}
+                    >
+                        {dbStatus === 'CHECKING' ? 'Prüfe...' : 'Verbindung testen'}
+                    </Button>
+                </div>
+                {dbStatus === 'ERROR' && (
+                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-300 flex items-start gap-2">
+                        <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                        <div>
+                            <strong>Fehler erkannt:</strong> Bitte stellen Sie sicher, dass die Tabellen in Supabase angelegt sind (SQL Script ausführen) und die RLS Policies korrekt sind.
+                        </div>
+                    </div>
+                )}
+            </Card>
+        )}
 
         <Card title="Profil Einstellungen">
             <div className="space-y-4">
