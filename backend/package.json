@@ -1,4 +1,3 @@
-
 {
   "name": "swissbroker-backend",
   "version": "1.0.0",
@@ -15,7 +14,7 @@
     "dotenv": "^16.3.1",
     "helmet": "^7.1.0",
     "express-rate-limit": "^7.1.5",
-    "@google/genai": "^0.1.1"
+    "@google/genai": "^1.0.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3",

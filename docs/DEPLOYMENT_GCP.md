@@ -1,106 +1,138 @@
+# Deployment auf Google Cloud Run (Full Stack: Frontend + Backend)
 
-# Deployment auf Google Cloud Run (Region Zürich / Schweiz)
+Diese Anleitung beschreibt das Deployment der kompletten **SwissBroker OS** Architektur (React Frontend + Node.js Backend) in der Region `europe-west6` (Zürich).
 
-Diese Anleitung beschreibt, wie du die App in der Google Cloud Region `europe-west6` (Zürich) hostest, um volle Datenhaltung in der Schweiz zu garantieren.
+## Architektur-Übersicht
 
-## Voraussetzungen
+1.  **Frontend (React/Vite):** Läuft im Nginx Container. Liefert die UI aus.
+2.  **Backend (Node.js):** Läuft im Node Container. Fungiert als sicherer Proxy zur Google Gemini API (versteckt den API Key).
+3.  **Datenbank (Supabase):** Extern gehostet (siehe `SELF_HOSTING_GUIDE.md` oder Supabase Cloud).
 
-1.  Ein Google Cloud Platform (GCP) Account.
-2.  Installierte [Google Cloud SDK (gcloud)](https://cloud.google.com/sdk/docs/install) auf deinem Computer (MacBook/PC).
-3.  Ein aktives Projekt in der Google Cloud Console.
-4.  **WICHTIG:** Ein aktives **Rechnungskonto (Billing Account)** muss mit dem Projekt verknüpft sein. Google Cloud Run und Artifact Registry erfordern dies, auch wenn du im kostenlosen Rahmen bleibst.
+---
 
-## Schritt 0: Projekt lokal vorbereiten
+## Teil A: Vorbereitung
 
-Ja, du musst den Code zuerst auf deinem Computer haben.
+1.  **GCP Setup:**
+    *   Installiere `gcloud` CLI.
+    *   Login: `gcloud auth login`.
+    *   Projekt wählen: `gcloud config set project DEIN_PROJEKT_ID`.
+    *   Billing aktivieren (Zwingend für Cloud Run).
 
-1.  **Download:** Lade diesen Code herunter (Button "Download" oder via Git).
-2.  **Entpacken:** Falls es eine ZIP-Datei ist, entpacke sie.
-3.  **Terminal öffnen:** Starte das Terminal auf deinem MacBook.
-4.  **In Ordner wechseln:** Navigiere mit `cd` in den Ordner:
+2.  **Artifact Registry erstellen (Zürich):**
     ```bash
-    cd Downloads/swissbroker-os  # Beispielpfad anpassen
+    gcloud artifacts repositories create swissbroker-repo \
+        --repository-format=docker \
+        --location=europe-west6 \
+        --description="SwissBroker OS Repository"
     ```
 
-### Wichtige Datei: Dockerfile
-Stelle sicher, dass eine Datei namens `Dockerfile` (ohne Dateiendung) im Hauptverzeichnis existiert. Sie sollte folgenden Inhalt haben:
+---
+
+## Teil B: Backend Deployment (Der AI Proxy)
+
+Das Backend muss **zuerst** deployed werden, da das Frontend die URL des Backends wissen muss.
+
+### 1. Die `backend/Dockerfile`
+Stelle sicher, dass im Ordner `backend/` folgende `Dockerfile` liegt:
 
 ```dockerfile
 # Stage 1: Build
-FROM node:20-alpine as build
-
+FROM node:20-alpine as builder
 WORKDIR /app
-
-# Dependencies installieren
 COPY package*.json ./
-RUN npm ci
-
-# Source Code kopieren
+# Verwende npm install statt ci, um Fehler bei fehlendem Lockfile zu vermeiden
+RUN npm install
 COPY . .
-
-# API Key als Build Argument annehmen (wird von Vite eingebacken)
-ARG API_KEY
-ENV API_KEY=$API_KEY
-
-# Build ausführen
 RUN npm run build
 
-# Stage 2: Serve (Nginx)
-FROM nginx:alpine
-
-# Build-Ergebnisse kopieren
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Nginx Config kopieren (für React Router Support)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Stage 2: Production Run
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+# Installiere nur Production-Dependencies
+RUN npm install --omit=dev
+COPY --from=builder /app/dist ./dist
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
 ```
 
-## Schritt 1: Login & Projektwahl
+### 2. Backend Build & Deploy
+Wechsle in den Backend Ordner:
+```bash
+cd backend
+```
 
-Führe nun im Terminal folgende Befehle aus:
+Führe den Build & Deploy Prozess aus. Wir übergeben den Google Gemini API Key hier als Umgebungsvariable an den Server:
 
 ```bash
-# Login bei Google Cloud (öffnet ein Browserfenster)
-gcloud auth login
+# 1. Build & Push via Cloud Build
+gcloud builds submit --config cloudbuild.yaml \
+    --substitutions="_GOOGLE_API_KEY=DEIN_ECHTER_GEMINI_KEY,_IMAGE_NAME=europe-west6-docker.pkg.dev/DEIN_PROJEKT_ID/swissbroker-repo/backend:latest" \
+    .
 
-# Projekt setzen (Ersetze DEIN_PROJEKT_ID mit deiner ID aus der Google Cloud Console)
-gcloud config set project DEIN_PROJEKT_ID
+# 2. Deploy auf Cloud Run
+gcloud run deploy swissbroker-backend \
+    --image europe-west6-docker.pkg.dev/DEIN_PROJEKT_ID/swissbroker-repo/backend:latest \
+    --platform managed \
+    --region europe-west6 \
+    --allow-unauthenticated \
+    --port 3000
 ```
 
-*(Hinweis: Eine Warnung zu fehlenden "environment tags" kannst du ignorieren, solange "Updated property [core/project]" erscheint.)*
+### 3. Backend URL notieren
+Nach dem Deployment erhältst du eine URL (z.B. `https://swissbroker-backend-xyz.a.run.app`).
+**Notiere diese URL!** Du brauchst sie gleich für das Frontend.
+Der API-Endpunkt für das Frontend ist dann: `https://swissbroker-backend-xyz.a.run.app/api/generate`.
 
-## Schritt 2: Artifact Registry erstellen
+---
 
-Wir brauchen einen Ort, um das Docker-Image zu speichern. Wir wählen Zürich (`europe-west6`).
+## Teil C: Frontend Deployment (React App)
 
-```bash
-gcloud artifacts repositories create swissbroker-repo \
-    --repository-format=docker \
-    --location=europe-west6 \
-    --description="SwissBroker OS Repository"
-```
+Gehe zurück in das Hauptverzeichnis (`cd ..`).
 
-## Schritt 3: Build & Push des Images
+### 1. Die `Dockerfile` (Root)
+Stelle sicher, dass im Hauptverzeichnis die Nginx-Dockerfile liegt (siehe vorherige Docs).
 
-Wir nutzen `cloudbuild.yaml`, um den API Key sicher zu übergeben.
+### 2. Frontend Build & Deploy
+Hier müssen wir nun die **Backend URL** und die **Supabase Daten** in den Build "einbacken". Vite ersetzt diese Variablen während des Builds (`npm run build`).
 
-**Kopiere diesen Befehl (angepasst für dein Projekt):**
+Es gibt zwei Möglichkeiten, die Variablen zu setzen:
+
+**Option A: Cloud Build (Variablen fest einbacken)**
+Nachteil: Du musst bei jeder Änderung der Variablen neu bauen.
 
 ```bash
 gcloud builds submit --config cloudbuild.yaml \
-    --substitutions=_API_KEY=DEIN_ECHTER_API_KEY,_IMAGE_NAME=europe-west6-docker.pkg.dev/DEIN_PROJEKT_ID/swissbroker-repo/app:latest \
+    --substitutions="_API_KEY=dummy_value,_IMAGE_NAME=europe-west6-docker.pkg.dev/DEIN_PROJEKT_ID/swissbroker-repo/app:latest" \
+    .
+```
+*(Hinweis: `_API_KEY` ist hier ein Dummy, da wir jetzt das Backend nutzen, aber der Build-Prozess erwartet evtl. noch ein Argument. Wichtiger sind die Runtime-Vars unten)*
+
+**Option B: Runtime Variablen in Cloud Run (Empfohlen)**
+Wir bauen das Image und setzen die Variablen erst beim Starten des Containers. Dafür muss dein Code `window.env` oder ähnliches unterstützen, ODER wir nutzen Vite's `define` feature beim Build.
+
+Da wir Vite nutzen, ist es am einfachsten, die Variablen in der **Cloud Run Konsole** oder beim Deploy-Befehl zu setzen, *sofern* der Code sie zur Laufzeit liest.
+Da Vite Environment Variables standardmäßig zur *Build-Zeit* ersetzt werden, müssen wir das Image mit den korrekten Werten bauen.
+
+Nutze daher Cloud Build mit den korrekten Werten:
+
+```bash
+# Ersetze die Platzhalter mit deinen echten Werten!
+# BACKEND_URL muss auf /api/generate enden!
+
+gcloud builds submit \
+    --tag europe-west6-docker.pkg.dev/DEIN_PROJEKT_ID/swissbroker-repo/app:latest \
+    --build-arg VITE_BACKEND_URL=https://swissbroker-backend-xyz.a.run.app/api/generate \
+    --build-arg VITE_SUPABASE_URL=https://deine-supabase-url.com \
+    --build-arg VITE_SUPABASE_ANON_KEY=dein-anon-key \
+    --build-arg VITE_USE_MOCK_DATA=false \
     .
 ```
 
-*(Ersetze `DEIN_ECHTER_API_KEY` und `DEIN_PROJEKT_ID` entsprechend)*
+*(Hinweis: Du musst deine `Dockerfile` im Root evtl. anpassen, um `ARG` Befehle für VITE_... zu akzeptieren, siehe unten)*
 
-## Schritt 4: Deployment auf Cloud Run (Zürich)
-
-Jetzt starten wir den Server in Zürich.
+### 3. Frontend auf Cloud Run starten
 
 ```bash
 gcloud run deploy swissbroker-os \
@@ -111,35 +143,36 @@ gcloud run deploy swissbroker-os \
     --port 80
 ```
 
-### Parameter Erklärung:
-*   `--region europe-west6`: **Zwingend**, damit der Server physisch in Zürich steht.
-*   `--allow-unauthenticated`: Macht die Webseite öffentlich erreichbar.
-
-## Schritt 5: Fertig!
-
-Nach dem Deployment erhältst du im Terminal eine URL (z.B. `https://swissbroker-os-uc.a.run.app`).
-
-Deine App läuft nun:
-1.  Auf Google Servern.
-2.  Physisch in der Schweiz (Zürich).
-3.  Mit Autoscaling (skaliert auf 0, wenn niemand sie nutzt = geringe Kosten).
-
 ---
 
-## Troubleshooting
+## Anhang: Dockerfile Update für Frontend (Root)
 
-### Fehler: "Billing account ... is not found"
-Dieser Fehler bedeutet, dass deinem Google Cloud Projekt noch kein Rechnungskonto hinterlegt ist.
-Google Cloud Dienste wie "Run" und "Artifact Registry" erfordern eine hinterlegte Zahlungsmethode (Kreditkarte), auch wenn die Nutzung oft durch das kostenlose Guthaben abgedeckt ist.
+Damit die Build-Args (`--build-arg`) funktionieren, muss deine `Dockerfile` im Hauptverzeichnis so aussehen:
 
-**Lösung:**
-1. Öffne die [Google Cloud Console Billing](https://console.cloud.google.com/billing).
-2. Klicke auf "Rechnungskonto verknüpfen" (Link billing account).
-3. Wähle dein Projekt aus und füge eine Zahlungsmethode hinzu.
-4. Führe den Befehl im Terminal erneut aus.
+```dockerfile
+FROM node:20-alpine as build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
 
-### Fehler: "Image ... not found"
-Das bedeutet, dass Schritt 3 (Build) übersprungen wurde oder fehlgeschlagen ist. Cloud Run kann nichts starten, was nicht vorher gebaut wurde.
+# Build Arguments definieren
+ARG VITE_BACKEND_URL
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_USE_MOCK_DATA
 
-**Lösung:**
-Führe Schritt 3 (`gcloud builds submit ...`) erneut aus und warte, bis er "SUCCESS" meldet. Erst danach Schritt 4 ausführen.
+# Environment Variablen setzen, damit Vite sie beim Build sieht
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV VITE_USE_MOCK_DATA=$VITE_USE_MOCK_DATA
+
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
