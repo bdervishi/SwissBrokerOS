@@ -1,0 +1,12 @@
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_IMAGE_NAME'
+      - '--build-arg'
+      - 'API_KEY=$_API_KEY'
+      - '.'
+images:
+  - '$_IMAGE_NAME'
