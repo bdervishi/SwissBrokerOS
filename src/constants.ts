@@ -574,7 +574,7 @@ export const MOCK_BANK_OFFERS: BankOffer[] = [
     { id: 'bo4', bankName: 'Gowago', productName: 'All-in-One', interestRateRange: [4.2, 6.5], maxDuration: 48, commissionPercentage: 2.0, type: CreditType.LEASING },
 ];
 
-// ... MOCK_STATIC_PAGES, MOCK_NAVIGATION, FAQS, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS, MOCK_LEAD_OFFERS, MOCK_JOBS, MOCK_TESTIMONIALS, MOCK_DRIVE_FOLDERS (Keep existing) ...
+// --- UPDATED STATIC PAGES WITH CONTENT FOR CMS ---
 export const MOCK_STATIC_PAGES: StaticPage[] = [
     { 
         id: 'p_imprint', 
@@ -582,7 +582,12 @@ export const MOCK_STATIC_PAGES: StaticPage[] = [
         isPublished: true, 
         lastUpdated: '01.01.2024', 
         title: { de: 'Impressum', en: 'Imprint', fr: 'Empreinte', it: 'Impronta' }, 
-        content: { de: '<h1>Impressum</h1><p>Angaben gemäss...</p>', en: '<h1>Imprint</h1>', fr: '<h1>Empreinte</h1>', it: '<h1>Impronta</h1>' } 
+        content: { 
+          de: '<h1>Impressum</h1><p>SwissBroker OS ist ein Produkt der <strong>Trifti GmbH</strong>.<br/>Musterstrasse 1, 8000 Zürich.<br/>Web: <a href="https://www.trifti.ch">www.trifti.ch</a></p>', 
+          en: '<h1>Imprint</h1>', 
+          fr: '<h1>Empreinte</h1>', 
+          it: '<h1>Impronta</h1>' 
+        } 
     },
     { 
         id: 'p_privacy', 
