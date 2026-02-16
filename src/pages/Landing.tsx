@@ -229,7 +229,7 @@ export const Landing: React.FC = () => {
                 {getStaticLink('datenschutz')}
                 <Link to="/legal/terms" className="hover:text-brand-600 dark:hover:text-slate-300">AGB</Link>
             </div>
-            <p className="font-medium">© {new Date().getFullYear()} SwissBroker OS. Ein Produkt der <a href="https://www.trifti.ch" target="_blank" rel="noreferrer" className="hover:text-brand-600 dark:hover:text-slate-300 transition-colors font-bold">Trifti GmbH</a>.</p>
+            <p className="font-medium">© {new Date().getFullYear()} SwissBroker OS. Ein Produkt der <a href="https://www.trifti.ch" target="_blank" rel="noreferrer" className="font-bold hover:text-brand-600 dark:hover:text-slate-300 transition-colors">Trifti GmbH</a>. Alle Rechte vorbehalten.</p>
           </div>
         </div>
       </footer>
