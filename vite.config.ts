@@ -18,6 +18,14 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: 'dist',
+      rollupOptions: {
+        input: {
+          main: path.resolve((process as any).cwd(), 'index.html'),
+          admin: path.resolve((process as any).cwd(), 'admin.html'),
+          broker: path.resolve((process as any).cwd(), 'broker.html'),
+          client: path.resolve((process as any).cwd(), 'client.html'),
+        },
+      },
     },
     define: {
       // This is necessary because the code uses `process.env.API_KEY`

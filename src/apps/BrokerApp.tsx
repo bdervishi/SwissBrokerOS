@@ -1,12 +1,13 @@
 
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from '../../contexts/AuthContext';
+import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 import { LanguageProvider } from '../../contexts/LanguageContext';
 import { SecurityProvider } from '../../contexts/SecurityContext';
 import { BrandingProvider } from '../../contexts/BrandingContext';
 import { ScrollToTop } from '../../components/ScrollToTop';
 import { MaintenanceView } from '../../components/MaintenanceView';
+import { UserRole } from '../../types';
 
 import { Dashboard } from '../../pages/Dashboard';
 import { AgentDashboard } from '../../pages/AgentDashboard';
@@ -35,6 +36,15 @@ import { Settings } from '../../pages/Settings';
 import { SaaSPlans } from '../../pages/SaaSPlans'; // Brokers see Plan selection
 import { DataImport } from '../../pages/DataImport';
 
+// Helper Wrapper to route agents to their specific dashboard
+const BrokerDashboardRouter = () => {
+    const { role } = useAuth();
+    if (role === UserRole.BROKER_AGENT) {
+        return <AgentDashboard />;
+    }
+    return <Dashboard />;
+};
+
 export const BrokerApp = () => {
   return (
     <AuthProvider>
@@ -46,7 +56,7 @@ export const BrokerApp = () => {
               <Routes>
                 {/* Default to Dashboard */}
                 <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<BrokerDashboardRouter />} />
                 
                 {/* Specific Agent Dashboard Route (can also be handled in Dashboard comp) */}
                 <Route path="/agent-dashboard" element={<AgentDashboard />} />
