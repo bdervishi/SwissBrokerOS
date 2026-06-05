@@ -1,6 +1,8 @@
 {
   "name": "SwissBroker OS",
-  "description": "A comprehensive SaaS platform for independent Swiss insurance brokers, featuring insurance management, tax overview preparation, mortgage scenarios, and wealth analysis.",
+  "description": "Enterprise-grade SaaS broker operating system for Swiss insurance, pensions, and financial advisors. Features advanced client onboarding, full policy administration, CRM databases, and certified integrations for Bexio, Abacus, Helvico, Google, and Microsoft.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
