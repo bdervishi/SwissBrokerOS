@@ -10,21 +10,13 @@ import {
   Plus, 
   Search, 
   Filter, 
-  MapPin, 
-  Calendar, 
-  ShieldAlert, 
-  Check, 
-  ChevronRight, 
-  HeartHandshake, 
-  Building2, 
-  HelpCircle,
+  MapPin,
+  Check,
+  ChevronRight,
+  Building2,
   Network,
   RotateCw,
-  LogOut,
-  Sparkles,
-  ExternalLink,
-  Lock,
-  Globe2
+  Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -596,29 +588,30 @@ export default function App() {
 
   // Toggle provider connection state
   const handleToggleConnection = (providerCode: string) => {
-    setProviders(prev => prev.map(p => {
-      if (p.code === providerCode) {
-        const nextStatus = p.status === 'CONNECTED' ? 'DISCONNECTED' : 'CONNECTED';
-        
-        // Log state changes matching integration_sync_logs tables
-        const logMsg = nextStatus === 'CONNECTED' 
-          ? `Schnittstelle ${p.name} wurde erfolgreich autorisiert und verbunden.`
-          : `Schnittstelle ${p.name} wurde ordnungsgemäss getrennt.`;
-          
-        setLogs(prevLogs => [{
-          id: String(Date.now()),
-          provider: p.name,
-          direction: nextStatus === 'CONNECTED' ? 'INBOUND' : 'OUTBOUND',
-          status: 'SUCCESS',
-          records: nextStatus === 'CONNECTED' ? 3 : 0,
-          message: logMsg,
-          time: 'Gerade eben'
-        }, ...prevLogs]);
+    const provider = providers.find(p => p.code === providerCode);
+    if (!provider) return;
 
-        return { ...p, status: nextStatus };
-      }
-      return p;
-    }));
+    const nextStatus = provider.status === 'CONNECTED' ? 'DISCONNECTED' : 'CONNECTED';
+
+    setProviders(prev => prev.map(p =>
+      p.code === providerCode ? { ...p, status: nextStatus } : p
+    ));
+
+    // Log state changes matching integration_sync_logs tables
+    const logMsg = nextStatus === 'CONNECTED'
+      ? `Schnittstelle ${provider.name} wurde erfolgreich autorisiert und verbunden.`
+      : `Schnittstelle ${provider.name} wurde ordnungsgemäss getrennt.`;
+
+    setLogs(prevLogs => [{
+      id: String(Date.now()),
+      provider: provider.name,
+      direction: nextStatus === 'CONNECTED' ? 'INBOUND' : 'OUTBOUND',
+      status: 'SUCCESS',
+      records: nextStatus === 'CONNECTED' ? 3 : 0,
+      message: logMsg,
+      time: 'Gerade eben'
+    }, ...prevLogs]);
+
     setSelectedConfProvider(null);
   };
 
@@ -642,30 +635,30 @@ export default function App() {
   });
 
   return (
-    <div id="swissbroker-app" class="flex flex-col h-screen overflow-hidden bg-slate-950 font-sans antialiased text-slate-100">
+    <div id="swissbroker-app" className="flex flex-col h-screen overflow-hidden bg-slate-950 font-sans antialiased text-slate-100">
       
       {/* ==========================================
           HEADER PANEL & ROLE SELECTOR
           ========================================== */}
-      <header class="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4">
-        <div class="flex items-center space-x-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 font-bold text-white shadow-lg shadow-sky-500/20">
+      <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4">
+        <div className="flex items-center space-x-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 font-bold text-white shadow-lg shadow-sky-500/20">
             CH
           </div>
           <div>
-            <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+            <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
               SwissBroker OS
-              <span class="inline-flex items-center gap-1 rounded bg-sky-500/10 px-1.5 py-0.5 text-xs font-semibold text-sky-400 border border-sky-400/20">
+              <span className="inline-flex items-center gap-1 rounded bg-sky-500/10 px-1.5 py-0.5 text-xs font-semibold text-sky-400 border border-sky-400/20">
                 PRO-Cloud
               </span>
             </h1>
-            <p class="text-xs text-slate-400">Automated Financial & Insurtech Operations</p>
+            <p className="text-xs text-slate-400">Automated Financial & Insurtech Operations</p>
           </div>
         </div>
 
         {/* Global Action items & role trigger */}
-        <div class="flex items-center space-x-4">
-          <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-lg border border-slate-800">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-slate-950 p-1 rounded-lg border border-slate-800">
             <button 
               id="role-broker"
               onClick={() => {
@@ -703,14 +696,14 @@ export default function App() {
       {/* ==========================================
           MAIN NAVIGATION & WORKSPACE BODY
           ========================================== */}
-      <div class="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         
         {/* Navigation Sidebar */}
-        <aside class="w-64 border-r border-slate-800 bg-slate-900/60 p-4 flex flex-col justify-between">
-          <div class="space-y-6">
+        <aside className="w-64 border-r border-slate-800 bg-slate-900/60 p-4 flex flex-col justify-between">
+          <div className="space-y-6">
             <div>
-              <p class="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Brokerage CRM</p>
-              <nav class="mt-2 space-y-1">
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Brokerage CRM</p>
+              <nav className="mt-2 space-y-1">
                 <button 
                   id="nav-clients"
                   onClick={() => changeRoute('#/clients')}
@@ -718,7 +711,7 @@ export default function App() {
                 >
                   <Users className="h-4 w-4" />
                   Kundenstamm
-                  <span class="ml-auto rounded-full bg-slate-950 px-2 py-0.5 text-xs text-slate-400">
+                  <span className="ml-auto rounded-full bg-slate-950 px-2 py-0.5 text-xs text-slate-400">
                     {clients.length}
                   </span>
                 </button>
@@ -730,7 +723,7 @@ export default function App() {
                 >
                   <FileText className="h-4 w-4" />
                   Versicherungen
-                  <span class="ml-auto rounded-full bg-slate-950 px-2 py-0.5 text-xs text-slate-400">
+                  <span className="ml-auto rounded-full bg-slate-950 px-2 py-0.5 text-xs text-slate-400">
                     {policies.length}
                   </span>
                 </button>
@@ -738,8 +731,8 @@ export default function App() {
             </div>
 
             <div>
-              <p class="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Integrationsfokus</p>
-              <nav class="mt-2 space-y-1">
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Integrationsfokus</p>
+              <nav className="mt-2 space-y-1">
                 <button 
                   id="nav-integrations"
                   onClick={() => changeRoute('#/integrations')}
@@ -747,15 +740,15 @@ export default function App() {
                 >
                   <Network className="h-4 w-4" />
                   Schnittstellen
-                  <span class="ml-auto flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="ml-auto flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 </button>
               </nav>
             </div>
             
             {userRole === 'SUPER_ADMIN' && (
               <div>
-                <p class="px-3 text-[10px] font-semibold uppercase tracking-wider text-emerald-500">System Management</p>
-                <nav class="mt-2 space-y-1">
+                <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-emerald-500">System Management</p>
+                <nav className="mt-2 space-y-1">
                   <button 
                     id="nav-admin"
                     onClick={() => changeRoute('#/admin')}
@@ -770,32 +763,32 @@ export default function App() {
           </div>
 
           {/* Connected Tenant / Status Indicator */}
-          <div class="rounded-xl bg-slate-950 border border-slate-800 p-3.5 space-y-2">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400">Mandant:</span>
-              <span class="font-semibold text-white">Muster Broker AG</span>
+          <div className="rounded-xl bg-slate-950 border border-slate-800 p-3.5 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">Mandant:</span>
+              <span className="font-semibold text-white">Muster Broker AG</span>
             </div>
-            <div class="flex items-center gap-2 pt-1.5 border-t border-slate-800/60">
-              <span class="h-2 w-2 rounded-full bg-emerald-500 pulsing-dot"></span>
-              <span class="text-[10px] uppercase font-bold tracking-wider text-emerald-400">Verbindung bereit</span>
+            <div className="flex items-center gap-2 pt-1.5 border-t border-slate-800/60">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 pulsing-dot"></span>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">Verbindung bereit</span>
             </div>
           </div>
         </aside>
 
         {/* Content View Canvas */}
-        <main class="flex-1 overflow-y-auto bg-slate-950 p-6 subtle-grid relative">
+        <main className="flex-1 overflow-y-auto bg-slate-950 p-6 subtle-grid relative">
           
           {/* ==========================================
               ROUTE 1: CLIENTS PAGE (KUNDENSTAMM)
               ========================================== */}
           {hash === '#/clients' && (
-            <div class="space-y-6">
+            <div className="space-y-6">
               
               {/* Header block + Primary Action with NO dead buttons */}
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 class="text-2xl font-bold tracking-tight text-white">Kundenverwaltung (CRM)</h2>
-                  <p class="text-sm text-slate-400">Verwalte deine privaten und Firmenberatungskunden und starte Schnittstellen-Exporte.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-white">Kundenverwaltung (CRM)</h2>
+                  <p className="text-sm text-slate-400">Verwalte deine privaten und Firmenberatungskunden und starte Schnittstellen-Exporte.</p>
                 </div>
                 
                 {/* Neuer Klient Button - TRICGERS MODAL */}
@@ -810,9 +803,9 @@ export default function App() {
               </div>
 
               {/* Filtering Controls */}
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                     <Search className="h-4 w-4" />
                   </span>
                   <input 
@@ -824,7 +817,7 @@ export default function App() {
                   />
                 </div>
 
-                <div class="flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
                   <Filter className="h-4 w-4 text-slate-400 shrink-0" />
                   <select 
                     value={filterType}
@@ -837,56 +830,56 @@ export default function App() {
                   </select>
                 </div>
 
-                <div class="flex items-center justify-end text-xs text-slate-400">
+                <div className="flex items-center justify-end text-xs text-slate-400">
                   Zeigt {filteredClients.length} von {clients.length} registrierten Klienten
                 </div>
               </div>
 
               {/* Main Core Viewport: Horizontal split list & details card */}
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
                 {/* List portion */}
-                <div class="lg:col-span-5 bg-slate-900 border border-slate-850 rounded-xl overflow-hidden shadow-xl">
-                  <div class="p-4 border-b border-slate-800 bg-slate-900/85">
-                    <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400">Klientenliste</h3>
+                <div className="lg:col-span-5 bg-slate-900 border border-slate-850 rounded-xl overflow-hidden shadow-xl">
+                  <div className="p-4 border-b border-slate-800 bg-slate-900/85">
+                    <h3 className="text-xs uppercase tracking-wider font-bold text-slate-400">Klientenliste</h3>
                   </div>
-                  <div class="divide-y divide-slate-800/80 max-h-[500px] overflow-y-auto">
+                  <div className="divide-y divide-slate-800/80 max-h-[500px] overflow-y-auto">
                     {filteredClients.map(client => (
                       <button
                         key={client.id}
                         onClick={() => setSelectedClient(client)}
                         className={`w-full text-left p-4 transition-all flex items-center justify-between hover:bg-slate-800/40 ${selectedClient?.id === client.id ? 'bg-slate-800/70 border-l-4 border-sky-500 pl-3' : ''}`}
                       >
-                        <div class="space-y-1">
-                          <div class="flex items-center gap-2">
-                            <span class="font-semibold text-sm text-white">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-white">
                               {client.type === 'CORPORATE' ? client.company_name : `${client.first_name} ${client.last_name}`}
                             </span>
-                            <span class={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${client.type === 'CORPORATE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${client.type === 'CORPORATE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
                               {client.type}
                             </span>
                           </div>
-                          <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                          <p className="text-xs text-slate-400 flex items-center gap-1.5">
                             {client.type === 'CORPORATE' && (
-                              <span class="text-slate-300">Ansprechpartner: {client.first_name} {client.last_name}</span>
+                              <span className="text-slate-300">Ansprechpartner: {client.first_name} {client.last_name}</span>
                             )}
                             {client.type === 'PRIVATE' && (
                               <span>Domicile: {client.tax_domicile} | Kanton {client.tax_domicile}</span>
                             )}
                           </p>
                         </div>
-                        <div class="flex flex-col items-end gap-1 shrink-0">
-                          <span class={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${client.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border border-sky-500/20'}`}>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${client.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border border-sky-500/20'}`}>
                             {client.status}
                           </span>
-                          <span class="text-[10px] text-slate-500 font-medium">Score: {client.trust_score}%</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Score: {client.trust_score}%</span>
                         </div>
                       </button>
                     ))}
 
                     {filteredClients.length === 0 && (
-                      <div class="p-8 text-center text-slate-500">
-                        <AlertCircle class="mx-auto h-8 w-8 mb-2 opacity-50" />
+                      <div className="p-8 text-center text-slate-500">
+                        <AlertCircle className="mx-auto h-8 w-8 mb-2 opacity-50" />
                         Keine Kunden gefunden, die den Kriterien entsprechen.
                       </div>
                     )}
@@ -894,22 +887,22 @@ export default function App() {
                 </div>
 
                 {/* Details card with interactive items - NO dead buttons */}
-                <div class="lg:col-span-7">
+                <div className="lg:col-span-7">
                   {selectedClient ? (
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl space-y-6 p-6">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl space-y-6 p-6">
                       
                       {/* Name Card Panel */}
-                      <div class="flex items-start justify-between border-b border-slate-800 pb-5">
-                        <div class="space-y-2">
-                          <div class="flex items-center gap-2">
-                            <span class="p-2.5 rounded-lg bg-sky-500/15 text-sky-400">
+                      <div className="flex items-start justify-between border-b border-slate-800 pb-5">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="p-2.5 rounded-lg bg-sky-500/15 text-sky-400">
                               {selectedClient.type === 'CORPORATE' ? <Building2 className="h-6 w-6" /> : <Users className="h-6 w-6" />}
                             </span>
                             <div>
-                              <h3 class="text-xl font-bold text-white tracking-tight">
+                              <h3 className="text-xl font-bold text-white tracking-tight">
                                 {selectedClient.type === 'CORPORATE' ? selectedClient.company_name : `${selectedClient.first_name} ${selectedClient.last_name}`}
                               </h3>
-                              <p class="text-xs text-slate-400 flex items-center gap-1">
+                              <p className="text-xs text-slate-400 flex items-center gap-1">
                                 <MapPin className="h-3.5 w-3.5" />
                                 {selectedClient.address}, {selectedClient.zip_city} ({selectedClient.country})
                               </p>
@@ -917,48 +910,48 @@ export default function App() {
                           </div>
                         </div>
 
-                        <div class="text-right">
-                          <div class="text-[10px] uppercase font-bold tracking-wider text-slate-500">Qualitäts-Score</div>
-                          <div class="text-3xl font-extrabold text-sky-400">{selectedClient.trust_score}<span class="text-xs text-slate-500">/100</span></div>
+                        <div className="text-right">
+                          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Qualitäts-Score</div>
+                          <div className="text-3xl font-extrabold text-sky-400">{selectedClient.trust_score}<span className="text-xs text-slate-500">/100</span></div>
                         </div>
                       </div>
 
                       {/* Client parameters grid */}
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-slate-950 p-4 border border-slate-850 rounded-lg">
-                          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Kontakte & Details</h4>
-                          <div class="space-y-2 text-xs">
-                            <div class="flex justify-between"><span class="text-slate-500">Telefon:</span> <span class="text-slate-200">{selectedClient.phone}</span></div>
-                            <div class="flex justify-between"><span class="text-slate-500">E-Mail:</span> <span class="text-slate-200 underline">{selectedClient.email}</span></div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-slate-950 p-4 border border-slate-850 rounded-lg">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Kontakte & Details</h4>
+                          <div className="space-y-2 text-xs">
+                            <div className="flex justify-between"><span className="text-slate-500">Telefon:</span> <span className="text-slate-200">{selectedClient.phone}</span></div>
+                            <div className="flex justify-between"><span className="text-slate-500">E-Mail:</span> <span className="text-slate-200 underline">{selectedClient.email}</span></div>
                             {selectedClient.type === 'PRIVATE' && (
                               <>
-                                <div class="flex justify-between"><span class="text-slate-500">Geburtstag:</span> <span class="text-slate-200">{selectedClient.birth_date}</span></div>
-                                <div class="flex justify-between"><span class="text-slate-500">Zivilstand:</span> <span class="text-slate-200">{selectedClient.marital_status}</span></div>
-                                <div class="flex justify-between"><span class="text-slate-500">Steuerdomizil:</span> <span class="text-slate-200">Kanton {selectedClient.tax_domicile}</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">Geburtstag:</span> <span className="text-slate-200">{selectedClient.birth_date}</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">Zivilstand:</span> <span className="text-slate-200">{selectedClient.marital_status}</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">Steuerdomizil:</span> <span className="text-slate-200">Kanton {selectedClient.tax_domicile}</span></div>
                               </>
                             )}
                             {selectedClient.type === 'CORPORATE' && (
                               <>
-                                <div class="flex justify-between"><span class="text-slate-500">CHE-UID:</span> <span class="text-slate-200 font-mono">{selectedClient.uid_number || 'N/A'}</span></div>
-                                <div class="flex justify-between"><span class="text-slate-500">NOGA Code:</span> <span class="text-slate-200">{selectedClient.noga_code || 'N/A'}</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">CHE-UID:</span> <span className="text-slate-200 font-mono">{selectedClient.uid_number || 'N/A'}</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">NOGA Code:</span> <span className="text-slate-200">{selectedClient.noga_code || 'N/A'}</span></div>
                               </>
                             )}
                           </div>
                         </div>
 
-                        <div class="bg-slate-950 p-4 border border-slate-850 rounded-lg flex flex-col justify-between">
+                        <div className="bg-slate-950 p-4 border border-slate-850 rounded-lg flex flex-col justify-between">
                           <div>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Betreuung</h4>
-                            <div class="space-y-1">
-                              <p class="text-sm font-semibold text-slate-200">{selectedClient.advisor_name}</p>
-                              <p class="text-[11px] text-slate-400">Hauptverantwortlicher Broker im System</p>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Betreuung</h4>
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold text-slate-200">{selectedClient.advisor_name}</p>
+                              <p className="text-[11px] text-slate-400">Hauptverantwortlicher Broker im System</p>
                             </div>
                           </div>
                           
                           {/* Sync Action buttons context */}
-                          <div class="pt-4 border-t border-slate-850 mt-4 flex items-center justify-between">
-                            <span class="text-[10px] text-slate-500 uppercase tracking-widest">3rd Party Export</span>
-                            <div class="flex gap-2">
+                          <div className="pt-4 border-t border-slate-850 mt-4 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-500 uppercase tracking-widest">3rd Party Export</span>
+                            <div className="flex gap-2">
                               <button 
                                 onClick={() => triggerSync('Bexio')}
                                 className="px-2.5 py-1 bg-slate-900 border border-slate-800 hover:border-slate-700 text-[11px] text-sky-400 rounded transition"
@@ -977,22 +970,22 @@ export default function App() {
                       </div>
 
                       {/* Linked Policies and Insurances - fully interactive */}
-                      <div class="space-y-3">
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Aktive Verträge & Policen</h4>
-                        <div class="space-y-2">
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Aktive Verträge & Policen</h4>
+                        <div className="space-y-2">
                           {policies.filter(p => p.client_id === selectedClient.id).map(policy => (
-                            <div key={policy.id} class="bg-slate-950 p-4 border border-slate-850 rounded-lg flex items-center justify-between">
+                            <div key={policy.id} className="bg-slate-950 p-4 border border-slate-850 rounded-lg flex items-center justify-between">
                               <div>
-                                <div class="flex items-center gap-1.5">
-                                  <span class="text-sm font-bold text-slate-100">{policy.type}</span>
-                                  <span class="text-[10px] bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-sky-400 font-semibold">{policy.insurer}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm font-bold text-slate-100">{policy.type}</span>
+                                  <span className="text-[10px] bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-sky-400 font-semibold">{policy.insurer}</span>
                                 </div>
-                                <p class="text-[11px] text-slate-400 mt-1 font-mono">ID: {policy.policy_number}</p>
+                                <p className="text-[11px] text-slate-400 mt-1 font-mono">ID: {policy.policy_number}</p>
                               </div>
 
-                              <div class="text-right">
-                                <div class="text-sm font-semibold text-white">CHF {policy.premium_amount.toLocaleString()}/Jahr</div>
-                                <span class="inline-flex items-center gap-1 text-[11px] text-emerald-400 mt-0.5">
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-white">CHF {policy.premium_amount.toLocaleString()}/Jahr</div>
+                                <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 mt-0.5">
                                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                                   Deckung aktiv
                                 </span>
@@ -1001,7 +994,7 @@ export default function App() {
                           ))}
 
                           {policies.filter(p => p.client_id === selectedClient.id).length === 0 && (
-                            <div class="bg-slate-950 p-6 rounded-lg text-center border border-dashed border-slate-800 text-slate-500 text-xs">
+                            <div className="bg-slate-950 p-6 rounded-lg text-center border border-dashed border-slate-800 text-slate-500 text-xs">
                               Bisher keine Policen erfasst. Verwende "Helvico Live" oben, um direkt eine zu generieren.
                             </div>
                           )}
@@ -1010,7 +1003,7 @@ export default function App() {
 
                     </div>
                   ) : (
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-slate-500">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-slate-500">
                       <Users className="mx-auto h-12 w-12 text-slate-700 mb-3" />
                       Wähle links einen Klienten aus, um seine vollständigen Parameter, Policen und Schnittstellenmappings einzusehen.
                     </div>
@@ -1026,67 +1019,67 @@ export default function App() {
               ROUTE 2: POLICIES PAGE (VERSICHERUNCEN)
               ========================================== */}
           {hash === '#/policies' && (
-            <div class="space-y-6">
+            <div className="space-y-6">
               <div>
-                <h2 class="text-2xl font-bold tracking-tight text-white">Versicherungspolicen</h2>
-                <p class="text-sm text-slate-400">Komplettübersicht aller bestehenden Versicherungsverträge deiner Klienten im System.</p>
+                <h2 className="text-2xl font-bold tracking-tight text-white">Versicherungspolicen</h2>
+                <p className="text-sm text-slate-400">Komplettübersicht aller bestehenden Versicherungsverträge deiner Klienten im System.</p>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Seeded stats summaries */}
-                <div class="bg-slate-900/60 p-5 rounded-xl border border-slate-800 text-slate-300">
-                  <p class="text-xs uppercase tracking-wider font-bold text-slate-500 mb-1">Prämienvolumen (Geseedet)</p>
-                  <p class="text-2xl font-extrabold text-sky-400">CHF 2'750.00</p>
-                  <span class="text-[10px] text-slate-400">Verteilt auf 3 aktive Policen</span>
+                <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 text-slate-300">
+                  <p className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-1">Prämienvolumen (Geseedet)</p>
+                  <p className="text-2xl font-extrabold text-sky-400">CHF 2'750.00</p>
+                  <span className="text-[10px] text-slate-400">Verteilt auf 3 aktive Policen</span>
                 </div>
-                <div class="bg-slate-900/60 p-5 rounded-xl border border-slate-800 text-slate-300">
-                  <p class="text-xs uppercase tracking-wider font-bold text-slate-500 mb-1">Verbunden mit Bexio</p>
-                  <p class="text-2xl font-extrabold text-emerald-400">100%</p>
-                  <span class="text-[10px] text-slate-400">Alle Verträge im Buchhaltungssync</span>
+                <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 text-slate-300">
+                  <p className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-1">Verbunden mit Bexio</p>
+                  <p className="text-2xl font-extrabold text-emerald-400">100%</p>
+                  <span className="text-[10px] text-slate-400">Alle Verträge im Buchhaltungssync</span>
                 </div>
-                <div class="bg-slate-900/60 p-5 rounded-xl border border-slate-800 text-slate-300">
-                  <p class="text-xs uppercase tracking-wider font-bold text-slate-500 mb-1">Verfügbare Tarifierer</p>
-                  <p class="text-2xl font-extrabold text-amber-400">Helvico SME API</p>
-                  <span class="text-[10px] text-emerald-400 flex items-center gap-1 mt-1">
-                    <span class="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 text-slate-300">
+                  <p className="text-xs uppercase tracking-wider font-bold text-slate-500 mb-1">Verfügbare Tarifierer</p>
+                  <p className="text-2xl font-extrabold text-amber-400">Helvico SME API</p>
+                  <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1">
+                    <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-ping"></span>
                     Cyber & SME Liability online live
                   </span>
                 </div>
               </div>
 
               {/* Table list of all contracts */}
-              <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
-                <div class="p-4 border-b border-slate-800 bg-slate-900/60 flex justify-between items-center">
-                  <h3 class="text-sm font-semibold text-white">Datenbestände aus der Seed-Migration</h3>
-                  <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400">Gesichert mit RLS Policies</span>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                <div className="p-4 border-b border-slate-800 bg-slate-900/60 flex justify-between items-center">
+                  <h3 className="text-sm font-semibold text-white">Datenbestände aus der Seed-Migration</h3>
+                  <span className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400">Gesichert mit RLS Policies</span>
                 </div>
                 
-                <table class="w-full text-left text-xs border-collapse">
+                <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
-                      <th class="p-4">Kunde</th>
-                      <th class="p-4">Versicherer & Typ</th>
-                      <th class="p-4">Policen-Nummer</th>
-                      <th class="p-4">Prämie / Jahr</th>
-                      <th class="p-4 font-mono">Status</th>
+                    <tr className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+                      <th className="p-4">Kunde</th>
+                      <th className="p-4">Versicherer & Typ</th>
+                      <th className="p-4">Policen-Nummer</th>
+                      <th className="p-4">Prämie / Jahr</th>
+                      <th className="p-4 font-mono">Status</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-slate-800">
+                  <tbody className="divide-y divide-slate-800">
                     {policies.map(p => {
                       const c = clients.find(cl => cl.id === p.client_id);
                       return (
-                        <tr key={p.id} class="hover:bg-slate-800/20 text-slate-200">
-                          <td class="p-4 font-medium text-white">
+                        <tr key={p.id} className="hover:bg-slate-800/20 text-slate-200">
+                          <td className="p-4 font-medium text-white">
                             {c ? (c.type === 'CORPORATE' ? c.company_name : `${c.first_name} ${c.last_name}`) : 'Klient Unbekannt'}
                           </td>
-                          <td class="p-4">
-                            <span class="text-sky-400 font-bold block">{p.type}</span>
-                            <span class="text-[10px] text-slate-500">{p.insurer} Versicherung</span>
+                          <td className="p-4">
+                            <span className="text-sky-400 font-bold block">{p.type}</span>
+                            <span className="text-[10px] text-slate-500">{p.insurer} Versicherung</span>
                           </td>
-                          <td class="p-4 font-mono text-slate-400">{p.policy_number}</td>
-                          <td class="p-4 text-slate-100 font-semibold">CHF {p.premium_amount.toLocaleString()}-</td>
-                          <td class="p-4">
-                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">
+                          <td className="p-4 font-mono text-slate-400">{p.policy_number}</td>
+                          <td className="p-4 text-slate-100 font-semibold">CHF {p.premium_amount.toLocaleString()}-</td>
+                          <td className="p-4">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">
                               <Check className="h-3 w-3" />
                               Active
                             </span>
@@ -1104,65 +1097,65 @@ export default function App() {
               ROUTE 3: INTERACTION & CONNECT DIRECTORY (INTEGRATIONS)
               ========================================== */}
           {hash === '#/integrations' && (
-            <div class="space-y-6 animate-fade-in">
+            <div className="space-y-6 animate-fade-in">
               
               {/* Introduction header */}
               <div>
-                <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                   <Network className="h-6 w-6 text-sky-400" />
                   Schnittstellen & Drittsysteme
                 </h2>
-                <p class="text-sm text-slate-400">Verbinde dein Schweizer CRM nahtlos mit Bexio, Abacus ERP, Google, Microsoft oder Helvico.</p>
+                <p className="text-sm text-slate-400">Verbinde dein Schweizer CRM nahtlos mit Bexio, Abacus ERP, Google, Microsoft oder Helvico.</p>
               </div>
 
               {/* Requirements block as demanded by the client (sage mir was du dazu alles benötgist?) */}
-              <div class="bg-gradient-to-r from-slate-900 to-slate-950 p-6 rounded-2xl border border-sky-500/15 shadow-xl relative overflow-hidden">
-                <div class="absolute -right-12 -bottom-12 opacity-5 text-sky-400">
-                  <Database class="h-64 w-62" />
+              <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-6 rounded-2xl border border-sky-500/15 shadow-xl relative overflow-hidden">
+                <div className="absolute -right-12 -bottom-12 opacity-5 text-sky-400">
+                  <Database className="h-64 w-62" />
                 </div>
                 
-                <h3 class="text-base font-bold text-white flex items-center gap-2 mb-3">
+                <h3 className="text-base font-bold text-white flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4 text-sky-400" />
                   Schnittstellen-Anforderungen: Was wird für die Integration benötigt?
                 </h3>
-                <p class="text-xs text-slate-300 leading-relaxed max-w-4xl mb-4">
+                <p className="text-xs text-slate-300 leading-relaxed max-w-4xl mb-4">
                   Die Integrationen sind in der Anwendungs- und Tabellenstruktur bereits komplett vorbereitet. 
                   Um die echten Schnittstellen künftig mit Live-Daten zu befeuern, müssen für die jeweiligen APIs folgende Secrets vorliegen. 
                   Du kannst diese als Super-Admin oder direkt hier hinterlegen:
                 </p>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div class="bg-slate-900/90 p-4 border border-slate-800/80 rounded-lg space-y-2">
-                    <div class="flex items-center gap-2 font-semibold text-xs text-amber-400">
-                      <span class="p-1 rounded bg-amber-500/10">BX</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-slate-900/90 p-4 border border-slate-800/80 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-amber-400">
+                      <span className="p-1 rounded bg-amber-500/10">BX</span>
                       Bexio (CRM / Buchhaltung)
                     </div>
-                    <ul class="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
-                      <li>Bexio <span class="text-white">Client ID</span> & <span class="text-white">Client Secret</span></li>
+                    <ul className="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
+                      <li>Bexio <span className="text-white">Client ID</span> & <span className="text-white">Client Secret</span></li>
                       <li>Erstellte App im Bexio Developer Portal</li>
                       <li>Redirect URL im Endpoint-Mapping</li>
                     </ul>
                   </div>
 
-                  <div class="bg-slate-900/90 p-4 border border-slate-800/80 rounded-lg space-y-2">
-                    <div class="flex items-center gap-2 font-semibold text-xs text-red-500">
-                      <span class="p-1 rounded bg-red-500/10">AB</span>
+                  <div className="bg-slate-900/90 p-4 border border-slate-800/80 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-red-500">
+                      <span className="p-1 rounded bg-red-500/10">AB</span>
                       Abacus AbaConnect ERP
                     </div>
-                    <ul class="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
+                    <ul className="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
                       <li>Eigene Abaconnect Subdomain</li>
-                      <li><span class="text-white">p12 Client-Zertifikat</span> & Passphrase</li>
+                      <li><span className="text-white">p12 Client-Zertifikat</span> & Passphrase</li>
                       <li>AbaConnect API Benutzerkonten</li>
                     </ul>
                   </div>
 
-                  <div class="bg-slate-900/90 p-4 border border-slate-800/80 rounded-lg space-y-2">
-                    <div class="flex items-center gap-2 font-semibold text-xs text-sky-400">
-                      <span class="p-1 rounded bg-sky-500/10">HV</span>
+                  <div className="bg-slate-900/90 p-4 border border-slate-800/80 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 font-semibold text-xs text-sky-400">
+                      <span className="p-1 rounded bg-sky-500/10">HV</span>
                       Helvico.ch (SME Tarifierer)
                     </div>
-                    <ul class="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
-                      <li><span class="text-white">Partner Agency ID</span> (HV-BROKER)</li>
+                    <ul className="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
+                      <li><span className="text-white">Partner Agency ID</span> (HV-BROKER)</li>
                       <li>Live API Key & Sandbox API Key</li>
                       <li>Webhook Empfänger URL (Public App URL)</li>
                     </ul>
@@ -1171,22 +1164,22 @@ export default function App() {
               </div>
 
               {/* Grid directory of providers */}
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {providers.map(provider => {
                   const isConnected = provider.status === 'CONNECTED';
                   return (
-                    <div key={provider.code} class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
-                      <div class="space-y-3">
-                        <div class="flex items-center justify-between">
-                          <h3 class="text-lg font-bold text-white tracking-wide">{provider.name}</h3>
-                          <span class={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-950 text-slate-400 border border-slate-800'}`}>
+                    <div key={provider.code} className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-bold text-white tracking-wide">{provider.name}</h3>
+                          <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${isConnected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-950 text-slate-400 border border-slate-800'}`}>
                             {provider.status}
                           </span>
                         </div>
-                        <p class="text-xs text-slate-400 leading-relaxed">{provider.description}</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">{provider.description}</p>
                       </div>
 
-                      <div class="pt-5 border-t border-slate-800 bg-transparent flex items-center justify-between mt-5">
+                      <div className="pt-5 border-t border-slate-800 bg-transparent flex items-center justify-between mt-5">
                         <button 
                           onClick={() => triggerProviderConfig(provider)}
                           className="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1 transition"
@@ -1208,63 +1201,63 @@ export default function App() {
               </div>
 
               {/* Horizontal Split and synchronization monitor block */}
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-4">
                 
                 {/* Outlining active tables mappings for super admin */}
-                <div class="lg:col-span-4 bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
-                  <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                <div className="lg:col-span-4 bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
                     <Database className="h-4 w-4 text-sky-400" />
                     Datenbank-Struktur (Postgres)
                   </h3>
-                  <p class="text-xs text-slate-400">Die neu ausgeführten relationalen Tabellen für die Replikation:</p>
+                  <p className="text-xs text-slate-400">Die neu ausgeführten relationalen Tabellen für die Replikation:</p>
                   
-                  <div class="space-y-2.5 text-[11px]">
-                    <div class="flex justify-between items-center bg-slate-950 p-2 rounded">
-                      <span class="font-mono text-slate-300">integration_providers</span>
-                      <span class="text-emerald-400">Aktiv & Seeding OK</span>
+                  <div className="space-y-2.5 text-[11px]">
+                    <div className="flex justify-between items-center bg-slate-950 p-2 rounded">
+                      <span className="font-mono text-slate-300">integration_providers</span>
+                      <span className="text-emerald-400">Aktiv & Seeding OK</span>
                     </div>
-                    <div class="flex justify-between items-center bg-slate-950 p-2 rounded">
-                      <span class="font-mono text-slate-300">tenant_integrations</span>
-                      <span class="text-emerald-400">RLS Secured (Row Level)</span>
+                    <div className="flex justify-between items-center bg-slate-950 p-2 rounded">
+                      <span className="font-mono text-slate-300">tenant_integrations</span>
+                      <span className="text-emerald-400">RLS Secured (Row Level)</span>
                     </div>
-                    <div class="flex justify-between items-center bg-slate-950 p-2 rounded">
-                      <span class="font-mono text-slate-300">integration_external_mappings</span>
-                      <span class="text-sky-400 font-medium">Auto mapping ON</span>
+                    <div className="flex justify-between items-center bg-slate-950 p-2 rounded">
+                      <span className="font-mono text-slate-300">integration_external_mappings</span>
+                      <span className="text-sky-400 font-medium">Auto mapping ON</span>
                     </div>
-                    <div class="flex justify-between items-center bg-slate-950 p-2 rounded">
-                      <span class="font-mono text-slate-300">integration_sync_logs</span>
-                      <span class="text-slate-400">Audit-ready</span>
+                    <div className="flex justify-between items-center bg-slate-950 p-2 rounded">
+                      <span className="font-mono text-slate-300">integration_sync_logs</span>
+                      <span className="text-slate-400">Audit-ready</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Live Realtime Sync Logs Feed */}
-                <div class="lg:col-span-8 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden flex flex-col">
-                  <div class="p-4 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
-                    <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400">Replikations- & Synchronisationsprotokoll</h3>
-                    <span class="text-[10px] text-sky-400 animate-pulse flex items-center gap-1">
-                      <span class="h-2 w-2 rounded-full bg-sky-400"></span> Live Monitoring
+                <div className="lg:col-span-8 bg-slate-900 rounded-xl border border-slate-800 overflow-hidden flex flex-col">
+                  <div className="p-4 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+                    <h3 className="text-xs uppercase tracking-wider font-bold text-slate-400">Replikations- & Synchronisationsprotokoll</h3>
+                    <span className="text-[10px] text-sky-400 animate-pulse flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-sky-400"></span> Live Monitoring
                     </span>
                   </div>
 
-                  <div class="p-4 divide-y divide-slate-800/80 overflow-y-auto max-h-[250px]">
+                  <div className="p-4 divide-y divide-slate-800/80 overflow-y-auto max-h-[250px]">
                     {logs.map(log => (
-                      <div key={log.id} class="py-3 flex items-start justify-between text-xs transition hover:bg-slate-800/10">
-                        <div class="space-y-1">
-                          <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-200">{log.provider}</span>
-                            <span class={`text-[9px] px-1.5 py-0.2 rounded font-mono ${log.direction === 'INBOUND' ? 'bg-sky-500/10 text-sky-400' : 'bg-pink-500/10 text-pink-400'}`}>
+                      <div key={log.id} className="py-3 flex items-start justify-between text-xs transition hover:bg-slate-800/10">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-200">{log.provider}</span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${log.direction === 'INBOUND' ? 'bg-sky-500/10 text-sky-400' : 'bg-pink-500/10 text-pink-400'}`}>
                               {log.direction}
                             </span>
                           </div>
-                          <p class="text-slate-400">{log.message}</p>
+                          <p className="text-slate-400">{log.message}</p>
                         </div>
                         
-                        <div class="text-right shrink-0">
-                          <span class={`text-[10px] font-bold px-2 py-0.5 rounded-full ${log.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                        <div className="text-right shrink-0">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${log.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                             {log.status}
                           </span>
-                          <p class="text-[10px] text-slate-500 mt-1">{log.time}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{log.time}</p>
                         </div>
                       </div>
                     ))}
@@ -1279,26 +1272,26 @@ export default function App() {
               ROUTE 4: THE SUPER-ADMINISTRATOR VIEW
               ========================================== */}
           {hash === '#/admin' && userRole === 'SUPER_ADMIN' && (
-            <div class="space-y-6">
-              <div class="flex items-center space-x-3">
-                <div class="h-12 w-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/20">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center border border-emerald-500/20">
                   <Sliders className="h-6 w-6" />
                 </div>
                 <div>
-                  <h2 class="text-2xl font-bold tracking-tight text-white">Global Integration Provider Registry</h2>
-                  <p class="text-sm text-slate-400">Verwalte die globalen OAuth ClientIDs, Endpunkte und Tokens für alle Broker-Mandanten der Schweiz.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-white">Global Integration Provider Registry</h2>
+                  <p className="text-sm text-slate-400">Verwalte die globalen OAuth ClientIDs, Endpunkte und Tokens für alle Broker-Mandanten der Schweiz.</p>
                 </div>
               </div>
 
               {/* Admin parameters control */}
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-slate-900 border border-slate-850 p-6 rounded-xl space-y-4">
-                  <h3 class="text-base font-bold text-white">1. Globale Redirect Endpoints & Proxies</h3>
-                  <p class="text-xs text-slate-400">Diese URIs sind für die App im Developer Portal der Anbieter (z.B. Bexio) registriert:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-900 border border-slate-850 p-6 rounded-xl space-y-4">
+                  <h3 className="text-base font-bold text-white">1. Globale Redirect Endpoints & Proxies</h3>
+                  <p className="text-xs text-slate-400">Diese URIs sind für die App im Developer Portal der Anbieter (z.B. Bexio) registriert:</p>
                   
-                  <div class="space-y-3 text-xs">
-                    <div class="space-y-1">
-                      <label class="text-slate-500 font-bold block uppercase text-[10px]">OAuth Redirect URI (Global)</label>
+                  <div className="space-y-3 text-xs">
+                    <div className="space-y-1">
+                      <label className="text-slate-500 font-bold block uppercase text-[10px]">OAuth Redirect URI (Global)</label>
                       <input 
                         type="text" 
                         readOnly 
@@ -1306,8 +1299,8 @@ export default function App() {
                         className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-slate-300 font-mono text-center cursor-not-allowed select-all"
                       />
                     </div>
-                    <div class="space-y-1">
-                      <label class="text-slate-500 font-bold block uppercase text-[10px]">Helvico Cyber Quotation Proxy</label>
+                    <div className="space-y-1">
+                      <label className="text-slate-500 font-bold block uppercase text-[10px]">Helvico Cyber Quotation Proxy</label>
                       <input 
                         type="text" 
                         readOnly 
@@ -1318,22 +1311,22 @@ export default function App() {
                   </div>
                 </div>
 
-                <div class="bg-slate-900 border border-slate-850 p-6 rounded-xl space-y-4">
-                  <h3 class="text-base font-bold text-white">2. Globale API Health-Checks</h3>
-                  <p class="text-xs text-slate-400">Status und Latenzzeiten der externen Schweizer Hostingpartner:</p>
+                <div className="bg-slate-900 border border-slate-850 p-6 rounded-xl space-y-4">
+                  <h3 className="text-base font-bold text-white">2. Globale API Health-Checks</h3>
+                  <p className="text-xs text-slate-400">Status und Latenzzeiten der externen Schweizer Hostingpartner:</p>
                   
-                  <div class="space-y-2">
-                    <div class="flex justify-between items-center text-xs p-2 bg-slate-950 rounded">
-                      <span class="font-bold">Bexio v2.0 API</span>
-                      <span class="text-emerald-400 font-bold">● Operational (42ms)</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs p-2 bg-slate-950 rounded">
+                      <span className="font-bold">Bexio v2.0 API</span>
+                      <span className="text-emerald-400 font-bold">● Operational (42ms)</span>
                     </div>
-                    <div class="flex justify-between items-center text-xs p-2 bg-slate-950 rounded">
-                      <span class="font-bold">Helvico Sandbox API</span>
-                      <span class="text-emerald-400 font-bold">● Operational (28ms)</span>
+                    <div className="flex justify-between items-center text-xs p-2 bg-slate-950 rounded">
+                      <span className="font-bold">Helvico Sandbox API</span>
+                      <span className="text-emerald-400 font-bold">● Operational (28ms)</span>
                     </div>
-                    <div class="flex justify-between items-center text-xs p-2 bg-slate-950 rounded">
-                      <span class="font-bold">Abacus AbaConnect Pool</span>
-                      <span class="text-slate-500 font-bold">● Waiting credentials</span>
+                    <div className="flex justify-between items-center text-xs p-2 bg-slate-950 rounded">
+                      <span className="font-bold">Abacus AbaConnect Pool</span>
+                      <span className="text-slate-500 font-bold">● Waiting credentials</span>
                     </div>
                   </div>
                 </div>
@@ -1348,11 +1341,11 @@ export default function App() {
           MODAL: NEW CUSTOMER (ZEI WECE: QUICK ADD & DETAILED)
           ========================================== */}
       {isNewClientModalOpen && (
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col justify-between">
             
             {/* Header + Selection tab controls */}
-            <div class="border-b border-slate-800 p-5 bg-slate-900/60 shrink-0">
+            <div className="border-b border-slate-800 p-5 bg-slate-900/60 shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-white">+ Neuen Klient erfassen</h3>
                 <button 
@@ -1400,10 +1393,10 @@ export default function App() {
                   )}
                   
                   {/* Select Customer Segment */}
-                  <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Klientensegment</label>
-                    <div class="flex gap-4">
-                      <label class="flex items-center gap-1.5 text-xs text-slate-300">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Klientensegment</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-1.5 text-xs text-slate-300">
                         <input 
                           type="radio" 
                           name="quickType" 
@@ -1412,7 +1405,7 @@ export default function App() {
                         />
                         Privatperson (Private)
                       </label>
-                      <label class="flex items-center gap-1.5 text-xs text-slate-300">
+                      <label className="flex items-center gap-1.5 text-xs text-slate-300">
                         <input 
                           type="radio" 
                           name="quickType"
@@ -1425,8 +1418,8 @@ export default function App() {
                   </div>
 
                   {quickForm.type === 'CORPORATE' && (
-                    <div class="space-y-1">
-                      <label class="text-xs text-slate-400 font-semibold block">Firmenname (Pflichtfeld)</label>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold block">Firmenname (Pflichtfeld)</label>
                       <input 
                         type="text"
                         required
@@ -1438,9 +1431,9 @@ export default function App() {
                     </div>
                   )}
 
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                      <label class="text-xs text-slate-400 font-semibold block">Vorname / Ansprechpartner</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold block">Vorname / Ansprechpartner</label>
                       <input 
                         type="text"
                         placeholder="Hans"
@@ -1449,8 +1442,8 @@ export default function App() {
                         className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-xs focus:outline-none focus:border-sky-500 text-white"
                       />
                     </div>
-                    <div class="space-y-1">
-                      <label class="text-xs text-slate-400 font-semibold block">{quickForm.type === 'PRIVATE' ? 'Nachname (Pflichtfeld)' : 'Nachname Kontakt'}</label>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold block">{quickForm.type === 'PRIVATE' ? 'Nachname (Pflichtfeld)' : 'Nachname Kontakt'}</label>
                       <input 
                         type="text"
                         required={quickForm.type === 'PRIVATE'}
@@ -1462,9 +1455,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1">
-                      <label class="text-xs text-slate-400 font-semibold block">Telefonnummer</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold block">Telefonnummer</label>
                       <input 
                         type="text"
                         placeholder="+41 79 123 45 67"
@@ -1473,8 +1466,8 @@ export default function App() {
                         className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-xs focus:outline-none focus:border-sky-500 text-white"
                       />
                     </div>
-                    <div class="space-y-1">
-                      <label class="text-xs text-slate-400 font-semibold block">E-Mail Adresse</label>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold block">E-Mail Adresse</label>
                       <input 
                         type="email"
                         placeholder="name@anbieter.ch"
@@ -1485,8 +1478,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Zugeordneter Broker / Advisor</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Zugeordneter Broker / Advisor</label>
                     <select
                       value={quickForm.advisor_id}
                       onChange={(e) => setQuickForm({ ...quickForm, advisor_id: e.target.value })}
@@ -1498,7 +1491,7 @@ export default function App() {
                     </select>
                   </div>
 
-                  <div class="pt-4 border-t border-slate-800 flex justify-end space-x-2 shrink-0">
+                  <div className="pt-4 border-t border-slate-800 flex justify-end space-x-2 shrink-0">
                     <button 
                       type="button"
                       onClick={() => setIsNewClientModalOpen(false)}
@@ -1541,11 +1534,11 @@ export default function App() {
 
                   {/* STEP 1: Stammdaten und Basis-onboarding */}
                   {detailedStep === 1 && (
-                    <div class="space-y-4">
-                      <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Kundentyp</label>
-                        <div class="flex gap-4">
-                          <label class="flex items-center gap-1.5 text-xs text-slate-300">
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Kundentyp</label>
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-1.5 text-xs text-slate-300">
                             <input 
                               type="radio" 
                               checked={detailedForm.type === 'PRIVATE'} 
@@ -1553,7 +1546,7 @@ export default function App() {
                             />
                             Privatperson
                           </label>
-                          <label class="flex items-center gap-1.5 text-xs text-slate-300">
+                          <label className="flex items-center gap-1.5 text-xs text-slate-300">
                             <input 
                               type="radio" 
                               checked={detailedForm.type === 'CORPORATE'} 
@@ -1564,9 +1557,9 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                          <label class="text-xs text-slate-400 font-semibold block">Vorname*</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 font-semibold block">Vorname*</label>
                           <input 
                             type="text" 
                             required
@@ -1576,8 +1569,8 @@ export default function App() {
                             className="w-full bg-slate-950 border border-slate-800 p-2 text-xs focus:outline-none focus:border-sky-500 text-white"
                           />
                         </div>
-                        <div class="space-y-1">
-                          <label class="text-xs text-slate-400 font-semibold block">Nachname*</label>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 font-semibold block">Nachname*</label>
                           <input 
                             type="text" 
                             required
@@ -1589,9 +1582,9 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                          <label class="text-xs text-slate-400 font-semibold block">Direktruf Telefon*</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 font-semibold block">Direktruf Telefon*</label>
                           <input 
                             type="text" 
                             required
@@ -1601,8 +1594,8 @@ export default function App() {
                             className="w-full bg-slate-950 border border-slate-800 p-2 text-xs text-white"
                           />
                         </div>
-                        <div class="space-y-1">
-                          <label class="text-xs text-slate-400 font-semibold block">E-Mail*</label>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 font-semibold block">E-Mail*</label>
                           <input 
                             type="email" 
                             required
@@ -1618,12 +1611,12 @@ export default function App() {
 
                   {/* STEP 2: Segmentprofil & Zusatzinformationen */}
                   {detailedStep === 2 && (
-                    <div class="space-y-4">
+                    <div className="space-y-4">
                       {detailedForm.type === 'PRIVATE' ? (
-                        <div class="space-y-4">
-                          <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                              <label class="text-xs text-slate-400 font-semibold block">Geburtsdatum</label>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs text-slate-400 font-semibold block">Geburtsdatum</label>
                               <input 
                                 type="date" 
                                 value={detailedForm.birth_date} 
@@ -1631,8 +1624,8 @@ export default function App() {
                                 className="w-full bg-slate-950 border border-slate-800 p-2 text-xs text-white"
                               />
                             </div>
-                            <div class="space-y-1">
-                              <label class="text-xs text-slate-400 font-semibold block">Zivilstand</label>
+                            <div className="space-y-1">
+                              <label className="text-xs text-slate-400 font-semibold block">Zivilstand</label>
                               <select 
                                 value={detailedForm.marital_status} 
                                 onChange={(e) => setDetailedForm({ ...detailedForm, marital_status: e.target.value })}
@@ -1646,8 +1639,8 @@ export default function App() {
                             </div>
                           </div>
                           
-                          <div class="space-y-1">
-                            <label class="text-xs text-slate-400 font-semibold block">Steuerkanton (Tax Domicile)*</label>
+                          <div className="space-y-1">
+                            <label className="text-xs text-slate-400 font-semibold block">Steuerkanton (Tax Domicile)*</label>
                             <select 
                               value={detailedForm.tax_domicile} 
                               onChange={(e) => setDetailedForm({ ...detailedForm, tax_domicile: e.target.value })}
@@ -1663,9 +1656,9 @@ export default function App() {
                           </div>
                         </div>
                       ) : (
-                        <div class="space-y-4">
-                          <div class="space-y-1">
-                            <label class="text-xs text-slate-400 font-semibold block">Firmenname (aus Zefix)*</label>
+                        <div className="space-y-4">
+                          <div className="space-y-1">
+                            <label className="text-xs text-slate-400 font-semibold block">Firmenname (aus Zefix)*</label>
                             <input 
                               type="text" 
                               required
@@ -1676,9 +1669,9 @@ export default function App() {
                             />
                           </div>
 
-                          <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                              <label class="text-xs text-slate-400 font-semibold block">Eidg. UID-Code CHE-xxx.xxx.xxx</label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs text-slate-400 font-semibold block">Eidg. UID-Code CHE-xxx.xxx.xxx</label>
                               <input 
                                 type="text" 
                                 placeholder="CHE-998.112.333"
@@ -1687,8 +1680,8 @@ export default function App() {
                                 className="w-full bg-slate-950 border border-slate-800 p-2 text-xs text-white font-mono"
                               />
                             </div>
-                            <div class="space-y-1">
-                              <label class="text-xs text-slate-400 font-semibold block">NOGA Branchen-Zweig</label>
+                            <div className="space-y-1">
+                              <label className="text-xs text-slate-400 font-semibold block">NOGA Branchen-Zweig</label>
                               <input 
                                 type="text" 
                                 placeholder="70.22 (Beratung)"
@@ -1699,9 +1692,9 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                              <label class="text-xs text-slate-400 font-semibold block">Mitarbeiteranzahl (FTE)</label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs text-slate-400 font-semibold block">Mitarbeiteranzahl (FTE)</label>
                               <input 
                                 type="number" 
                                 value={detailedForm.employee_count} 
@@ -1709,8 +1702,8 @@ export default function App() {
                                 className="w-full bg-slate-950 border border-slate-800 p-2 text-xs text-white"
                               />
                             </div>
-                            <div class="space-y-1">
-                              <label class="text-xs text-slate-400 font-semibold block">Jährliche BVG Lohnsumme (CHF)</label>
+                            <div className="space-y-1">
+                              <label className="text-xs text-slate-400 font-semibold block">Jährliche BVG Lohnsumme (CHF)</label>
                               <input 
                                 type="number" 
                                 value={detailedForm.total_payroll_sum} 
@@ -1726,9 +1719,9 @@ export default function App() {
 
                   {/* STEP 3: Anschrift & Landeskoordination */}
                   {detailedStep === 3 && (
-                    <div class="space-y-4">
-                      <div class="space-y-1">
-                        <label class="text-xs text-slate-400 font-semibold block">Strasse & Hausnummer*</label>
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400 font-semibold block">Strasse & Hausnummer*</label>
                         <input 
                           type="text" 
                           required
@@ -1739,9 +1732,9 @@ export default function App() {
                         />
                       </div>
 
-                      <div class="grid grid-cols-3 gap-4">
-                        <div class="col-span-2 space-y-1">
-                          <label class="text-xs text-slate-400 font-semibold block">PLZ & Ort*</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2 space-y-1">
+                          <label className="text-xs text-slate-400 font-semibold block">PLZ & Ort*</label>
                           <input 
                             type="text" 
                             required
@@ -1751,8 +1744,8 @@ export default function App() {
                             className="w-full bg-slate-950 border border-slate-800 p-2 text-xs text-white"
                           />
                         </div>
-                        <div class="space-y-1">
-                          <label class="text-xs text-slate-400 font-semibold block">Land*</label>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400 font-semibold block">Land*</label>
                           <input 
                             type="text" 
                             readOnly
@@ -1766,9 +1759,9 @@ export default function App() {
 
                   {/* STEP 4: Advisor & Risikomanagement */}
                   {detailedStep === 4 && (
-                    <div class="space-y-4">
-                      <div class="space-y-1">
-                        <label class="text-xs text-slate-400 font-semibold block">Betreuer & Advisor*</label>
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400 font-semibold block">Betreuer & Advisor*</label>
                         <select 
                           value={detailedForm.advisor_id} 
                           onChange={(e) => setDetailedForm({ ...detailedForm, advisor_id: e.target.value })}
@@ -1780,10 +1773,10 @@ export default function App() {
                         </select>
                       </div>
 
-                      <div class="space-y-1">
-                        <div class="flex justify-between items-center text-xs">
-                          <label class="text-slate-400 font-semibold">Geschätzte Vertrauens- & Bonitätsstufe (%)</label>
-                          <span class="text-sky-400 font-bold">{detailedForm.trust_score}%</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-xs">
+                          <label className="text-slate-400 font-semibold">Geschätzte Vertrauens- & Bonitätsstufe (%)</label>
+                          <span className="text-sky-400 font-bold">{detailedForm.trust_score}%</span>
                         </div>
                         <input 
                           type="range" 
@@ -1854,10 +1847,10 @@ export default function App() {
           MODAL: INTERACTIVE SCHNITTSTELLE CONFIG DRAWER
           ========================================== */}
       {selectedConfProvider && (
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 class="font-bold text-white text-base">Einrichtung: {selectedConfProvider.name}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-white text-base">Einrichtung: {selectedConfProvider.name}</h3>
               <button 
                 onClick={() => setSelectedConfProvider(null)}
                 className="text-slate-400 hover:text-white"
@@ -1866,14 +1859,14 @@ export default function App() {
               </button>
             </div>
 
-            <p class="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               Trage hier die offiziellen Zugangsdaten deines Mandanten oder Administrators ein, um die direkte Sync-Operation scharf zu schalten.
             </p>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleToggleConnection(selectedConfProvider.code); }} class="space-y-3.5">
+            <form onSubmit={(e) => { e.preventDefault(); handleToggleConnection(selectedConfProvider.code); }} className="space-y-3.5">
               {selectedConfProvider.required_credentials.map(cred => (
-                <div key={cred.key} class="space-y-1">
-                  <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">{cred.label}</label>
+                <div key={cred.key} className="space-y-1">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">{cred.label}</label>
                   <input 
                     type={cred.is_secret ? 'password' : 'text'}
                     required
@@ -1885,17 +1878,17 @@ export default function App() {
                 </div>
               ))}
 
-              <div class="bg-slate-950 p-3 rounded border border-slate-850 space-y-1.5">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Verfügbare Endpoints</span>
+              <div className="bg-slate-950 p-3 rounded border border-slate-850 space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Verfügbare Endpoints</span>
                 {selectedConfProvider.endpoints.map((ep, i) => (
-                  <div key={i} class="flex items-center justify-between text-[11px] text-slate-400">
+                  <div key={i} className="flex items-center justify-between text-[11px] text-slate-400">
                     <span>{ep.label}:</span>
-                    <span class="truncate ml-2 max-w-[200px] text-sky-400 font-mono text-[10px]">{ep.url}</span>
+                    <span className="truncate ml-2 max-w-[200px] text-sky-400 font-mono text-[10px]">{ep.url}</span>
                   </div>
                 ))}
               </div>
 
-              <div class="pt-4 border-t border-slate-850 flex justify-end space-x-2">
+              <div className="pt-4 border-t border-slate-850 flex justify-end space-x-2">
                 <button 
                   type="button"
                   onClick={() => setSelectedConfProvider(null)}
