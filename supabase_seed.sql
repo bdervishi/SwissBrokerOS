@@ -236,7 +236,7 @@ INSERT INTO public.policies (
     coverage_details
 ) VALUES
 (
-    'p1p1p1p1-1111-4444-b111-74f00998df01'::uuid,
+    'f1f1f1f1-1111-4444-b111-74f00998df01'::uuid,
     'c1c1c1c1-1111-4444-b111-74f00998df01'::uuid, -- Hans Meier
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid,
     'AXA', 'Privathaftpflicht', '83.223.442',
@@ -245,7 +245,7 @@ INSERT INTO public.policies (
     ARRAY['Privathaftpflicht', 'Grobfahrlässigkeit']
 ),
 (
-    'p2p2p2p2-2222-4444-b222-74f00998df02'::uuid,
+    'f2f2f2f2-2222-4444-b222-74f00998df02'::uuid,
     'c1c1c1c1-1111-4444-b111-74f00998df01'::uuid, -- Hans Meier
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid,
     'Zurich', 'Motorfahrzeug', 'M-992-883',
@@ -254,7 +254,7 @@ INSERT INTO public.policies (
     ARRAY['Vollkasko', 'Parkschaden']
 ),
 (
-    'p3p3p3p3-3333-4444-b333-74f00998df03'::uuid,
+    'f3f3f3f3-3333-4444-b333-74f00998df03'::uuid,
     'c2c2c2c2-2222-4444-b222-74f00998df02'::uuid, -- Anna Schmidt
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid,
     'Allianz', 'Hausrat', 'H-123-456',
@@ -272,7 +272,7 @@ INSERT INTO public.mortgages (
     interest_rate, type, duration_years, start_date, end_date, amortization_method, application_status
 ) VALUES
 (
-    'm1m1m1m1-1111-4444-b111-74f00998df01'::uuid,
+    'b1b1b1b1-1111-4444-b111-74f00998df01'::uuid,
     'c1c1c1c1-1111-4444-b111-74f00998df01'::uuid, -- Hans Meier
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid,
     'Eigentumswohnung Zürich', 1200000, 800000, 400000,
@@ -301,7 +301,7 @@ INSERT INTO public.leads (
     email, phone, city, is_public_marketplace, marketplace_price
 ) VALUES
 (
-    'l1l1l1l1-1111-4444-b111-74f00998df01'::uuid,
+    'd1d1d1d1-1111-4444-b111-74f00998df01'::uuid,
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid,
     'Hypothekaranfrage EFH Zürich',
     'Kunde sucht Finanzierung für Eigentumswohnung. Kaufpreis 1.2M, Eigenkapital 400k vorhanden. Wünscht Beratung zu Festhypothek.',
@@ -309,7 +309,7 @@ INSERT INTO public.leads (
     'gabriel.huber@example.ch', '+41 79 333 44 55', 'Zürich', false, null
 ),
 (
-    'l2l2l2l2-2222-4444-b222-74f00998df02'::uuid,
+    'd2d2d2d2-2222-4444-b222-74f00998df02'::uuid,
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid,
     'KMU sucht BVG Lösung',
     'Architekturbüro mit 12 Mitarbeitern sucht neue Pensionskassenlösung. Unzufrieden mit aktuellen Verwaltungskosten.',
@@ -325,7 +325,7 @@ INSERT INTO public.commissions (
     id, tenant_id, agent_id, amount, currency, status, type, source_partner, description, date
 ) VALUES
 (
-    'com1com1-1111-4444-b111-74f00998df01'::uuid, 
+    'f001f001-1111-4444-b111-74f00998df01'::uuid, 
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid, 
     'a2d88734-72b1-4770-98fc-eb8283300202'::uuid, -- Felix Fieldagent
     150.00, 
@@ -337,7 +337,7 @@ INSERT INTO public.commissions (
     '2024-05-01'::date
 ),
 (
-    'com2com2-2222-4444-b222-74f00998df02'::uuid, 
+    'f002f002-2222-4444-b222-74f00998df02'::uuid, 
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid, 
     'a2d88734-72b1-4770-98fc-eb8283300202'::uuid, -- Felix Fieldagent
     450.00, 
@@ -357,7 +357,7 @@ INSERT INTO public.time_entries (
     id, user_id, tenant_id, date, hours, activity, description, status, related_client_id
 ) VALUES
 (
-    't1t1t1t1-1111-4444-b111-74f00998df01'::uuid, 
+    'e1e1e1e1-1111-4444-b111-74f00998df01'::uuid, 
     'a2d88734-72b1-4770-98fc-eb8283300202'::uuid, -- Felix Fieldagent
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid, 
     '2024-05-20'::date, 
@@ -368,7 +368,7 @@ INSERT INTO public.time_entries (
     'c1c1c1c1-1111-4444-b111-74f00998df01'::uuid
 ),
 (
-    't2t2t2t2-2222-4444-b222-74f00998df02'::uuid, 
+    'e2e2e2e2-2222-4444-b222-74f00998df02'::uuid, 
     'a2d88734-72b1-4770-98fc-eb8283300202'::uuid, -- Felix Fieldagent
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid, 
     '2024-05-20'::date, 
@@ -379,7 +379,7 @@ INSERT INTO public.time_entries (
     null
 ),
 (
-    't3t3t3t3-3333-4444-b333-74f00998df03'::uuid, 
+    'e3e3e3e3-3333-4444-b333-74f00998df03'::uuid, 
     'a2d88734-72b1-4770-98fc-eb8283300202'::uuid, -- Felix Fieldagent
     'd78b87d5-cc72-46a2-bc42-99933fd2fbb1'::uuid, 
     '2024-05-21'::date, 
