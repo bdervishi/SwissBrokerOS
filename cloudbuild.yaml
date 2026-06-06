@@ -1,0 +1,18 @@
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_IMAGE_NAME'
+      - '--build-arg'
+      - 'VITE_BACKEND_URL=$_VITE_BACKEND_URL'
+      - '--build-arg'
+      - 'VITE_SUPABASE_URL=$_VITE_SUPABASE_URL'
+      - '--build-arg'
+      - 'VITE_SUPABASE_ANON_KEY=$_VITE_SUPABASE_ANON_KEY'
+      - '--build-arg'
+      - 'VITE_USE_MOCK_DATA=$_VITE_USE_MOCK_DATA'
+      - '.'
+images:
+  - '$_IMAGE_NAME'

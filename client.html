@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwissBroker OS - Kundenportal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
+              slate: { 850: '#1e293b', 900: '#0f172a', 950: '#020617' }
+            },
+            fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          },
+        },
+      }
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      body { font-family: 'Inter', sans-serif; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      :root { --color-brand-50: 236 253 245; --color-brand-100: 209 250 229; --color-brand-500: 16 185 129; --color-brand-600: 5 150 105; --color-brand-700: 4 120 87; --color-brand-900: 6 78 59; }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "@react-three/drei": "https://esm.sh/@react-three/drei@^10.7.7",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@^9.4.2",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+        "three": "https://esm.sh/three@^0.182.0",
+        "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+        "recharts": "https://esm.sh/recharts@^3.6.0",
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+        "framer-motion": "https://esm.sh/framer-motion@^11.11.11"
+      }
+    }
+    </script>
+  </head>
+  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/entries/client.tsx"></script>
+  </body>
+</html>

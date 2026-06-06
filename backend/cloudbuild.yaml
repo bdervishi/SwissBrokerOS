@@ -1,0 +1,32 @@
+steps:
+  # 1. Build des Docker Images
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_IMAGE_NAME'
+      - '.'
+
+  # 2. Push des Images in die Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$_IMAGE_NAME']
+
+  # 3. Deployment zu Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'swissbroker-backend'
+      - '--image'
+      - '$_IMAGE_NAME'
+      - '--region'
+      - 'europe-west6'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_API_KEY=$_GOOGLE_API_KEY'
+
+images:
+  - '$_IMAGE_NAME'

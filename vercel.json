@@ -1,0 +1,10 @@
+
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/broker", "destination": "/broker.html" },
+    { "source": "/client", "destination": "/client.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
