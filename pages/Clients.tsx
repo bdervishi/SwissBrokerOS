@@ -5,10 +5,9 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Link, Navigate } from 'react-router-dom';
-import { MOCK_TENANTS } from '../constants';
 import { Search, Plus, User, Building2, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useClients } from '../src/hooks/useData';
+import { useClients, useTenants } from '../src/hooks/useData';
 import { db } from '../src/services/db';
 import { UserRole } from '../types';
 
@@ -42,6 +41,7 @@ const ClientAvatar: React.FC<{ src?: string; first?: string; last?: string }> = 
 export const Clients: React.FC = () => {
   const { role, user } = useAuth();
   const { data: clients, refetch } = useClients();
+  const { data: tenants, refetch: refetchTenants } = useTenants();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,7 +49,37 @@ export const Clients: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Tenant creation (SaaS)
+  const [isTenantModalOpen, setIsTenantModalOpen] = useState(false);
+  const [tenantForm, setTenantForm] = useState({ name: '', plan: 'STARTER' });
+  const [savingTenant, setSavingTenant] = useState(false);
+  const [tenantError, setTenantError] = useState<string | null>(null);
+
   const setField = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleCreateTenant = async () => {
+    setTenantError(null);
+    if (!tenantForm.name.trim()) {
+      setTenantError('Firmenname ist erforderlich.');
+      return;
+    }
+    setSavingTenant(true);
+    try {
+      await db.tenants.create({
+        name: tenantForm.name.trim(),
+        plan: tenantForm.plan,
+        status: 'ACTIVE',
+        brandingConfig: { primaryColor: '#0ea5e9', logoText: tenantForm.name.trim() },
+      } as any);
+      setIsTenantModalOpen(false);
+      setTenantForm({ name: '', plan: 'STARTER' });
+      refetchTenants();
+    } catch (err: any) {
+      setTenantError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingTenant(false);
+    }
+  };
 
   const handleCreateClient = async () => {
     setError(null);
@@ -106,7 +136,7 @@ export const Clients: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Verwaltete Makler (Tenants)</h1>
             <p className="text-slate-500 text-sm">Übersicht aller Broker-Firmen auf der Plattform.</p>
           </div>
-          <Button icon={<Plus size={18} />}>Neuer Tenant</Button>
+          <Button icon={<Plus size={18} />} onClick={() => { setTenantError(null); setIsTenantModalOpen(true); }}>Neuer Tenant</Button>
         </div>
 
         <Card noPadding>
@@ -122,7 +152,7 @@ export const Clients: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {MOCK_TENANTS.map((tenant) => (
+              {tenants.map((tenant) => (
                 <tr key={tenant.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">
                     <div className="flex items-center gap-3">
@@ -153,6 +183,27 @@ export const Clients: React.FC = () => {
             </tbody>
           </table>
         </Card>
+
+        <Modal isOpen={isTenantModalOpen} onClose={() => setIsTenantModalOpen(false)} title="Neuen Mandanten erstellen" maxWidth="max-w-md">
+          <div className="space-y-4">
+            <Input label="Firmenname *" value={tenantForm.name} onChange={(v) => setTenantForm({ ...tenantForm, name: v })} />
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Plan</label>
+              <select
+                value={tenantForm.plan}
+                onChange={(e) => setTenantForm({ ...tenantForm, plan: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+              >
+                {['STARTER', 'PROFESSIONAL', 'ENTERPRISE'].map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            {tenantError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{tenantError}</p>}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setIsTenantModalOpen(false)} disabled={savingTenant}>Abbrechen</Button>
+              <Button onClick={handleCreateTenant} disabled={savingTenant}>{savingTenant ? <Loader2 className="animate-spin" size={18} /> : 'Erstellen'}</Button>
+            </div>
+          </div>
+        </Modal>
       </Layout>
     );
   }
