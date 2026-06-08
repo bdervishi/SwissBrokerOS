@@ -5,6 +5,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { generateContentWithRetry } from '../services/aiService';
+import { leadsService } from '../src/services/leads';
+import { useLeadsFull } from '../src/hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, Lead, LeadContact, LeadActivity } from '../types';
 import { Navigate } from 'react-router-dom';
@@ -16,29 +18,6 @@ import {
     Edit3, ExternalLink, Map as MapIcon, 
     CheckCircle2, Linkedin, Briefcase, Filter
 } from 'lucide-react';
-
-const MOCK_LEADS: Lead[] = [
-    { 
-        id: 'l1', 
-        tenantId: 't1',
-        name: 'AlpenTech Solutions', 
-        city: 'Zürich', 
-        address: 'Hardturmstrasse 161, 8005 Zürich',
-        status: 'NEW', 
-        potentialValue: 5000,
-        type: 'OTHER',
-        website: 'https://alpentech.ch',
-        createdAt: '2024-06-01',
-        updatedAt: '2024-06-02',
-        source: 'Radar',
-        aiInsightScore: 85,
-        contacts: [{ id: 'c1', name: 'Dr. Marc Wenger', role: 'CEO', email: 'm.wenger@alpentech.ch', phone: '+41 44 123 45 67', isPrimary: true }],
-        activities: [{ id: 'h1', type: 'SYSTEM', title: 'Lead erstellt', description: 'Radar-Match: Series A Funding News.', timestamp: '01.06.2024 09:00', authorName: 'System' }],
-        interests: ['Cyber-Versicherung', 'PK-Optimierung'],
-        tasks: [{ id: 't1', label: 'Inhaber anrufen', dueDate: '2024-06-10', isCompleted: false, priority: 'HIGH' }],
-        offers: [],
-    }
-];
 
 type SearchMode = 'COMPANIES' | 'PEOPLE';
 
@@ -61,7 +40,7 @@ export const LeadFinder: React.FC = () => {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     
     // Pipeline State
-    const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
+    const { data: leads, refetch: refetchLeads } = useLeadsFull(currentUser?.tenantId);
     const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
     const [activeDetailTab, setActiveDetailTab] = useState<'COCKPIT' | 'JOURNAL' | 'CONTACTS'>('COCKPIT');
 
@@ -141,10 +120,10 @@ export const LeadFinder: React.FC = () => {
         }
     };
 
-    const addLeadFromSearch = (res: any) => {
+    const addLeadFromSearch = async (res: any) => {
         const newLead: Lead = {
             id: Date.now().toString(),
-            tenantId: 't1',
+            tenantId: currentUser?.tenantId || '',
             name: res.type === 'PERSON' ? `${res.name} (${res.company})` : res.name,
             city: criteria.location,
             address: res.address || 'Adresse via LinkedIn ermitteln',
@@ -169,7 +148,16 @@ export const LeadFinder: React.FC = () => {
             tasks: [],
             offers: []
         };
-        setLeads([newLead, ...leads]);
+        await leadsService.create(newLead);
+        refetchLeads();
+    };
+
+    const advanceMap: Record<string, Lead['status']> = { NEW: 'CONTACTED', CONTACTED: 'OFFER', OFFER: 'WON' };
+    const handleAdvanceStatus = async (lead: Lead) => {
+        const next = advanceMap[lead.status];
+        if (!next) return;
+        await leadsService.updateStatus(lead.id, next);
+        refetchLeads();
     };
 
     const handleObjectionHelp = async () => {
@@ -332,9 +320,9 @@ export const LeadFinder: React.FC = () => {
                     {/* Pipeline Kanban */}
                     {!selectedLeadId && (
                         <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 h-full overflow-y-auto pr-2">
-                            <PipelineColumn title="Neu" status="NEW" leads={leads} onSelect={setSelectedLeadId} color="text-blue-600" />
-                            <PipelineColumn title="Kontaktiert" status="CONTACTED" leads={leads} onSelect={setSelectedLeadId} color="text-amber-600" />
-                            <PipelineColumn title="Offerte" status="OFFER" leads={leads} onSelect={setSelectedLeadId} color="text-purple-600" />
+                            <PipelineColumn title="Neu" status="NEW" leads={leads} onSelect={setSelectedLeadId} onAdvance={handleAdvanceStatus} color="text-blue-600" />
+                            <PipelineColumn title="Kontaktiert" status="CONTACTED" leads={leads} onSelect={setSelectedLeadId} onAdvance={handleAdvanceStatus} color="text-amber-600" />
+                            <PipelineColumn title="Offerte" status="OFFER" leads={leads} onSelect={setSelectedLeadId} onAdvance={handleAdvanceStatus} color="text-purple-600" />
                         </div>
                     )}
 
@@ -442,8 +430,9 @@ export const LeadFinder: React.FC = () => {
     );
 };
 
-const PipelineColumn = ({ title, status, leads, onSelect, selectedId, color }: any) => {
+const PipelineColumn = ({ title, status, leads, onSelect, selectedId, color, onAdvance }: any) => {
     const colLeads = leads.filter((l: Lead) => l.status === status);
+    const nextLabel: Record<string, string> = { NEW: 'Kontaktiert', CONTACTED: 'Offerte', OFFER: 'Gewonnen' };
     return (
         <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col h-full">
             <div className={`flex justify-between items-center mb-4 pb-2 border-b border-slate-200 dark:border-slate-800 ${color}`}>
@@ -454,8 +443,19 @@ const PipelineColumn = ({ title, status, leads, onSelect, selectedId, color }: a
                 {colLeads.map((lead: Lead) => (
                     <div key={lead.id} onClick={() => onSelect(lead.id)} className={`bg-white dark:bg-slate-900 p-3 rounded-lg border shadow-sm cursor-pointer hover:border-brand-400 transition-all group ${selectedId === lead.id ? 'ring-2 ring-brand-500 border-transparent' : 'border-slate-200 dark:border-slate-800'}`}>
                         <div className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-1">{lead.name}</div>
-                        <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase font-medium">
-                            <MapPin size={10}/> {lead.city}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase font-medium">
+                                <MapPin size={10}/> {lead.city}
+                            </div>
+                            {nextLabel[status] && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onAdvance?.(lead); }}
+                                    className="text-[10px] font-bold text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                                    title={`Nach "${nextLabel[status]}" verschieben`}
+                                >
+                                    → {nextLabel[status]}
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}

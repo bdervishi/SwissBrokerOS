@@ -1,67 +1,67 @@
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Landing } from './pages/Landing';
-import { Login } from './pages/Login'; 
-import { Dashboard } from './pages/Dashboard';
-import { ClientDetail } from './pages/ClientDetail';
-import { Clients } from './pages/Clients';
-import { TenantDetail } from './pages/TenantDetail';
-import { Policies } from './pages/Policies';
-import { PolicyDetail } from './pages/PolicyDetail';
-import { Analytics } from './pages/Analytics';
-import { Settings } from './pages/Settings';
-import { Mortgages } from './pages/Mortgages';
-import { MortgageDetail } from './pages/MortgageDetail';
-import { Integrations } from './pages/Integrations';
-import { PartnerHub } from './pages/PartnerHub';
-import { PartnerDetail } from './pages/PartnerDetail';
-import { CalendarPage } from './pages/Calendar';
-import { Commissions } from './pages/Commissions';
-import { Inbox } from './pages/Inbox';
-import { TaxManagement } from './pages/TaxManagement';
-import { CreditSimulation } from './pages/CreditSimulation';
-import { LeadMarketplace } from './pages/LeadMarketplace';
-import { SaaSPlans } from './pages/SaaSPlans';
-import { SaaSLanguages } from './pages/SaaSLanguages';
-import { SaaSDemo } from './pages/SaaSDemo';
-import { SaaSPitch } from './pages/SaaSPitch'; 
-import { SaaSTaxConfig } from './pages/SaaSTaxConfig';
-import { SaaSEmailConfig } from './pages/SaaSEmailConfig';
-import { SaaSNewsletter } from './pages/SaaSNewsletter';
-import { SaaSTestimonials } from './pages/SaaSTestimonials';
-import { SaaSEmbeddedFinance } from './pages/SaaSEmbeddedFinance';
-import { SaaSTeams } from './pages/SaaSTeams';
-import { SaaSPages } from './pages/SaaSPages';
-import { SaaSCaseStudies } from './pages/SaaSCaseStudies'; 
-import { SaaSMaintenance } from './pages/SaaSMaintenance';
-import { BrokerAIConfig } from './pages/BrokerAIConfig';
-import { AgentDashboard } from './pages/AgentDashboard';
-import { TeamOverview } from './pages/TeamOverview';
-import { TeamDetail } from './pages/TeamDetail';
-import { EmployeeDetail } from './pages/EmployeeDetail';
-import { MyProfile } from './pages/MyProfile'; 
-import { LeadFinder } from './pages/LeadFinder';
-import { SocialSelling } from './pages/SocialSelling'; 
-import { DataImport } from './pages/DataImport';
-import { WebEngine } from './pages/WebEngine'; 
-import { CallAgent } from './pages/CallAgent';
-import { FeatureInfo } from './pages/FeatureInfo';
-import { Legal } from './pages/Legal';
-import { PublicPage } from './pages/PublicPage';
-import { Career } from './pages/Career';
-import { AffiliateProgram } from './pages/AffiliateProgram';
-import { FAQPage } from './pages/FAQ'; 
-import { OnboardingWizard } from './pages/OnboardingWizard';
+const Landing = lazy(() => import('./pages/Landing').then(m => ({ default: m.Landing })));
+const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const ClientDetail = lazy(() => import('./pages/ClientDetail').then(m => ({ default: m.ClientDetail })));
+const Clients = lazy(() => import('./pages/Clients').then(m => ({ default: m.Clients })));
+const TenantDetail = lazy(() => import('./pages/TenantDetail').then(m => ({ default: m.TenantDetail })));
+const Policies = lazy(() => import('./pages/Policies').then(m => ({ default: m.Policies })));
+const PolicyDetail = lazy(() => import('./pages/PolicyDetail').then(m => ({ default: m.PolicyDetail })));
+const Analytics = lazy(() => import('./pages/Analytics').then(m => ({ default: m.Analytics })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const Mortgages = lazy(() => import('./pages/Mortgages').then(m => ({ default: m.Mortgages })));
+const MortgageDetail = lazy(() => import('./pages/MortgageDetail').then(m => ({ default: m.MortgageDetail })));
+const Integrations = lazy(() => import('./pages/Integrations').then(m => ({ default: m.Integrations })));
+const PartnerHub = lazy(() => import('./pages/PartnerHub').then(m => ({ default: m.PartnerHub })));
+const PartnerDetail = lazy(() => import('./pages/PartnerDetail').then(m => ({ default: m.PartnerDetail })));
+const CalendarPage = lazy(() => import('./pages/Calendar').then(m => ({ default: m.CalendarPage })));
+const Commissions = lazy(() => import('./pages/Commissions').then(m => ({ default: m.Commissions })));
+const Inbox = lazy(() => import('./pages/Inbox').then(m => ({ default: m.Inbox })));
+const TaxManagement = lazy(() => import('./pages/TaxManagement').then(m => ({ default: m.TaxManagement })));
+const CreditSimulation = lazy(() => import('./pages/CreditSimulation').then(m => ({ default: m.CreditSimulation })));
+const LeadMarketplace = lazy(() => import('./pages/LeadMarketplace').then(m => ({ default: m.LeadMarketplace })));
+const SaaSPlans = lazy(() => import('./pages/SaaSPlans').then(m => ({ default: m.SaaSPlans })));
+const SaaSLanguages = lazy(() => import('./pages/SaaSLanguages').then(m => ({ default: m.SaaSLanguages })));
+const SaaSDemo = lazy(() => import('./pages/SaaSDemo').then(m => ({ default: m.SaaSDemo })));
+const SaaSPitch = lazy(() => import('./pages/SaaSPitch').then(m => ({ default: m.SaaSPitch })));
+const SaaSTaxConfig = lazy(() => import('./pages/SaaSTaxConfig').then(m => ({ default: m.SaaSTaxConfig })));
+const SaaSEmailConfig = lazy(() => import('./pages/SaaSEmailConfig').then(m => ({ default: m.SaaSEmailConfig })));
+const SaaSNewsletter = lazy(() => import('./pages/SaaSNewsletter').then(m => ({ default: m.SaaSNewsletter })));
+const SaaSTestimonials = lazy(() => import('./pages/SaaSTestimonials').then(m => ({ default: m.SaaSTestimonials })));
+const SaaSEmbeddedFinance = lazy(() => import('./pages/SaaSEmbeddedFinance').then(m => ({ default: m.SaaSEmbeddedFinance })));
+const SaaSTeams = lazy(() => import('./pages/SaaSTeams').then(m => ({ default: m.SaaSTeams })));
+const SaaSPages = lazy(() => import('./pages/SaaSPages').then(m => ({ default: m.SaaSPages })));
+const SaaSCaseStudies = lazy(() => import('./pages/SaaSCaseStudies').then(m => ({ default: m.SaaSCaseStudies })));
+const SaaSMaintenance = lazy(() => import('./pages/SaaSMaintenance').then(m => ({ default: m.SaaSMaintenance })));
+const BrokerAIConfig = lazy(() => import('./pages/BrokerAIConfig').then(m => ({ default: m.BrokerAIConfig })));
+const AgentDashboard = lazy(() => import('./pages/AgentDashboard').then(m => ({ default: m.AgentDashboard })));
+const TeamOverview = lazy(() => import('./pages/TeamOverview').then(m => ({ default: m.TeamOverview })));
+const TeamDetail = lazy(() => import('./pages/TeamDetail').then(m => ({ default: m.TeamDetail })));
+const EmployeeDetail = lazy(() => import('./pages/EmployeeDetail').then(m => ({ default: m.EmployeeDetail })));
+const MyProfile = lazy(() => import('./pages/MyProfile').then(m => ({ default: m.MyProfile })));
+const LeadFinder = lazy(() => import('./pages/LeadFinder').then(m => ({ default: m.LeadFinder })));
+const SocialSelling = lazy(() => import('./pages/SocialSelling').then(m => ({ default: m.SocialSelling })));
+const DataImport = lazy(() => import('./pages/DataImport').then(m => ({ default: m.DataImport })));
+const WebEngine = lazy(() => import('./pages/WebEngine').then(m => ({ default: m.WebEngine })));
+const CallAgent = lazy(() => import('./pages/CallAgent').then(m => ({ default: m.CallAgent })));
+const FeatureInfo = lazy(() => import('./pages/FeatureInfo').then(m => ({ default: m.FeatureInfo })));
+const Legal = lazy(() => import('./pages/Legal').then(m => ({ default: m.Legal })));
+const PublicPage = lazy(() => import('./pages/PublicPage').then(m => ({ default: m.PublicPage })));
+const Career = lazy(() => import('./pages/Career').then(m => ({ default: m.Career })));
+const AffiliateProgram = lazy(() => import('./pages/AffiliateProgram').then(m => ({ default: m.AffiliateProgram })));
+const FAQPage = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQPage })));
+const OnboardingWizard = lazy(() => import('./pages/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 import { MaintenanceView } from './components/MaintenanceView'; 
-import { PublicPlans } from './pages/PublicPlans'; 
-import { PublicCaseStudies } from './pages/PublicCaseStudies'; 
-import { PublicBlog } from './pages/PublicBlog'; 
-import { AboutUs } from './pages/AboutUs'; 
+const PublicPlans = lazy(() => import('./pages/PublicPlans').then(m => ({ default: m.PublicPlans })));
+const PublicCaseStudies = lazy(() => import('./pages/PublicCaseStudies').then(m => ({ default: m.PublicCaseStudies })));
+const PublicBlog = lazy(() => import('./pages/PublicBlog').then(m => ({ default: m.PublicBlog })));
+const AboutUs = lazy(() => import('./pages/AboutUs').then(m => ({ default: m.AboutUs })));
 // Solution Pages
-import { SolutionBroker } from './pages/solutions/SolutionBroker';
-import { SolutionEnterprise } from './pages/solutions/SolutionEnterprise';
-import { SolutionSales } from './pages/solutions/SolutionSales';
+const SolutionBroker = lazy(() => import('./pages/solutions/SolutionBroker').then(m => ({ default: m.SolutionBroker })));
+const SolutionEnterprise = lazy(() => import('./pages/solutions/SolutionEnterprise').then(m => ({ default: m.SolutionEnterprise })));
+const SolutionSales = lazy(() => import('./pages/solutions/SolutionSales').then(m => ({ default: m.SolutionSales })));
 
 import { ScrollToTop } from './components/ScrollToTop';
 
@@ -116,6 +116,7 @@ const App = () => {
             <ApplicationController>
                 <Router>
                 <ScrollToTop />
+                <Suspense fallback={<div className="p-8 text-center text-slate-400">Lädt…</div>}>
                 <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/register" element={<OnboardingWizard />} />
@@ -197,6 +198,7 @@ const App = () => {
 
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
+                </Suspense>
                 </Router>
             </ApplicationController>
           </SecurityProvider>

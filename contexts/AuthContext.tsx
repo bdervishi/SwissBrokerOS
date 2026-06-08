@@ -104,9 +104,11 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
       const identifier = username.trim();
       let email = identifier.includes('@') ? identifier : null;
       if (!email) {
+        // Resolve username -> email via a SECURITY DEFINER RPC, since RLS blocks
+        // anonymous reads of profiles (see database_login_rpc.sql).
         try {
-          const matches = await db.profiles.getAll({ username: identifier });
-          email = (matches[0] as User | undefined)?.email ?? null;
+          const { data } = await supabase.rpc('email_for_username', { uname: identifier });
+          email = (data as string | null) ?? null;
         } catch {
           email = null;
         }
