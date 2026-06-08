@@ -3,16 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_COMMISSIONS, MOCK_TENANTS, MOCK_POLICIES, MOCK_CLIENTS, MOCK_USERS } from '../constants';
 import { CommissionStatus, CommissionType, UserRole, PolicyStatus } from '../types';
 import { TrendingUp, DollarSign, Clock, Download, Filter, Building2, AlertTriangle, ShieldAlert, Phone, Users, CheckCircle, Settings as SettingsIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
+import { useCommissions, useTenants, usePolicies, useClients, useProfiles } from '../src/hooks/useData';
 import { Navigate, Link, useLocation } from 'react-router-dom';
 import { SensitiveData } from '../components/ui/SensitiveData';
 
 export const Commissions: React.FC = () => {
     const { role } = useAuth();
+    const { data: commissions } = useCommissions();
+    const { data: tenants } = useTenants();
+    const { data: policies } = usePolicies();
+    const { data: clients } = useClients();
+    const { data: users } = useProfiles();
     const location = useLocation();
     
     // Check if a specific tab was requested via navigation state
@@ -40,7 +45,7 @@ export const Commissions: React.FC = () => {
     // 2. SaaS Hunter View
     if (role === UserRole.SAAS_ACQUISITION) {
         // Simple view for Hunters
-        const myCommissions = MOCK_COMMISSIONS; // Mock: In real app filter by hunter ID
+        const myCommissions = commissions; // Mock: In real app filter by hunter ID
         const totalEarned = 12500;
         
         return (
@@ -61,7 +66,7 @@ export const Commissions: React.FC = () => {
     // 3. SaaS Admin View (Revenue from Tenants)
     if (role === UserRole.SAAS_SUPER_ADMIN || role === UserRole.SAAS_SALES || role === UserRole.SAAS_FINANCE) {
         // ... (SaaS View Code remains same as previous, but included for completeness)
-        const totalMrr = MOCK_TENANTS.reduce((sum, t) => sum + t.mrr, 0);
+        const totalMrr = tenants.reduce((sum, t) => sum + t.mrr, 0);
         const revenueData = [
             { name: 'Jan', value: 850 },
             { name: 'Feb', value: 920 },
@@ -88,7 +93,7 @@ export const Commissions: React.FC = () => {
                     />
                      <KPICard 
                         title="Active Tenants" 
-                        value={MOCK_TENANTS.length.toString()} 
+                        value={tenants.length.toString()} 
                         icon={<Building2 className="text-blue-600" />} 
                         trend="Stable"
                     />
@@ -111,11 +116,11 @@ export const Commissions: React.FC = () => {
     // 4. Broker View (Normal Commissions + Storno + Agents)
     
     // --- Data Prep for Overview ---
-    const totalPaid = MOCK_COMMISSIONS
+    const totalPaid = commissions
         .filter(c => c.status === CommissionStatus.PAID)
         .reduce((sum, c) => sum + c.amount, 0);
 
-    const totalPending = MOCK_COMMISSIONS
+    const totalPending = commissions
         .filter(c => c.status === CommissionStatus.PENDING)
         .reduce((sum, c) => sum + c.amount, 0);
 
@@ -129,7 +134,7 @@ export const Commissions: React.FC = () => {
 
     // --- Data Prep for Storno Risk ---
     // Filter policies that have a liability duration and are active
-    const policiesWithRisk = MOCK_POLICIES.filter(p => 
+    const policiesWithRisk = policies.filter(p => 
         p.status === PolicyStatus.ACTIVE && 
         (p.liabilityDurationMonths || 0) > 0 && 
         p.initialCommission && p.initialCommission > 0
@@ -170,9 +175,9 @@ export const Commissions: React.FC = () => {
         : 0;
 
     // --- Data Prep for Agents ---
-    const agents = MOCK_USERS.filter(u => u.role === UserRole.BROKER_AGENT);
+    const agents = users.filter(u => u.role === UserRole.BROKER_AGENT);
     const agentStats = agents.map(agent => {
-        const agentCommissions = MOCK_COMMISSIONS.filter(c => c.agentId === agent.id);
+        const agentCommissions = commissions.filter(c => c.agentId === agent.id);
         const totalVolume = agentCommissions.reduce((sum, c) => sum + c.amount, 0);
         
         // Calculated payout
@@ -266,7 +271,7 @@ export const Commissions: React.FC = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {MOCK_COMMISSIONS.map(com => (
+                                            {commissions.map(com => (
                                                 <tr key={com.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                                                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{com.date}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{com.partnerName}</td>
@@ -375,7 +380,7 @@ export const Commissions: React.FC = () => {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {riskyPolicies.map(p => {
-                                        const client = MOCK_CLIENTS.find(c => c.id === p.clientId);
+                                        const client = clients.find(c => c.id === p.clientId);
                                         return (
                                             <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                                                 <td className="px-6 py-4">

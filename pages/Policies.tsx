@@ -3,7 +3,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_POLICIES, MOCK_CLIENTS, MOCK_PARTNERS } from '../constants';
+import { MOCK_PARTNERS } from '../constants';
+import { usePolicies, useClients } from '../src/hooks/useData';
 import { FileText, Filter, Download, ArrowRightLeft, Check, X, TrendingDown, ArrowRight, Save, Eye, EyeOff, Wallet, Loader2, LayoutGrid, List as ListIcon, Calendar, Shield, Sparkles, AlertCircle, ThumbsUp, CheckCircle2, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Link, Navigate } from 'react-router-dom';
@@ -13,6 +14,8 @@ import { SensitiveData } from '../components/ui/SensitiveData';
 
 export const Policies: React.FC = () => {
   const { user, role } = useAuth();
+  const { data: policies } = usePolicies();
+  const { data: clients } = useClients();
   
   // View State
   const [viewMode, setViewMode] = useState<'LIST' | 'GRID'>('LIST');
@@ -40,17 +43,17 @@ export const Policies: React.FC = () => {
   // --- STRICT DATA ISOLATION LOGIC ---
   const displayedPolicies = useMemo(() => {
       if (role === UserRole.CLIENT && user) {
-          const clientProfile = MOCK_CLIENTS.find(c => c.username === user.username);
+          const clientProfile = clients.find(c => c.username === user.username);
           if (clientProfile) {
-              return MOCK_POLICIES.filter(p => p.clientId === clientProfile.id);
+              return policies.filter(p => p.clientId === clientProfile.id);
           }
-          return []; 
+          return [];
       }
-      return MOCK_POLICIES;
-  }, [role, user]);
+      return policies;
+  }, [role, user, policies, clients]);
 
   const getClientName = (id: string) => {
-    const c = MOCK_CLIENTS.find(client => client.id === id);
+    const c = clients.find(client => client.id === id);
     return c ? `${c.firstName} ${c.lastName}` : 'Unbekannt';
   };
 
