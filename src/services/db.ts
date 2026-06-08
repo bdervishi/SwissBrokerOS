@@ -66,13 +66,20 @@ const applyMockFilters = <T extends Record<string, any>>(rows: T[], filters?: Fi
  * in-memory copy of the seed data (so the UI reflects changes within a session);
  * otherwise it queries Supabase and maps rows to/from camelCase.
  */
-function createTable<T extends { id: string }>(table: string, seed: T[]) {
+function createTable<T extends { id: string }>(
+  table: string,
+  seed: T[],
+  transform?: (entity: T) => T,
+) {
   // Local mutable store for mock mode – never touches the imported constants.
   const store: T[] = seed.map((r) => ({ ...r }));
+  // Normalises a row into the shape the UI expects (e.g. mapping JSONB columns
+  // whose interface name differs from the column name). Idempotent on mock data.
+  const finish = (entity: T): T => (transform ? transform(entity) : entity);
 
   return {
     getAll: async (filters?: Filters): Promise<T[]> => {
-      if (USE_MOCK) return applyMockFilters(store, filters);
+      if (USE_MOCK) return applyMockFilters(store, filters).map(finish);
 
       let query = supabase.from(table).select('*');
       if (filters) {
@@ -82,15 +89,18 @@ function createTable<T extends { id: string }>(table: string, seed: T[]) {
       }
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []).map((row) => rowToEntity<T>(row));
+      return (data ?? []).map((row) => finish(rowToEntity<T>(row)));
     },
 
     getById: async (id: string): Promise<T | undefined> => {
-      if (USE_MOCK) return store.find((r) => r.id === id);
+      if (USE_MOCK) {
+        const found = store.find((r) => r.id === id);
+        return found ? finish(found) : undefined;
+      }
 
       const { data, error } = await supabase.from(table).select('*').eq('id', id).maybeSingle();
       if (error) throw error;
-      return data ? rowToEntity<T>(data) : undefined;
+      return data ? finish(rowToEntity<T>(data)) : undefined;
     },
 
     create: async (entity: Partial<T>): Promise<T> => {
@@ -145,8 +155,22 @@ function createTable<T extends { id: string }>(table: string, seed: T[]) {
 // ==========================================================================
 // One accessor per Postgres table. Leads have no mock seed yet, so they start
 // empty in mock mode.
+// The tenants table stores branding/HR/compliance/quota as JSONB columns whose
+// interface names differ (branding_config -> branding) and the UI also reads a
+// few derived fields (usersCount/mrr) that are not columns. Normalise here so
+// real DB rows match the Tenant interface the UI expects.
+const tenantTransform = (t: any): Tenant => ({
+  ...t,
+  // branding_config column maps to brandingConfig; the interface field is `branding`.
+  branding: t.branding ?? t.brandingConfig ?? { primaryColor: '#0ea5e9', logoText: t.name ?? 'Broker' },
+  // Derived/aggregate fields that are not columns – default so the UI never crashes.
+  usersCount: t.usersCount ?? 0,
+  mrr: t.mrr ?? 0,
+  joinedDate: t.joinedDate ?? t.createdAt ?? '',
+});
+
 export const db = {
-  tenants: createTable<Tenant>('tenants', MOCK_TENANTS),
+  tenants: createTable<Tenant>('tenants', MOCK_TENANTS, tenantTransform),
   profiles: createTable<User>('profiles', MOCK_USERS),
   clients: createTable<Client>('clients', MOCK_CLIENTS),
   policies: createTable<Policy>('policies', MOCK_POLICIES),
