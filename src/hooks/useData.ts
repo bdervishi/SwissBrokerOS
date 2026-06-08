@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { db } from '../services/db';
 import { leadsService } from '../services/leads';
+import { calendarService } from '../services/calendar';
+import { CalendarEvent } from '../types';
 import {
   Client,
   Policy,
@@ -125,6 +127,9 @@ export const useLeads = (tenantId?: string) =>
 // Full leads (with embedded contacts/activities/tasks) via the leads service.
 export const useLeadsFull = (tenantId?: string) =>
   useCollection<Lead>(() => leadsService.getAll(tenantId), [tenantId]);
+
+export const useCalendarEvents = (tenantId?: string) =>
+  useCollection<CalendarEvent>(() => calendarService.getAll(tenantId), [tenantId]);
 
 export const useClientNotes = (clientId?: string) =>
   useCollection<ClientNote>(
