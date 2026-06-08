@@ -4,7 +4,7 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useBranding } from '../contexts/BrandingContext';
 import { UserRole, WebSection, WebSectionType } from '../types';
@@ -126,11 +126,11 @@ export const WebEngine: React.FC = () => {
 
     // --- AI Import Logic ---
     const handleSmartImport = async () => {
-        if (!importUrl || !process.env.API_KEY) return;
+        if (!importUrl) return;
         setIsImporting(true);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             
             // Simulation: Since we can't scrape real URLs from browser securely without a backend proxy,
             // we will ask Gemini to Hallucinate/Generate a structure based on the URL context (or just generate generic good copy).

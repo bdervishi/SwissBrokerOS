@@ -135,8 +135,12 @@ export const CallAgent: React.FC = () => {
     }
 
     const startCall = async () => {
-        if(!process.env.API_KEY) {
-            alert("API Key missing");
+        // The realtime Live (voice) API cannot use the secure HTTP proxy, so it
+        // needs an explicit, opt-in client key. Unset by default to avoid
+        // shipping a key in the bundle.
+        const liveKey = (import.meta as any).env?.VITE_GEMINI_LIVE_KEY;
+        if(!liveKey) {
+            alert("Live-Voice ist nicht konfiguriert (VITE_GEMINI_LIVE_KEY fehlt).");
             return;
         }
 
@@ -156,7 +160,7 @@ export const CallAgent: React.FC = () => {
             }});
             mediaStreamRef.current = stream;
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: liveKey });
             
             const sessionPromise = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',

@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { Navigate } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { 
     Upload, 
     FileSpreadsheet, 
@@ -114,11 +114,10 @@ export const DataImport: React.FC = () => {
     };
 
     const suggestMappingWithAI = async (headers: string[]) => {
-        if (!process.env.API_KEY) return;
         setIsAnalyzing(true);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const targetFields = SCHEMA_DEFINITIONS[activeType].map(f => f.key);
             
             const prompt = `

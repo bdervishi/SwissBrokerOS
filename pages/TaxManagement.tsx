@@ -7,7 +7,7 @@ import { MOCK_TAX_RETURNS, MOCK_CLIENTS } from '../constants';
 import { TaxReturn, TaxReturnStatus, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { 
     Calculator, 
     FileText, 
@@ -96,7 +96,7 @@ export const TaxManagement: React.FC = () => {
 
     // --- AI Logic ---
     const handleAiAnalysis = async () => {
-        if (!selectedReturn || !process.env.API_KEY) return;
+        if (!selectedReturn) return;
         
         setIsGeneratingAi(true);
         setAiAdvice(null);
@@ -105,7 +105,7 @@ export const TaxManagement: React.FC = () => {
         if (!client) return;
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Handel als Schweizer Steuerexperte für den Kanton ${selectedReturn.canton}.
                 Analysiere die Situation für den Kunden:
@@ -135,12 +135,11 @@ export const TaxManagement: React.FC = () => {
     };
 
     const handleGenerateRelocationChecklist = async () => {
-        if (!process.env.API_KEY) return;
         setIsGeneratingChecklist(true);
         setRelocationChecklist(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Erstelle eine detaillierte Checkliste für eine Sitzverlegung / Umzug in der Schweiz.
                 

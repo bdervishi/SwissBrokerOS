@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, CaseStudy } from '../types';
 import { Navigate } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { 
     Sparkles, 
     Send, 
@@ -53,13 +53,13 @@ export const SaaSCaseStudies: React.FC = () => {
     }
 
     const handleGenerate = async () => {
-        if (!clientName || !projectTheme || !process.env.API_KEY) return;
+        if (!clientName || !projectTheme) return;
         
         setIsGenerating(true);
         setGeneratedCase(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Erstelle einen detaillierten Case Study (Success Story) Beitrag für die Agentur 'Trifti'.
                 Trifti ist spezialisiert auf KI-Agenten, Web3-Entwicklung und High-End Webdesign.

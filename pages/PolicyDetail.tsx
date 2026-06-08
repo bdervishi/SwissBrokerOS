@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { MOCK_POLICIES, MOCK_CLIENTS, MOCK_DOCUMENTS, MOCK_CLAIMS } from '../constants';
 import { SensitiveData } from '../components/ui/SensitiveData';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
 import { UserRole } from '../types';
@@ -80,7 +80,7 @@ export const PolicyDetail: React.FC = () => {
     setAiSummary(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = getAIClient();
       
       const prompt = `
         Erstelle eine kundenfreundliche Zusammenfassung für folgende Versicherungspolice.
@@ -112,12 +112,12 @@ export const PolicyDetail: React.FC = () => {
   };
 
   const handleContractReview = async () => {
-      if (!policy || !process.env.API_KEY) return;
+      if (!policy) return;
       setIsReviewing(true);
       setReviewResult(null);
 
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const ai = getAIClient();
           const prompt = `
             Führe eine Due Diligence Prüfung (Contract Review) für diese Police durch.
             Suche nach "Red Flags" oder unüblichen Klauseln.

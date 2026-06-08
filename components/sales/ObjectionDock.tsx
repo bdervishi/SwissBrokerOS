@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../../services/aiService';
 import { 
     MessageSquare, 
     Zap, 
@@ -30,13 +30,12 @@ export const ObjectionDock: React.FC = () => {
     const [copied, setCopied] = useState(false);
 
     const handleObjection = async (promptContext: string) => {
-        if (!process.env.API_KEY) return;
         setIsLoading(true);
         setActiveResponse(null);
         setCopied(false);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const systemInstruction = `
                 Du bist ein Top-Performer im B2B SaaS Sales. Du verkaufst "SwissBroker OS".
                 

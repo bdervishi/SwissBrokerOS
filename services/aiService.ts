@@ -4,11 +4,16 @@
 
 const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || 'http://localhost:3000/api/generate';
 
+export interface AIGenerateResult {
+  text: string;
+  candidates?: any[];
+}
+
 export const generateContentWithRetry = async (
-    model: string, 
-    contents: any, 
+    model: string,
+    contents: any,
     config: any = {}
-): Promise<{ text: string }> => { // Simplified return type based on our proxy
+): Promise<AIGenerateResult> => { // Mirrors the backend proxy response
     
     const headers = {
         'Content-Type': 'application/json',
@@ -39,10 +44,11 @@ export const generateContentWithRetry = async (
         }
 
         const data = await response.json();
-        
+
         // Map backend response to what the app expects
         return {
-            text: data.text
+            text: data.text,
+            candidates: data.candidates,
         };
 
     } catch (error) {
@@ -50,3 +56,17 @@ export const generateContentWithRetry = async (
         throw error;
     }
 };
+
+/**
+ * Drop-in replacement for `new GoogleGenAI({ apiKey })`. Exposes the same
+ * `.models.generateContent({ model, contents, config })` shape the pages use,
+ * but routes the request through the secure backend proxy so the API key never
+ * reaches the browser. Call sites only need to swap the constructor.
+ */
+export const getAIClient = () => ({
+  models: {
+    generateContent: async (
+      { model, contents, config }: { model: string; contents: any; config?: any },
+    ): Promise<AIGenerateResult> => generateContentWithRetry(model, contents, config ?? {}),
+  },
+});

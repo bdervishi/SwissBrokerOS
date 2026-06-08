@@ -4,17 +4,18 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Link, Navigate } from 'react-router-dom';
-import { MOCK_CLIENTS, MOCK_TENANTS } from '../constants';
-import { 
-    Search, Plus, User, Building2, Users, ArrowRight, ArrowLeft, 
+import {
+    Search, Plus, User, Building2, Users, ArrowRight, ArrowLeft,
     ShieldCheck, Wallet, FileText, CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useClients } from '../hooks/useData';
 import { UserRole, ClientType } from '../types';
 import { Modal } from '../components/ui/Modal';
 
 export const Clients: React.FC = () => {
   const { role, user } = useAuth();
+  const { data: clients } = useClients();
   const [viewType, setViewType] = useState<ClientType>('PRIVATE');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -111,9 +112,9 @@ export const Clients: React.FC = () => {
   }
 
   // 3. Broker View Logic
-  let baseClients = MOCK_CLIENTS;
+  let baseClients = clients;
   if (role === UserRole.BROKER_AGENT && user) {
-      baseClients = MOCK_CLIENTS.filter(c => c.advisorId === user.id);
+      baseClients = clients.filter(c => c.advisorId === user.id);
   }
 
   const displayedClients = baseClients.filter(c => {

@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { Navigate } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { ObjectionDock } from '../components/sales/ObjectionDock';
 import { 
     Linkedin, 
@@ -50,11 +50,10 @@ export const SocialSelling: React.FC = () => {
     }
 
     const handleGenerateSearch = async () => {
-        if (!process.env.API_KEY) return;
         setIsGeneratingString(true);
         
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Erstelle einen perfekten LinkedIn Boolean Search String für Sales Navigator oder die normale Suche.
                 Zielgruppe: ${searchCriteria.role}
@@ -80,11 +79,11 @@ export const SocialSelling: React.FC = () => {
     };
 
     const handleAnalyzeProfile = async () => {
-        if (!profileText || !process.env.API_KEY) return;
+        if (!profileText) return;
         setIsAnalyzingProfile(true);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Analysiere diesen LinkedIn "Über Mich" Text eines potenziellen Kunden (Versicherungsmakler).
                 Text: "${profileText}"
