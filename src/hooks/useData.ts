@@ -3,7 +3,8 @@ import { db } from '../services/db';
 import { leadsService } from '../services/leads';
 import { calendarService } from '../services/calendar';
 import { emailsService } from '../services/emails';
-import { CalendarEvent, TaxReturn, Email } from '../types';
+import { leadOffersService } from '../services/leadOffers';
+import { CalendarEvent, TaxReturn, Email, LeadOffer } from '../types';
 import {
   Client,
   Policy,
@@ -134,6 +135,9 @@ export const useCalendarEvents = (tenantId?: string) =>
 
 export const useEmails = (tenantId?: string) =>
   useCollection<Email>(() => emailsService.getAll(tenantId), [tenantId]);
+
+export const useLeadOffers = () =>
+  useCollection<LeadOffer>(() => leadOffersService.getAll(), []);
 
 export const useTaxReturns = (clientId?: string) =>
   useCollection<TaxReturn>(() => db.taxReturns.getAll(clientId ? { clientId } : undefined), [clientId]);
