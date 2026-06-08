@@ -1,12 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal'; // Added Modal Import
 import { ComplianceShield } from '../components/ui/ComplianceShield';
-import { MOCK_CLIENTS, MOCK_POLICIES, MOCK_ASSETS, MOCK_ADVICE, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS } from '../constants';
+import { MOCK_ADVICE, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS } from '../constants';
+import { useClient, usePolicies, useAssets } from '../src/hooks/useData';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { generateContentWithRetry } from '../services/aiService';
@@ -40,7 +41,7 @@ import {
   RefreshCw,
   Sparkles
 } from 'lucide-react';
-import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore } from '../types';
+import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore, Client } from '../types';
 
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,9 +51,11 @@ export const ClientDetail: React.FC = () => {
   const [noteInput, setNoteInput] = useState('');
   const [localNotes, setLocalNotes] = useState<ClientNote[]>(MOCK_CLIENT_NOTES.filter(n => n.clientId === id));
   
-  // Compliance State
-  const clientData = MOCK_CLIENTS.find(c => c.id === id);
-  const [client, setClient] = useState(clientData);
+  // Compliance State – load the client from the data layer and mirror it into
+  // local state so edits (KYC/compliance updates) work as before.
+  const { data: loadedClient, loading: clientLoading } = useClient(id);
+  const [client, setClient] = useState<Client | undefined>(undefined);
+  useEffect(() => { setClient(loadedClient as Client | undefined); }, [loadedClient]);
   const [isCheckingCompliance, setIsCheckingCompliance] = useState(false);
 
   // Protocol Wizard State
@@ -66,12 +69,12 @@ export const ClientDetail: React.FC = () => {
   const [generatedProtocol, setGeneratedProtocol] = useState<string>('');
   const [signatureData, setSignatureData] = useState<string | null>(null);
 
-  const policies = MOCK_POLICIES.filter(p => p.clientId === id);
-  const assets = MOCK_ASSETS.filter(a => a.clientId === id);
+  const { data: policies } = usePolicies(id);
+  const { data: assets } = useAssets(id);
   const advice = MOCK_ADVICE.filter(a => a.clientId === id);
   const activities = MOCK_ACTIVITY_LOGS.filter(a => a.clientId === id).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
-  if (!client) return <Layout><div className="p-8">Klient nicht gefunden</div></Layout>;
+  if (!client) return <Layout><div className="p-8">{clientLoading ? 'Lädt…' : 'Klient nicht gefunden'}</div></Layout>;
 
   const handleAddNote = () => {
       if (!noteInput.trim()) return;

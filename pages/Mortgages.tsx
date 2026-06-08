@@ -3,14 +3,16 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_MORTGAGES, MOCK_CLIENTS } from '../constants';
 import { Link } from 'react-router-dom';
 import { Plus, Building, Percent, Calculator, CheckCircle, AlertCircle, Save, X, Eye, EyeOff, Wallet } from 'lucide-react';
 import { MortgageType, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useMortgages, useClients } from '../src/hooks/useData';
 
 export const Mortgages: React.FC = () => {
   const { user, role } = useAuth();
+  const { data: mortgages } = useMortgages();
+  const { data: clients } = useClients();
   
   // Sidebar Quick Calculator State
   const [calcPrice, setCalcPrice] = useState(1000000);
@@ -30,9 +32,9 @@ export const Mortgages: React.FC = () => {
   });
 
   // DATA FILTERING
-  let displayedMortgages = MOCK_MORTGAGES;
+  let displayedMortgages = mortgages;
   if (role === UserRole.CLIENT && user) {
-      displayedMortgages = MOCK_MORTGAGES.filter(m => m.clientId === user.id);
+      displayedMortgages = mortgages.filter(m => m.clientId === user.id);
   }
 
   // Calculate Quick Calc (Sidebar)
@@ -75,7 +77,7 @@ export const Mortgages: React.FC = () => {
 
 
   const getClientName = (id: string) => {
-    const c = MOCK_CLIENTS.find(client => client.id === id);
+    const c = clients.find(client => client.id === id);
     return c ? `${c.firstName} ${c.lastName}` : 'Unbekannt';
   };
 
