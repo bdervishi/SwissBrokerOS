@@ -6,9 +6,10 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal'; // Added Modal Import
 import { ComplianceShield } from '../components/ui/ComplianceShield';
-import { MOCK_ADVICE, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS } from '../constants';
-import { useClient, usePolicies, useAssets } from '../src/hooks/useData';
+import { MOCK_ADVICE, MOCK_ACTIVITY_LOGS } from '../constants';
+import { useClient, usePolicies, useAssets, useClientNotes } from '../src/hooks/useData';
 import { db } from '../src/services/db';
+import { useAuth } from '../contexts/AuthContext';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { generateContentWithRetry } from '../services/aiService';
@@ -46,11 +47,12 @@ import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore, Client } 
 
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL' | 'COMPLIANCE'>('OVERVIEW');
   
   // Note State
   const [noteInput, setNoteInput] = useState('');
-  const [localNotes, setLocalNotes] = useState<ClientNote[]>(MOCK_CLIENT_NOTES.filter(n => n.clientId === id));
+  const { data: notes, refetch: refetchNotes } = useClientNotes(id);
   
   // Compliance State – load the client from the data layer and mirror it into
   // local state so edits (KYC/compliance updates) work as before.
@@ -85,6 +87,13 @@ export const ClientDetail: React.FC = () => {
   });
   const [assetForm, setAssetForm] = useState({
     type: AssetType.PILLAR_3A, name: '', value: '', provider: '',
+  });
+
+  // Edit client master data
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: '', lastName: '', companyName: '', email: '', phone: '', address: '', zipCity: '', taxDomicile: '', birthDate: '',
   });
 
   if (!client) return <Layout><div className="p-8">{clientLoading ? 'Lädt…' : 'Klient nicht gefunden'}</div></Layout>;
@@ -145,18 +154,61 @@ export const ClientDetail: React.FC = () => {
     }
   };
 
-  const handleAddNote = () => {
+  const openEdit = () => {
+    if (!client) return;
+    setEntryError(null);
+    setEditForm({
+      firstName: client.firstName || '',
+      lastName: client.lastName || '',
+      companyName: client.companyName || '',
+      email: client.email || '',
+      phone: (client as any).phone || '',
+      address: client.address || '',
+      zipCity: client.zipCity || '',
+      taxDomicile: client.taxDomicile || '',
+      birthDate: client.birthDate || '',
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateClient = async () => {
+    setEntryError(null);
+    if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
+      setEntryError('Vor- und Nachname sind erforderlich.');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const updated = await db.clients.update(client.id, {
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        companyName: editForm.companyName.trim() || null,
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        address: editForm.address.trim(),
+        zipCity: editForm.zipCity.trim(),
+        taxDomicile: editForm.taxDomicile.trim(),
+        birthDate: editForm.birthDate || null,
+      } as any);
+      setClient(updated as Client);
+      setIsEditOpen(false);
+    } catch (err: any) {
+      setEntryError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleAddNote = async () => {
       if (!noteInput.trim()) return;
-      const newNote: ClientNote = {
-          id: Date.now().toString(),
+      await db.clientNotes.create({
           clientId: client.id,
-          authorId: 'u_broker_1',
-          authorName: 'Max Muster',
+          authorId: user?.id,
+          authorName: user ? `${user.firstName} ${user.lastName}` : 'Berater',
           content: noteInput,
-          createdAt: new Date().toLocaleString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-      };
-      setLocalNotes([newNote, ...localNotes]);
+      } as any);
       setNoteInput('');
+      refetchNotes();
   };
 
   const handleRunKycCheck = async () => {
@@ -303,6 +355,7 @@ export const ClientDetail: React.FC = () => {
           </div>
         </div>
         <div className="ml-auto flex gap-3">
+            <Button variant="outline" icon={<FileText size={16}/>} onClick={openEdit}>Bearbeiten</Button>
             <Button variant="secondary" icon={<FileSignature size={16}/>} onClick={() => setIsProtocolModalOpen(true)}>Beratungsprotokoll AI</Button>
             <Button>Termin buchen</Button>
         </div>
@@ -530,7 +583,7 @@ export const ClientDetail: React.FC = () => {
               <div className="space-y-6">
                   <Card title="Wichtige Notizen" className="border-l-4 border-l-brand-500">
                       <div className="space-y-6">
-                        {localNotes.map(note => (
+                        {notes.map(note => (
                             <div key={note.id} className="group border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{note.createdAt}</span>
@@ -581,6 +634,34 @@ export const ClientDetail: React.FC = () => {
             </div>
         )}
       </div>
+
+      {/* EDIT CLIENT MODAL */}
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Stammdaten bearbeiten" maxWidth="max-w-xl">
+        <div className="space-y-4">
+          {client.companyName !== undefined && client.companyName !== null && (
+            <EntryField label="Firmenname" value={editForm.companyName} onChange={(v) => setEditForm({ ...editForm, companyName: v })} />
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="Vorname *" value={editForm.firstName} onChange={(v) => setEditForm({ ...editForm, firstName: v })} />
+            <EntryField label="Nachname *" value={editForm.lastName} onChange={(v) => setEditForm({ ...editForm, lastName: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="E-Mail" type="email" value={editForm.email} onChange={(v) => setEditForm({ ...editForm, email: v })} />
+            <EntryField label="Telefon" value={editForm.phone} onChange={(v) => setEditForm({ ...editForm, phone: v })} />
+          </div>
+          <EntryField label="Adresse" value={editForm.address} onChange={(v) => setEditForm({ ...editForm, address: v })} />
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="PLZ / Ort" value={editForm.zipCity} onChange={(v) => setEditForm({ ...editForm, zipCity: v })} />
+            <EntryField label="Steuerdomizil (Kanton)" value={editForm.taxDomicile} onChange={(v) => setEditForm({ ...editForm, taxDomicile: v })} />
+          </div>
+          <EntryField label="Geburtsdatum" type="date" value={editForm.birthDate} onChange={(v) => setEditForm({ ...editForm, birthDate: v })} />
+          {entryError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{entryError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={savingEdit}>Abbrechen</Button>
+            <Button onClick={handleUpdateClient} disabled={savingEdit}>{savingEdit ? <Loader2 className="animate-spin" size={18} /> : 'Speichern'}</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* NEW POLICY MODAL */}
       <Modal isOpen={isPolicyModalOpen} onClose={() => setIsPolicyModalOpen(false)} title="Neue Police erfassen" maxWidth="max-w-xl">

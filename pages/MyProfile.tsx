@@ -4,8 +4,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { SensitiveData } from '../components/ui/SensitiveData';
-import { MOCK_TIME_ENTRIES } from '../constants';
-import { useClients } from '../src/hooks/useData';
+import { useClients, useTimeEntries } from '../src/hooks/useData';
+import { db } from '../src/services/db';
 import { TimeEntry, TimeEntryStatus } from '../types';
 import { useBranding } from '../contexts/BrandingContext';
 import { 
@@ -33,6 +33,7 @@ export const MyProfile: React.FC = () => {
     const { user } = useAuth();
     const { tenant } = useBranding();
     const { data: clients } = useClients();
+    const { data: loadedTimeEntries, refetch: refetchTime } = useTimeEntries(user?.id);
     const [activeTab, setActiveTab] = useState<'PERSONAL' | 'HR_FINANCE' | 'TIMESHEET'>('PERSONAL');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -57,10 +58,9 @@ export const MyProfile: React.FC = () => {
         baseSalary: user?.baseSalary || 0
     });
 
-    // Local State for Time Tracking
-    const [timeEntries, setTimeEntries] = useState<TimeEntry[]>(
-        MOCK_TIME_ENTRIES.filter(t => t.userId === user?.id)
-    );
+    // Time entries from the data layer (mock or Supabase)
+    const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+    useEffect(() => { setTimeEntries(loadedTimeEntries); }, [loadedTimeEntries]);
     const [newTimeEntry, setNewTimeEntry] = useState({
         clientId: '',
         activity: '',
@@ -85,25 +85,23 @@ export const MyProfile: React.FC = () => {
         }, 1000);
     };
 
-    const handleAddTimeEntry = () => {
+    const handleAddTimeEntry = async () => {
         if (!newTimeEntry.clientId || !newTimeEntry.activity) return;
-        
-        const entry: TimeEntry = {
-            id: Date.now().toString(),
-            userId: user?.id || '',
+        await db.timeEntries.create({
+            userId: user?.id,
+            tenantId: user?.tenantId,
             ...newTimeEntry,
-            status: 'DRAFT'
-        };
-        
-        setTimeEntries([entry, ...timeEntries]);
+            status: 'DRAFT',
+        } as any);
         setNewTimeEntry({ ...newTimeEntry, description: '', hours: 1.0 });
+        refetchTime();
     };
 
-    const handleSubmitWeek = () => {
-        // Mock submission
-        const updated = timeEntries.map(t => t.status === 'DRAFT' ? { ...t, status: 'SUBMITTED' as TimeEntryStatus } : t);
-        setTimeEntries(updated);
-        alert(`${pendingSubmission} Einträge zur Genehmigung eingereicht.`);
+    const handleSubmitWeek = async () => {
+        const drafts = timeEntries.filter(t => t.status === 'DRAFT');
+        await Promise.all(drafts.map(t => db.timeEntries.update(t.id, { status: 'SUBMITTED' as TimeEntryStatus })));
+        refetchTime();
+        alert(`${drafts.length} Einträge zur Genehmigung eingereicht.`);
     };
 
     const getStatusBadge = (status: TimeEntryStatus) => {

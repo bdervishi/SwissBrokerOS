@@ -10,6 +10,7 @@ import {
   TimeEntry,
   User,
   Tenant,
+  ClientNote,
 } from '../types';
 
 export interface AsyncCollection<T> {
@@ -119,6 +120,12 @@ export const useProfiles = (tenantId?: string) =>
 
 export const useLeads = (tenantId?: string) =>
   useCollection<Lead>(() => db.leads.getAll(tenantId ? { tenantId } : undefined), [tenantId]);
+
+export const useClientNotes = (clientId?: string) =>
+  useCollection<ClientNote>(
+    () => db.clientNotes.getAll(clientId ? { clientId } : undefined),
+    [clientId],
+  );
 
 // ---- Single items -------------------------------------------------------
 export const useClient = (id?: string) =>

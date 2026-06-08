@@ -8,6 +8,7 @@ import {
   MOCK_TIME_ENTRIES,
   MOCK_USERS,
   MOCK_TENANTS,
+  MOCK_CLIENT_NOTES,
 } from '../constants';
 import {
   Client,
@@ -19,6 +20,7 @@ import {
   TimeEntry,
   User,
   Tenant,
+  ClientNote,
 } from '../types';
 
 // ==========================================================================
@@ -179,6 +181,7 @@ export const db = {
   leads: createTable<Lead>('leads', []),
   commissions: createTable<Commission>('commissions', MOCK_COMMISSIONS),
   timeEntries: createTable<TimeEntry>('time_entries', MOCK_TIME_ENTRIES),
+  clientNotes: createTable<ClientNote>('client_notes', MOCK_CLIENT_NOTES),
 };
 
 export type Database = typeof db;
