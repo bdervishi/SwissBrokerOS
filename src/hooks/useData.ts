@@ -16,6 +16,7 @@ export interface AsyncCollection<T> {
   data: T[];
   loading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export interface AsyncItem<T> {
@@ -32,6 +33,7 @@ function useCollection<T>(loader: () => Promise<T[]>, deps: unknown[]): AsyncCol
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -53,9 +55,9 @@ function useCollection<T>(loader: () => Promise<T[]>, deps: unknown[]): AsyncCol
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, tick]);
 
-  return { data, loading, error };
+  return { data, loading, error, refetch: () => setTick((t) => t + 1) };
 }
 
 function useItem<T>(loader: () => Promise<T | undefined>, deps: unknown[]): AsyncItem<T> {
