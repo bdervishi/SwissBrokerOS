@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { db } from '../services/db';
+import { leadsService } from '../services/leads';
 import {
   Client,
   Policy,
@@ -120,6 +121,10 @@ export const useProfiles = (tenantId?: string) =>
 
 export const useLeads = (tenantId?: string) =>
   useCollection<Lead>(() => db.leads.getAll(tenantId ? { tenantId } : undefined), [tenantId]);
+
+// Full leads (with embedded contacts/activities/tasks) via the leads service.
+export const useLeadsFull = (tenantId?: string) =>
+  useCollection<Lead>(() => leadsService.getAll(tenantId), [tenantId]);
 
 export const useClientNotes = (clientId?: string) =>
   useCollection<ClientNote>(
