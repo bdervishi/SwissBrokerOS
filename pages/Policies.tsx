@@ -5,7 +5,8 @@ import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { MOCK_PARTNERS } from '../constants';
 import { usePolicies, useClients } from '../src/hooks/useData';
-import { FileText, Filter, Download, ArrowRightLeft, Check, X, TrendingDown, ArrowRight, Save, Eye, EyeOff, Wallet, Loader2, LayoutGrid, List as ListIcon, Calendar, Shield, Sparkles, AlertCircle, ThumbsUp, CheckCircle2, ChevronRight } from 'lucide-react';
+import { db } from '../src/services/db';
+import { FileText, Filter, Download, ArrowRightLeft, Check, X, TrendingDown, ArrowRight, Save, Eye, EyeOff, Wallet, Loader2, LayoutGrid, List as ListIcon, Calendar, Shield, Sparkles, AlertCircle, ThumbsUp, CheckCircle2, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Link, Navigate } from 'react-router-dom';
 import { InsuranceSwitchScenario, PartnerCategory, UserRole } from '../types';
@@ -14,8 +15,46 @@ import { SensitiveData } from '../components/ui/SensitiveData';
 
 export const Policies: React.FC = () => {
   const { user, role } = useAuth();
-  const { data: policies } = usePolicies();
+  const { data: policies, refetch: refetchPolicies } = usePolicies();
   const { data: clients } = useClients();
+
+  // Add-policy modal state
+  const [isAddPolicyOpen, setIsAddPolicyOpen] = useState(false);
+  const [savingPolicy, setSavingPolicy] = useState(false);
+  const [addPolicyError, setAddPolicyError] = useState<string | null>(null);
+  const [addPolicyForm, setAddPolicyForm] = useState({
+    clientId: '', insurer: '', type: '', policyNumber: '', premiumAmount: '', startDate: '',
+  });
+
+  const handleAddPolicy = async () => {
+    setAddPolicyError(null);
+    if (!addPolicyForm.clientId || !addPolicyForm.insurer.trim() || !addPolicyForm.type.trim()) {
+      setAddPolicyError('Kunde, Versicherer und Art sind erforderlich.');
+      return;
+    }
+    setSavingPolicy(true);
+    try {
+      const owner = clients.find(c => c.id === addPolicyForm.clientId);
+      await db.policies.create({
+        clientId: addPolicyForm.clientId,
+        tenantId: owner?.tenantId,
+        insurer: addPolicyForm.insurer.trim(),
+        type: addPolicyForm.type.trim(),
+        policyNumber: addPolicyForm.policyNumber.trim(),
+        premiumAmount: Number(addPolicyForm.premiumAmount) || 0,
+        premiumFrequency: 'Jährlich',
+        status: 'ACTIVE',
+        startDate: addPolicyForm.startDate || null,
+      } as any);
+      setIsAddPolicyOpen(false);
+      setAddPolicyForm({ clientId: '', insurer: '', type: '', policyNumber: '', premiumAmount: '', startDate: '' });
+      refetchPolicies();
+    } catch (err: any) {
+      setAddPolicyError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingPolicy(false);
+    }
+  };
   
   // View State
   const [viewMode, setViewMode] = useState<'LIST' | 'GRID'>('LIST');
@@ -158,6 +197,7 @@ export const Policies: React.FC = () => {
                 <>
                     <Button variant="outline" icon={<Download size={16} />}>Export</Button>
                     <Button variant="outline" icon={<Filter size={16} />}>Filter</Button>
+                    <Button icon={<Plus size={16} />} onClick={() => { setAddPolicyError(null); setIsAddPolicyOpen(true); }}>Police anlegen</Button>
                 </>
             )}
         </div>
@@ -269,6 +309,39 @@ export const Policies: React.FC = () => {
               )}
           </div>
       )}
+
+      {/* Add Policy Modal */}
+      <Modal isOpen={isAddPolicyOpen} onClose={() => setIsAddPolicyOpen(false)} title="Neue Police anlegen" maxWidth="max-w-xl">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Kunde *</label>
+            <select
+              value={addPolicyForm.clientId}
+              onChange={(e) => setAddPolicyForm({ ...addPolicyForm, clientId: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="">– Kunde wählen –</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.companyName ? c.companyName : `${c.firstName} ${c.lastName}`}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <PField label="Versicherer *" value={addPolicyForm.insurer} onChange={(v) => setAddPolicyForm({ ...addPolicyForm, insurer: v })} />
+            <PField label="Art (z.B. Hausrat) *" value={addPolicyForm.type} onChange={(v) => setAddPolicyForm({ ...addPolicyForm, type: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <PField label="Policennummer" value={addPolicyForm.policyNumber} onChange={(v) => setAddPolicyForm({ ...addPolicyForm, policyNumber: v })} />
+            <PField label="Jahresprämie (CHF)" type="number" value={addPolicyForm.premiumAmount} onChange={(v) => setAddPolicyForm({ ...addPolicyForm, premiumAmount: v })} />
+          </div>
+          <PField label="Beginn" type="date" value={addPolicyForm.startDate} onChange={(v) => setAddPolicyForm({ ...addPolicyForm, startDate: v })} />
+          {addPolicyError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{addPolicyError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsAddPolicyOpen(false)} disabled={savingPolicy}>Abbrechen</Button>
+            <Button onClick={handleAddPolicy} disabled={savingPolicy}>{savingPolicy ? <Loader2 className="animate-spin" size={18} /> : 'Police speichern'}</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Insurance Switch Modal */}
       <Modal
@@ -604,3 +677,15 @@ export const Policies: React.FC = () => {
     </Layout>
   );
 };
+
+const PField: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string }> = ({ label, value, onChange, type = 'text' }) => (
+  <div className="space-y-1">
+    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+    />
+  </div>
+);
