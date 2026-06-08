@@ -4,7 +4,8 @@ import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_TENANTS, MOCK_USERS, MOCK_CLIENTS, MOCK_POLICIES, MOCK_SAAS_PACKAGES } from '../constants';
+import { MOCK_SAAS_PACKAGES } from '../constants';
+import { useTenants, useProfiles, useClients } from '../src/hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { 
@@ -62,14 +63,18 @@ export const TenantDetail: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'USERS' | 'BILLING' | 'TECH' | 'DUE_DILIGENCE'>('OVERVIEW');
     const [userSearch, setUserSearch] = useState('');
 
+    const { data: tenants } = useTenants();
+    const { data: allProfiles } = useProfiles();
+    const { data: allClients } = useClients();
+
     // Access Control
     if (role !== UserRole.SAAS_SUPER_ADMIN && role !== UserRole.SAAS_SALES && role !== UserRole.SAAS_FINANCE) {
         return <Navigate to="/dashboard" />;
     }
 
-    const tenant = MOCK_TENANTS.find(t => t.id === id);
-    const tenantUsers = MOCK_USERS.filter(u => u.tenantId === id);
-    const tenantClients = MOCK_CLIENTS.filter(c => c.tenantId === id);
+    const tenant = tenants.find(t => t.id === id);
+    const tenantUsers = allProfiles.filter(u => u.tenantId === id);
+    const tenantClients = allClients.filter(c => c.tenantId === id);
     const currentPlan = MOCK_SAAS_PACKAGES.find(p => p.id === (tenant?.plan === 'ENTERPRISE' ? 'pkg_enterprise' : tenant?.plan === 'STARTER' ? 'pkg_starter' : 'pkg_pro'));
     
     // Simple Health Score Mock

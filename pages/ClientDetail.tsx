@@ -8,6 +8,7 @@ import { Modal } from '../components/ui/Modal'; // Added Modal Import
 import { ComplianceShield } from '../components/ui/ComplianceShield';
 import { MOCK_ADVICE, MOCK_CLIENT_NOTES, MOCK_ACTIVITY_LOGS } from '../constants';
 import { useClient, usePolicies, useAssets } from '../src/hooks/useData';
+import { db } from '../src/services/db';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { generateContentWithRetry } from '../services/aiService';
@@ -69,12 +70,80 @@ export const ClientDetail: React.FC = () => {
   const [generatedProtocol, setGeneratedProtocol] = useState<string>('');
   const [signatureData, setSignatureData] = useState<string | null>(null);
 
-  const { data: policies } = usePolicies(id);
-  const { data: assets } = useAssets(id);
+  const { data: policies, refetch: refetchPolicies } = usePolicies(id);
+  const { data: assets, refetch: refetchAssets } = useAssets(id);
   const advice = MOCK_ADVICE.filter(a => a.clientId === id);
   const activities = MOCK_ACTIVITY_LOGS.filter(a => a.clientId === id).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
+  // New-entry (policy / asset) capture state
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [savingEntry, setSavingEntry] = useState(false);
+  const [entryError, setEntryError] = useState<string | null>(null);
+  const [policyForm, setPolicyForm] = useState({
+    insurer: '', type: '', policyNumber: '', premiumAmount: '', premiumFrequency: 'Jährlich', startDate: '', deductible: '',
+  });
+  const [assetForm, setAssetForm] = useState({
+    type: AssetType.PILLAR_3A, name: '', value: '', provider: '',
+  });
+
   if (!client) return <Layout><div className="p-8">{clientLoading ? 'Lädt…' : 'Klient nicht gefunden'}</div></Layout>;
+
+  const handleCreatePolicy = async () => {
+    setEntryError(null);
+    if (!policyForm.insurer.trim() || !policyForm.type.trim()) {
+      setEntryError('Versicherer und Art sind erforderlich.');
+      return;
+    }
+    setSavingEntry(true);
+    try {
+      await db.policies.create({
+        clientId: id,
+        tenantId: client.tenantId,
+        insurer: policyForm.insurer.trim(),
+        type: policyForm.type.trim(),
+        policyNumber: policyForm.policyNumber.trim(),
+        premiumAmount: Number(policyForm.premiumAmount) || 0,
+        premiumFrequency: policyForm.premiumFrequency,
+        status: 'ACTIVE',
+        startDate: policyForm.startDate || null,
+        deductible: policyForm.deductible ? Number(policyForm.deductible) : null,
+      } as any);
+      setIsPolicyModalOpen(false);
+      setPolicyForm({ insurer: '', type: '', policyNumber: '', premiumAmount: '', premiumFrequency: 'Jährlich', startDate: '', deductible: '' });
+      refetchPolicies();
+    } catch (err: any) {
+      setEntryError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingEntry(false);
+    }
+  };
+
+  const handleCreateAsset = async () => {
+    setEntryError(null);
+    if (!assetForm.name.trim()) {
+      setEntryError('Bezeichnung ist erforderlich.');
+      return;
+    }
+    setSavingEntry(true);
+    try {
+      await db.assets.create({
+        clientId: id,
+        type: assetForm.type,
+        name: assetForm.name.trim(),
+        value: Number(assetForm.value) || 0,
+        provider: assetForm.provider.trim(),
+        lastUpdated: new Date().toISOString().slice(0, 10),
+      } as any);
+      setIsAssetModalOpen(false);
+      setAssetForm({ type: AssetType.PILLAR_3A, name: '', value: '', provider: '' });
+      refetchAssets();
+    } catch (err: any) {
+      setEntryError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingEntry(false);
+    }
+  };
 
   const handleAddNote = () => {
       if (!noteInput.trim()) return;
@@ -358,7 +427,32 @@ export const ClientDetail: React.FC = () => {
         )}
 
         {/* Existing Wealth/Tax Tabs omitted for brevity but preserved in full file content... */}
-        {activeTab === 'WEALTH' && <WealthVis assets={assets} />} {/* Placeholder for existing content */}
+        {activeTab === 'WEALTH' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Vermögen & Vorsorge</h3>
+              <Button icon={<Plus size={16} />} onClick={() => { setEntryError(null); setIsAssetModalOpen(true); }}>Vermögenswert erfassen</Button>
+            </div>
+            <WealthVis assets={assets} />
+            <Card title="Erfasste Vermögenswerte" noPadding>
+              {assets.length === 0 ? (
+                <div className="p-6 text-center text-slate-500">Noch keine Vermögenswerte erfasst.</div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {assets.map(a => (
+                    <div key={a.id} className="px-6 py-4 flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-slate-100">{a.name}</p>
+                        <p className="text-xs text-slate-500">{a.type}{a.provider ? ` • ${a.provider}` : ''}</p>
+                      </div>
+                      <p className="font-mono font-semibold text-slate-900 dark:text-slate-100"><SensitiveData>CHF {a.value.toLocaleString()}</SensitiveData></p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
         
         {activeTab === 'TAX' && (
            <div className="max-w-4xl mx-auto">
@@ -453,6 +547,15 @@ export const ClientDetail: React.FC = () => {
         
         {activeTab === 'POLICIES' && (
             <div className="grid grid-cols-1 gap-6">
+                 <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Versicherungsverträge</h3>
+                    <Button icon={<Plus size={16} />} onClick={() => { setEntryError(null); setIsPolicyModalOpen(true); }}>Police erfassen</Button>
+                 </div>
+                 {policies.length === 0 && (
+                    <div className="text-center text-slate-500 py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                        Noch keine Policen erfasst.
+                    </div>
+                 )}
                  {policies.map(p => (
                      <div key={p.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-6">
@@ -478,6 +581,55 @@ export const ClientDetail: React.FC = () => {
             </div>
         )}
       </div>
+
+      {/* NEW POLICY MODAL */}
+      <Modal isOpen={isPolicyModalOpen} onClose={() => setIsPolicyModalOpen(false)} title="Neue Police erfassen" maxWidth="max-w-xl">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="Versicherer *" value={policyForm.insurer} onChange={(v) => setPolicyForm({ ...policyForm, insurer: v })} />
+            <EntryField label="Art (z.B. Hausrat) *" value={policyForm.type} onChange={(v) => setPolicyForm({ ...policyForm, type: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="Policennummer" value={policyForm.policyNumber} onChange={(v) => setPolicyForm({ ...policyForm, policyNumber: v })} />
+            <EntryField label="Jahresprämie (CHF)" type="number" value={policyForm.premiumAmount} onChange={(v) => setPolicyForm({ ...policyForm, premiumAmount: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="Beginn" type="date" value={policyForm.startDate} onChange={(v) => setPolicyForm({ ...policyForm, startDate: v })} />
+            <EntryField label="Selbstbehalt (CHF)" type="number" value={policyForm.deductible} onChange={(v) => setPolicyForm({ ...policyForm, deductible: v })} />
+          </div>
+          {entryError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{entryError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsPolicyModalOpen(false)} disabled={savingEntry}>Abbrechen</Button>
+            <Button onClick={handleCreatePolicy} disabled={savingEntry}>{savingEntry ? <Loader2 className="animate-spin" size={18} /> : 'Police speichern'}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* NEW ASSET MODAL */}
+      <Modal isOpen={isAssetModalOpen} onClose={() => setIsAssetModalOpen(false)} title="Vermögenswert erfassen" maxWidth="max-w-xl">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Typ</label>
+            <select
+              value={assetForm.type}
+              onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value as AssetType })}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              {Object.values(AssetType).map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <EntryField label="Bezeichnung *" value={assetForm.name} onChange={(v) => setAssetForm({ ...assetForm, name: v })} />
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="Wert (CHF)" type="number" value={assetForm.value} onChange={(v) => setAssetForm({ ...assetForm, value: v })} />
+            <EntryField label="Anbieter / Bank" value={assetForm.provider} onChange={(v) => setAssetForm({ ...assetForm, provider: v })} />
+          </div>
+          {entryError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{entryError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsAssetModalOpen(false)} disabled={savingEntry}>Abbrechen</Button>
+            <Button onClick={handleCreateAsset} disabled={savingEntry}>{savingEntry ? <Loader2 className="animate-spin" size={18} /> : 'Vermögenswert speichern'}</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* CONSULTATION PROTOCOL MODAL */}
       <Modal
@@ -632,5 +784,17 @@ const InfoRow = ({ label, value }: { label: string, value: string }) => (
   <div className="flex justify-between border-b border-slate-50 dark:border-slate-800 pb-2 last:border-0">
     <span className="text-slate-500 dark:text-slate-400 text-sm">{label}</span>
     <span className="font-medium text-slate-900 dark:text-slate-100 text-sm">{value}</span>
+  </div>
+);
+
+const EntryField: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string }> = ({ label, value, onChange, type = 'text' }) => (
+  <div className="space-y-1">
+    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+    />
   </div>
 );

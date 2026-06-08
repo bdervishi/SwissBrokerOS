@@ -2,12 +2,15 @@ import React from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { MOCK_ASSETS, MOCK_POLICIES } from '../constants';
+import { useAssets, usePolicies } from '../src/hooks/useData';
 import { AssetType } from '../types';
 
 export const Analytics: React.FC = () => {
+    const { data: assets } = useAssets();
+    const { data: policies } = usePolicies();
+
     // Process Asset Data for Pie Chart
-    const assetDistribution = MOCK_ASSETS.reduce((acc, asset) => {
+    const assetDistribution = assets.reduce((acc, asset) => {
         acc[asset.type] = (acc[asset.type] || 0) + asset.value;
         return acc;
     }, {} as Record<AssetType, number>);
@@ -16,7 +19,7 @@ export const Analytics: React.FC = () => {
     const COLORS = ['#0ea5e9', '#10b981', '#6366f1', '#f59e0b', '#ec4899'];
 
     // Process Policy Data
-    const policyByInsurer = MOCK_POLICIES.reduce((acc, p) => {
+    const policyByInsurer = policies.reduce((acc, p) => {
         acc[p.insurer] = (acc[p.insurer] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
