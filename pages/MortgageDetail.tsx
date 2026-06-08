@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_MORTGAGES, MOCK_CLIENTS } from '../constants';
+import { useMortgages, useClients } from '../src/hooks/useData';
 import { 
   ArrowLeft, 
   Home, 
@@ -34,9 +34,12 @@ export const MortgageDetail: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'IDLE' | 'SUCCESS'>('IDLE');
 
-  const mortgage = MOCK_MORTGAGES.find(m => m.id === id);
-  
+  const { data: mortgages, loading: mortgagesLoading } = useMortgages();
+  const { data: clients } = useClients();
+  const mortgage = mortgages.find(m => m.id === id);
+
   if (!mortgage) {
+    if (mortgagesLoading) return <Layout><div className="p-8 text-slate-400">Lädt…</div></Layout>;
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center h-96">
@@ -47,7 +50,7 @@ export const MortgageDetail: React.FC = () => {
     );
   }
 
-  const client = MOCK_CLIENTS.find(c => c.id === mortgage.clientId);
+  const client = clients.find(c => c.id === mortgage.clientId);
 
   // Data for Charts
   const LTV_DATA = [

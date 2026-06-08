@@ -4,7 +4,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_POLICIES, MOCK_CLIENTS, MOCK_DOCUMENTS, MOCK_CLAIMS } from '../constants';
+import { MOCK_DOCUMENTS, MOCK_CLAIMS } from '../constants';
+import { usePolicies, useClients } from '../src/hooks/useData';
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { getAIClient } from '../services/aiService';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,9 +49,12 @@ export const PolicyDetail: React.FC = () => {
   const [isReviewing, setIsReviewing] = useState(false);
   const [reviewResult, setReviewResult] = useState<string | null>(null);
 
-  const policy = MOCK_POLICIES.find(p => p.id === id);
-  
+  const { data: policies, loading: policiesLoading } = usePolicies();
+  const { data: clients } = useClients();
+  const policy = policies.find(p => p.id === id);
+
   if (!policy) {
+    if (policiesLoading) return <Layout><div className="p-8 text-slate-400">Lädt…</div></Layout>;
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center h-96">
@@ -61,7 +65,7 @@ export const PolicyDetail: React.FC = () => {
     );
   }
 
-  const client = MOCK_CLIENTS.find(c => c.id === policy.clientId);
+  const client = clients.find(c => c.id === policy.clientId);
   const documents = MOCK_DOCUMENTS.filter(d => d.policyId === policy.id);
   const claims = MOCK_CLAIMS.filter(c => c.policyId === policy.id);
 

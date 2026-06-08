@@ -4,7 +4,8 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_LEAD_OFFERS, MOCK_CLIENTS, MOCK_MORTGAGES, MOCK_POLICIES } from '../constants';
+import { useLeadOffers, useClients, useMortgages, usePolicies } from '../src/hooks/useData';
+import { leadOffersService } from '../src/services/leadOffers';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, LeadOffer } from '../types';
 import { Navigate } from 'react-router-dom';
@@ -36,7 +37,11 @@ import { SensitiveData } from '../components/ui/SensitiveData';
 
 export const LeadMarketplace: React.FC = () => {
     const { role, user } = useAuth();
-    
+    const { data: offers, refetch: refetchOffers } = useLeadOffers();
+    const { data: clients } = useClients();
+    const { data: mortgages } = useMortgages();
+    const { data: policies } = usePolicies();
+
     const [filterType, setFilterType] = useState<'ALL' | 'MORTGAGE' | 'INSURANCE' | 'INVESTMENT'>('ALL');
     const [searchTerm, setSearchTerm] = useState('');
     const [minQuality, setMinQuality] = useState(0);
@@ -70,14 +75,14 @@ export const LeadMarketplace: React.FC = () => {
         if (!user) return [];
         // In real app: filter by advisorId === user.id. 
         // For demo, we just return all MOCK_CLIENTS so you can see data.
-        return MOCK_CLIENTS; 
+        return clients; 
     }, [user]);
 
     // 2. Open Deals for Selected Client
     const openDeals = useMemo(() => {
         if (!selectedClientId) return [];
         
-        const clientMortgages = MOCK_MORTGAGES
+        const clientMortgages = mortgages
             .filter(m => m.clientId === selectedClientId)
             .map(m => ({
                 id: m.id,
@@ -88,7 +93,7 @@ export const LeadMarketplace: React.FC = () => {
                 sourceObj: m
             }));
 
-        const clientPolicies = MOCK_POLICIES
+        const clientPolicies = policies
             .filter(p => p.clientId === selectedClientId && p.status === 'PENDING') // Only pending policies usually sold as leads
             .map(p => ({
                 id: p.id,
@@ -120,7 +125,7 @@ export const LeadMarketplace: React.FC = () => {
         setSellMode('MANUAL'); 
     };
 
-    const filteredLeads = MOCK_LEAD_OFFERS.filter(lead => {
+    const filteredLeads = offers.filter(lead => {
         const matchesType = filterType === 'ALL' || lead.type === filterType;
         const matchesSearch = lead.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               lead.canton.toLowerCase().includes(searchTerm.toLowerCase());
@@ -148,26 +153,37 @@ export const LeadMarketplace: React.FC = () => {
         setPurchaseStep('DETAILS');
     };
 
-    const confirmPurchase = () => {
+    const confirmPurchase = async () => {
         setPurchaseStep('SUCCESS');
-        // In real app: API call to transfer ownership and charge fees
+        if (selectedLead) {
+            try { await leadOffersService.markSold(selectedLead.id); refetchOffers(); } catch { /* ignore */ }
+        }
     };
 
-    const handleCreateOffer = () => {
-        // In real app: API call
-        console.log("Creating offer", newOffer);
+    const handleCreateOffer = async () => {
+        if (!newOffer.title.trim()) return;
+        await leadOffersService.create({
+            type: newOffer.type as LeadOffer['type'],
+            title: newOffer.title.trim(),
+            description: newOffer.description,
+            volume: Number(newOffer.volume) || 0,
+            price: Number(newOffer.price) || 0,
+            canton: newOffer.canton,
+            datePosted: new Date().toISOString().slice(0, 10),
+            status: 'AVAILABLE',
+            sellerTenantId: user?.tenantId,
+            sellerName: user ? `${user.firstName} ${user.lastName}` : 'Broker',
+            sellerRating: 5,
+            sellerDealCount: 0,
+            qualityScore: 80,
+            verificationStatus: { phoneVerified: false, emailVerified: true, intentVerified: false },
+            guaranteeIncluded: false,
+        } as any);
         setIsSellModalOpen(false);
-        // Reset form
-        setNewOffer({
-            title: '',
-            type: 'INSURANCE',
-            volume: 0,
-            price: 0,
-            canton: 'Zürich',
-            description: ''
-        });
+        setNewOffer({ title: '', type: 'INSURANCE', volume: 0, price: 0, canton: 'Zürich', description: '' });
         setSellMode('MANUAL');
         setSelectedClientId('');
+        refetchOffers();
     };
 
     return (
