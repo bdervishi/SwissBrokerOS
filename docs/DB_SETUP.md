@@ -15,6 +15,8 @@ depend on earlier files).
 | 7 | `database_leads.sql` | Extends `leads` + `lead_contacts` / `lead_activities` / `lead_tasks` + RLS |
 | 8 | `database_calendar.sql` | `calendar_events` table + RLS |
 | 9 | `database_tax.sql` | `tax_returns` table + RLS (seeds one return per client) |
+| 10 | `database_emails.sql` | `emails` table + RLS (seeds demo mail) |
+| 11 | `database_lead_offers.sql` | `lead_offers` marketplace table (public browse + seller write) |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |
