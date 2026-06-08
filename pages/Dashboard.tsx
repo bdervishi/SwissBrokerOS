@@ -4,7 +4,8 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
-import { MOCK_CLIENTS, MOCK_EVENTS, MOCK_COMMISSIONS, MOCK_POLICIES, MOCK_TENANTS, MOCK_USERS } from '../constants';
+import { MOCK_EVENTS } from '../constants';
+import { useClients, usePolicies, useCommissions, useTenants, useProfiles } from '../src/hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, CommissionStatus, EventType, PolicyStatus } from '../types';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -91,15 +92,22 @@ export const Dashboard: React.FC = () => {
     }
   }, [customDateInput, customTimeInput]);
 
+  // Live data from the data layer (mock or Supabase depending on config)
+  const { data: clients } = useClients();
+  const { data: policies } = usePolicies();
+  const { data: commissions } = useCommissions();
+  const { data: tenants } = useTenants();
+  const { data: users } = useProfiles();
+
   // --- CLIENT DASHBOARD ---
   if (role === UserRole.CLIENT) {
-      const myPolicies = MOCK_POLICIES; // In a real app, filter by user.id
+      const clientProfile = clients.find(c => c.username === user?.username);
+      const myPolicies = clientProfile ? policies.filter(p => p.clientId === clientProfile.id) : policies;
       const totalPremium = myPolicies.reduce((sum, p) => sum + p.premiumAmount, 0);
-      
+
       // Find Advisor & Tenant Data
-      const clientProfile = MOCK_CLIENTS.find(c => c.username === user?.username);
-      const advisor = MOCK_USERS.find(u => u.id === clientProfile?.advisorId);
-      const tenant = MOCK_TENANTS.find(t => t.id === clientProfile?.tenantId);
+      const advisor = users.find(u => u.id === clientProfile?.advisorId);
+      const tenant = tenants.find(t => t.id === clientProfile?.tenantId);
 
       const handleAppointmentSubmit = () => {
           setAppointmentStep('SUCCESS');
@@ -505,14 +513,14 @@ export const Dashboard: React.FC = () => {
   // Shared logic for Broker Admin, Admin Staff, Marketing
 
   // 1. Calculate dynamic KPIs
-  const activeClientsCount = MOCK_CLIENTS.length;
+  const activeClientsCount = clients.length;
   
-  const pendingCommissions = MOCK_COMMISSIONS
+  const pendingCommissions = commissions
     .filter(c => c.status === CommissionStatus.PENDING)
     .reduce((sum, c) => sum + c.amount, 0);
 
   // 2. Calculate Storno Risk for Dashboard Alert
-  const policiesWithRisk = MOCK_POLICIES.filter(p => 
+  const policiesWithRisk = policies.filter(p => 
       p.status === PolicyStatus.ACTIVE && 
       (p.liabilityDurationMonths || 0) > 0 && 
       p.initialCommission && p.initialCommission > 0
@@ -646,7 +654,7 @@ export const Dashboard: React.FC = () => {
           {role !== UserRole.BROKER_MARKETING && (
             <Card title="Klienten-Liste (Auszug)" noPadding>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {MOCK_CLIENTS.slice(0, 5).map((client) => (
+                {clients.slice(0, 5).map((client) => (
                     <div key={client.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
                     <div className="flex items-center gap-4">
                         <img src={client.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
