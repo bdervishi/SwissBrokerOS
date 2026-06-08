@@ -41,7 +41,8 @@ import {
   PenTool,
   CheckCircle2,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore, Client } from '../types';
 
@@ -197,6 +198,24 @@ export const ClientDetail: React.FC = () => {
     } finally {
       setSavingEdit(false);
     }
+  };
+
+  const handleDeletePolicy = async (policyId: string) => {
+      if (!confirm('Diese Police wirklich löschen?')) return;
+      await db.policies.remove(policyId);
+      refetchPolicies();
+  };
+
+  const handleDeleteAsset = async (assetId: string) => {
+      if (!confirm('Diesen Vermögenswert wirklich löschen?')) return;
+      await db.assets.remove(assetId);
+      refetchAssets();
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+      if (!confirm('Diese Notiz wirklich löschen?')) return;
+      await db.clientNotes.remove(noteId);
+      refetchNotes();
   };
 
   const handleAddNote = async () => {
@@ -493,12 +512,15 @@ export const ClientDetail: React.FC = () => {
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {assets.map(a => (
-                    <div key={a.id} className="px-6 py-4 flex justify-between items-center">
+                    <div key={a.id} className="px-6 py-4 flex justify-between items-center group">
                       <div>
                         <p className="font-medium text-slate-900 dark:text-slate-100">{a.name}</p>
                         <p className="text-xs text-slate-500">{a.type}{a.provider ? ` • ${a.provider}` : ''}</p>
                       </div>
-                      <p className="font-mono font-semibold text-slate-900 dark:text-slate-100"><SensitiveData>CHF {a.value.toLocaleString()}</SensitiveData></p>
+                      <div className="flex items-center gap-3">
+                        <p className="font-mono font-semibold text-slate-900 dark:text-slate-100"><SensitiveData>CHF {a.value.toLocaleString()}</SensitiveData></p>
+                        <button onClick={() => handleDeleteAsset(a.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Löschen"><Trash2 size={16} /></button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -587,6 +609,7 @@ export const ClientDetail: React.FC = () => {
                             <div key={note.id} className="group border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{note.createdAt}</span>
+                                    <button onClick={() => handleDeleteNote(note.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Notiz löschen"><Trash2 size={14} /></button>
                                 </div>
                                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">"{note.content}"</p>
                                 <p className="text-[10px] text-brand-600 font-bold mt-2">— {note.authorName}</p>
@@ -628,6 +651,7 @@ export const ClientDetail: React.FC = () => {
                              <Link to={`/policy/${p.id}`}>
                                 <Button variant="outline">Details</Button>
                              </Link>
+                             <button onClick={() => handleDeletePolicy(p.id)} className="text-slate-300 hover:text-red-500 transition-colors" title="Police löschen"><Trash2 size={18} /></button>
                         </div>
                      </div>
                  ))}
