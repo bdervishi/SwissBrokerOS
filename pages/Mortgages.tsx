@@ -8,11 +8,16 @@ import { Plus, Building, Percent, Calculator, CheckCircle, AlertCircle, Save, X,
 import { MortgageType, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useMortgages, useClients } from '../src/hooks/useData';
+import { db } from '../src/services/db';
 
 export const Mortgages: React.FC = () => {
   const { user, role } = useAuth();
-  const { data: mortgages } = useMortgages();
+  const { data: mortgages, refetch: refetchMortgages } = useMortgages();
   const { data: clients } = useClients();
+  const [scenarioClientId, setScenarioClientId] = useState('');
+  const [propertyName, setPropertyName] = useState('');
+  const [savingScenario, setSavingScenario] = useState(false);
+  const [scenarioError, setScenarioError] = useState<string | null>(null);
   
   // Sidebar Quick Calculator State
   const [calcPrice, setCalcPrice] = useState(1000000);
@@ -79,6 +84,38 @@ export const Mortgages: React.FC = () => {
   const getClientName = (id: string) => {
     const c = clients.find(client => client.id === id);
     return c ? `${c.firstName} ${c.lastName}` : 'Unbekannt';
+  };
+
+  const handleSaveScenario = async () => {
+    setScenarioError(null);
+    if (!scenarioClientId) {
+      setScenarioError('Bitte einen Kunden auswählen.');
+      return;
+    }
+    setSavingScenario(true);
+    try {
+      const owner = clients.find(c => c.id === scenarioClientId);
+      await db.mortgages.create({
+        clientId: scenarioClientId,
+        tenantId: owner?.tenantId,
+        propertyName: propertyName.trim() || 'Liegenschaft',
+        propertyValue: scenarioForm.propertyValue,
+        loanAmount: scenarioForm.loanAmount,
+        ownCapital: scenarioForm.ownCapital,
+        interestRate: scenarioForm.interestRate,
+        type: scenarioForm.interestType,
+        durationYears: 10,
+        applicationStatus: 'ACTIVE',
+      } as any);
+      setIsModalOpen(false);
+      setScenarioClientId('');
+      setPropertyName('');
+      refetchMortgages();
+    } catch (err: any) {
+      setScenarioError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingScenario(false);
+    }
   };
 
   return (
@@ -222,12 +259,35 @@ export const Mortgages: React.FC = () => {
         title="Neues Finanzierungs-Szenario"
       >
         <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm text-slate-600 dark:text-slate-400">Kunde *</label>
+                    <select
+                        className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-transparent"
+                        value={scenarioClientId}
+                        onChange={e => setScenarioClientId(e.target.value)}
+                    >
+                        <option value="">– Kunde wählen –</option>
+                        {clients.map(c => <option key={c.id} value={c.id}>{c.companyName ? c.companyName : `${c.firstName} ${c.lastName}`}</option>)}
+                    </select>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm text-slate-600 dark:text-slate-400">Objektbezeichnung</label>
+                    <input
+                        type="text"
+                        className="w-full p-2 border border-slate-200 dark:border-slate-700 rounded-md bg-transparent"
+                        placeholder="z.B. Einfamilienhaus Zürich"
+                        value={propertyName}
+                        onChange={e => setPropertyName(e.target.value)}
+                    />
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* Inputs */}
                 <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-brand-600 uppercase tracking-wide">Objekt & Mittel</h4>
-                    
+
                     <div className="space-y-2">
                         <label className="text-sm text-slate-600 dark:text-slate-400">Objektwert</label>
                         <input 
@@ -396,9 +456,12 @@ export const Mortgages: React.FC = () => {
                 )}
             </div>
 
+            {scenarioError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{scenarioError}</p>}
             <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Abbrechen</Button>
-                <Button icon={<Save size={18} />}>Szenario speichern</Button>
+                <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={savingScenario}>Abbrechen</Button>
+                <Button icon={savingScenario ? undefined : <Save size={18} />} onClick={handleSaveScenario} disabled={savingScenario}>
+                    {savingScenario ? 'Speichere…' : 'Szenario speichern'}
+                </Button>
             </div>
         </div>
       </Modal>
