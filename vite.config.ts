@@ -14,12 +14,23 @@ export default defineConfig(() => {
     },
     build: {
       outDir: 'dist',
+      chunkSizeWarningLimit: 900,
       rollupOptions: {
         input: {
           main: path.resolve((process as any).cwd(), 'index.html'),
           admin: path.resolve((process as any).cwd(), 'admin.html'),
           broker: path.resolve((process as any).cwd(), 'broker.html'),
           client: path.resolve((process as any).cwd(), 'client.html'),
+        },
+        output: {
+          // Split heavy third-party libs into cacheable vendor chunks so they
+          // are shared across lazy-loaded pages instead of duplicated.
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+            'vendor-charts': ['recharts'],
+            'vendor-motion': ['framer-motion'],
+          },
         },
       },
     },
