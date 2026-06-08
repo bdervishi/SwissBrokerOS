@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { MOCK_TENANTS } from '../constants';
+import { db } from '../src/services/db';
 import { Tenant, BrandingConfig } from '../types';
 
 interface BrandingContextType {
@@ -65,22 +65,40 @@ export const BrandingProvider: React.FC<{ children?: React.ReactNode }> = ({ chi
   const { user } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [branding, setBranding] = useState<BrandingConfig>(defaultBranding);
+  // Skip persisting on the initial load of branding, and debounce writes.
+  const hydratedRef = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let active = true;
     if (user?.tenantId) {
-        // Only reset if tenant is null (initial load), otherwise keep local state edits
-        if (!tenant) {
-            const foundTenant = MOCK_TENANTS.find(t => t.id === user.tenantId);
-            if (foundTenant) {
-                setTenant(foundTenant);
-                setBranding(foundTenant.branding || defaultBranding);
-            }
-        }
+      if (!tenant) {
+        db.tenants.getById(user.tenantId).then((found) => {
+          if (active && found) {
+            setTenant(found);
+            setBranding(found.branding || defaultBranding);
+            hydratedRef.current = true;
+          }
+        }).catch(() => {});
+      }
     } else {
-        setTenant(null);
-        setBranding(defaultBranding);
+      setTenant(null);
+      setBranding(defaultBranding);
+      hydratedRef.current = false;
     }
+    return () => { active = false; };
   }, [user, tenant]);
+
+  // Persist branding changes to the tenant (debounced). No-op before hydration.
+  useEffect(() => {
+    if (!hydratedRef.current || !tenant) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      db.tenants.update(tenant.id, { brandingConfig: branding } as any)
+        .catch((err) => console.warn('[Branding] persist failed:', err?.message));
+    }, 800);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [branding, tenant]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -103,6 +121,10 @@ export const BrandingProvider: React.FC<{ children?: React.ReactNode }> = ({ chi
 
   const updateTenant = (updates: Partial<Tenant>) => {
       setTenant(prev => prev ? { ...prev, ...updates } : null);
+      if (tenant) {
+          db.tenants.update(tenant.id, updates as any)
+            .catch((err) => console.warn('[Tenant] update failed:', err?.message));
+      }
   };
 
   return (
