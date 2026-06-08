@@ -3,7 +3,8 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_EMAILS } from '../constants';
+import { useEmails } from '../src/hooks/useData';
+import { emailsService } from '../src/services/emails';
 import { Email, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
@@ -31,12 +32,14 @@ import {
 } from 'lucide-react';
 
 export const Inbox: React.FC = () => {
-    const { role } = useAuth();
+    const { role, user } = useAuth();
+    const { data: loadedEmails } = useEmails(user?.tenantId);
     const { isAIEnabled } = useSecurity();
     
     // --- STATE ---
     const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-    const [localEmails, setLocalEmails] = useState<Email[]>(MOCK_EMAILS);
+    const [localEmails, setLocalEmails] = useState<Email[]>([]);
+    useEffect(() => { setLocalEmails(loadedEmails); }, [loadedEmails]);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'INBOX' | 'SNOOZED' | 'ARCHIVE'>('INBOX');
     const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
@@ -100,20 +103,23 @@ export const Inbox: React.FC = () => {
         setSelectedEmail({ ...email, isRead: true });
         setAiSummary(null);
         setTagInputOpen(false);
+        if (!email.isRead) emailsService.update(email.id, { isRead: true });
     };
 
     const handleArchive = (e: React.MouseEvent, email: Email) => {
         e.stopPropagation();
         setLocalEmails(prev => prev.map(em => em.id === email.id ? { ...em, folder: 'ARCHIVE' } : em));
         if (selectedEmail?.id === email.id) setSelectedEmail(null);
+        emailsService.update(email.id, { folder: 'ARCHIVE' });
     };
 
     const handleSnooze = (days: number) => {
         if (!selectedEmail) return;
         const snoozeDate = new Date();
         snoozeDate.setDate(snoozeDate.getDate() + days);
-        
+
         setLocalEmails(prev => prev.map(em => em.id === selectedEmail.id ? { ...em, snoozedUntil: snoozeDate, folder: 'INBOX' } : em));
+        emailsService.update(selectedEmail.id, { snoozedUntil: snoozeDate, folder: 'INBOX' });
         setSelectedEmail(null);
         setSnoozeMenuOpen(false);
     };
@@ -138,7 +144,10 @@ export const Inbox: React.FC = () => {
         
         // Update selected email view
         const updatedSelected = updatedEmails.find(e => e.id === selectedEmail.id);
-        if (updatedSelected) setSelectedEmail(updatedSelected);
+        if (updatedSelected) {
+            setSelectedEmail(updatedSelected);
+            emailsService.update(updatedSelected.id, { tags: updatedSelected.tags });
+        }
 
         setNewTagText('');
         setTagInputOpen(false);

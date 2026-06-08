@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { db } from '../services/db';
 import { leadsService } from '../services/leads';
 import { calendarService } from '../services/calendar';
-import { CalendarEvent, TaxReturn } from '../types';
+import { emailsService } from '../services/emails';
+import { CalendarEvent, TaxReturn, Email } from '../types';
 import {
   Client,
   Policy,
@@ -130,6 +131,9 @@ export const useLeadsFull = (tenantId?: string) =>
 
 export const useCalendarEvents = (tenantId?: string) =>
   useCollection<CalendarEvent>(() => calendarService.getAll(tenantId), [tenantId]);
+
+export const useEmails = (tenantId?: string) =>
+  useCollection<Email>(() => emailsService.getAll(tenantId), [tenantId]);
 
 export const useTaxReturns = (clientId?: string) =>
   useCollection<TaxReturn>(() => db.taxReturns.getAll(clientId ? { clientId } : undefined), [clientId]);
