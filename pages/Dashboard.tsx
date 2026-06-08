@@ -4,8 +4,7 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
-import { MOCK_EVENTS } from '../constants';
-import { useClients, usePolicies, useCommissions, useTenants, useProfiles } from '../src/hooks/useData';
+import { useClients, usePolicies, useCommissions, useTenants, useProfiles, useCalendarEvents } from '../src/hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, CommissionStatus, EventType, PolicyStatus } from '../types';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -98,6 +97,7 @@ export const Dashboard: React.FC = () => {
   const { data: commissions } = useCommissions();
   const { data: tenants } = useTenants();
   const { data: users } = useProfiles();
+  const { data: events } = useCalendarEvents(user?.tenantId);
 
   // --- CLIENT DASHBOARD ---
   if (role === UserRole.CLIENT) {
@@ -539,7 +539,7 @@ export const Dashboard: React.FC = () => {
   }, 0);
 
   // 3. Get upcoming events
-  const upcomingEvents = MOCK_EVENTS
+  const upcomingEvents = events
     .filter(e => {
         const eventDate = new Date(e.start);
         eventDate.setHours(23, 59, 59); // Include today

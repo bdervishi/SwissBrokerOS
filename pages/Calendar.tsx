@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/Button';
-import { MOCK_EVENTS } from '../constants';
+import { Modal } from '../components/ui/Modal';
+import { useAuth } from '../contexts/AuthContext';
+import { useCalendarEvents } from '../src/hooks/useData';
+import { calendarService } from '../src/services/calendar';
 import { CalendarEvent, EventType, RelatedEntityType } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -18,7 +21,38 @@ import {
 
 export const CalendarPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: events, refetch } = useCalendarEvents(user?.tenantId);
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // New-event modal
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [eventForm, setEventForm] = useState({ title: '', date: '', time: '09:00', type: EventType.MEETING as EventType });
+
+  const handleCreateEvent = async () => {
+    if (!eventForm.title.trim() || !eventForm.date) return;
+    setSavingEvent(true);
+    try {
+      const start = new Date(`${eventForm.date}T${eventForm.time || '09:00'}`);
+      await calendarService.create({
+        title: eventForm.title.trim(),
+        start,
+        end: start,
+        type: eventForm.type,
+        relatedType: 'NONE',
+        relatedId: '',
+        isAllDay: false,
+        tenantId: user?.tenantId,
+        userId: user?.id,
+      } as any);
+      setIsEventModalOpen(false);
+      setEventForm({ title: '', date: '', time: '09:00', type: EventType.MEETING });
+      refetch();
+    } finally {
+      setSavingEvent(false);
+    }
+  };
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => {
@@ -81,7 +115,7 @@ export const CalendarPage: React.FC = () => {
   ];
 
   const getEventsForDay = (day: number) => {
-      return MOCK_EVENTS.filter(e => 
+      return events.filter(e =>
           e.start.getDate() === day && 
           e.start.getMonth() === month && 
           e.start.getFullYear() === year
@@ -135,7 +169,7 @@ export const CalendarPage: React.FC = () => {
                 </div>
                 <Button variant="outline" size="sm" onClick={handleToday}>Heute</Button>
             </div>
-            <Button icon={<Plus size={18} />}>Neuer Termin</Button>
+            <Button icon={<Plus size={18} />} onClick={() => setIsEventModalOpen(true)}>Neuer Termin</Button>
         </div>
 
         {/* Calendar Grid Container */}
@@ -202,6 +236,39 @@ export const CalendarPage: React.FC = () => {
             </div>
         </div>
       </div>
+
+      <Modal isOpen={isEventModalOpen} onClose={() => setIsEventModalOpen(false)} title="Neuer Termin" maxWidth="max-w-md">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Titel *</label>
+            <input value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Datum *</label>
+              <input type="date" value={eventForm.date} onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Zeit</label>
+              <input type="time" value={eventForm.time} onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Typ</label>
+            <select value={eventForm.type} onChange={(e) => setEventForm({ ...eventForm, type: e.target.value as EventType })}
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500">
+              {Object.values(EventType).map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsEventModalOpen(false)} disabled={savingEvent}>Abbrechen</Button>
+            <Button onClick={handleCreateEvent} disabled={savingEvent}>{savingEvent ? 'Speichere…' : 'Termin erstellen'}</Button>
+          </div>
+        </div>
+      </Modal>
     </Layout>
   );
 };
