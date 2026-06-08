@@ -18,6 +18,11 @@ if (!isSupabaseConfigured) {
   console.info(`[Supabase] Connected to ${supabaseUrl.replace(/^https?:\/\//, '').slice(0, 24)}…`);
 }
 
-// createClient tolerates empty strings (it only fails on an actual request),
-// so exporting a client even when unconfigured keeps imports simple.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// createClient throws synchronously on an empty URL/key. When Supabase is not
+// configured we still export a client (built from harmless placeholders) so
+// importing this module never crashes the app – in mock mode no requests are
+// ever sent through it.
+export const supabase = createClient(
+  supabaseUrl || 'http://localhost:54321',
+  supabaseAnonKey || 'public-anon-placeholder-key',
+);
