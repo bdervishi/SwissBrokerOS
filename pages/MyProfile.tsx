@@ -4,7 +4,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { SensitiveData } from '../components/ui/SensitiveData';
-import { MOCK_CLIENTS, MOCK_TIME_ENTRIES } from '../constants';
+import { MOCK_TIME_ENTRIES } from '../constants';
+import { useClients } from '../src/hooks/useData';
 import { TimeEntry, TimeEntryStatus } from '../types';
 import { useBranding } from '../contexts/BrandingContext';
 import { 
@@ -31,6 +32,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 export const MyProfile: React.FC = () => {
     const { user } = useAuth();
     const { tenant } = useBranding();
+    const { data: clients } = useClients();
     const [activeTab, setActiveTab] = useState<'PERSONAL' | 'HR_FINANCE' | 'TIMESHEET'>('PERSONAL');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -72,7 +74,7 @@ export const MyProfile: React.FC = () => {
     const canSubmit = tenant?.hrConfig?.requireTimeSubmission && pendingSubmission > 0;
 
     // Mock Clients for Dropdown
-    const myClients = MOCK_CLIENTS.filter(c => c.advisorId === user?.id);
+    const myClients = clients.filter(c => c.advisorId === user?.id);
 
     const handleSaveProfile = () => {
         setIsSaving(true);

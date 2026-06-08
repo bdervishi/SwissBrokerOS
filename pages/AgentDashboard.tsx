@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { MOCK_COMMISSIONS, MOCK_CLIENTS } from '../constants';
+import { useCommissions, useClients } from '../src/hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole, CommissionStatus } from '../types';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -22,10 +22,12 @@ import { Link } from 'react-router-dom';
 
 export const AgentDashboard: React.FC = () => {
     const { user } = useAuth();
-    
+    const { data: commissions } = useCommissions();
+    const { data: clients } = useClients();
+
     // Filter commissions linked to this agent
-    const myCommissions = MOCK_COMMISSIONS.filter(c => c.agentId === user?.id);
-    const myClients = MOCK_CLIENTS.filter(c => c.advisorId === user?.id);
+    const myCommissions = commissions.filter(c => c.agentId === user?.id);
+    const myClients = clients.filter(c => c.advisorId === user?.id);
 
     // Calculate Wallet States
     const totalVolume = myCommissions.reduce((sum, c) => sum + c.amount, 0);
