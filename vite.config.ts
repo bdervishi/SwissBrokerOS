@@ -18,9 +18,6 @@ export default defineConfig(() => {
       rollupOptions: {
         input: {
           main: path.resolve((process as any).cwd(), 'index.html'),
-          admin: path.resolve((process as any).cwd(), 'admin.html'),
-          broker: path.resolve((process as any).cwd(), 'broker.html'),
-          client: path.resolve((process as any).cwd(), 'client.html'),
         },
         output: {
           // Split heavy third-party libs into cacheable vendor chunks so they
