@@ -14,6 +14,7 @@ depend on earlier files).
 | 6 | `database_login_rpc.sql` | `email_for_username()` so username login works under RLS |
 | 7 | `database_leads.sql` | Extends `leads` + `lead_contacts` / `lead_activities` / `lead_tasks` + RLS |
 | 8 | `database_calendar.sql` | `calendar_events` table + RLS |
+| 9 | `database_tax.sql` | `tax_returns` table + RLS (seeds one return per client) |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |
