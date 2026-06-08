@@ -89,6 +89,13 @@ export const ClientDetail: React.FC = () => {
     type: AssetType.PILLAR_3A, name: '', value: '', provider: '',
   });
 
+  // Edit client master data
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: '', lastName: '', companyName: '', email: '', phone: '', address: '', zipCity: '', taxDomicile: '', birthDate: '',
+  });
+
   if (!client) return <Layout><div className="p-8">{clientLoading ? 'Lädt…' : 'Klient nicht gefunden'}</div></Layout>;
 
   const handleCreatePolicy = async () => {
@@ -144,6 +151,51 @@ export const ClientDetail: React.FC = () => {
       setEntryError(err?.message || 'Speichern fehlgeschlagen.');
     } finally {
       setSavingEntry(false);
+    }
+  };
+
+  const openEdit = () => {
+    if (!client) return;
+    setEntryError(null);
+    setEditForm({
+      firstName: client.firstName || '',
+      lastName: client.lastName || '',
+      companyName: client.companyName || '',
+      email: client.email || '',
+      phone: (client as any).phone || '',
+      address: client.address || '',
+      zipCity: client.zipCity || '',
+      taxDomicile: client.taxDomicile || '',
+      birthDate: client.birthDate || '',
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateClient = async () => {
+    setEntryError(null);
+    if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
+      setEntryError('Vor- und Nachname sind erforderlich.');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const updated = await db.clients.update(client.id, {
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        companyName: editForm.companyName.trim() || null,
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        address: editForm.address.trim(),
+        zipCity: editForm.zipCity.trim(),
+        taxDomicile: editForm.taxDomicile.trim(),
+        birthDate: editForm.birthDate || null,
+      } as any);
+      setClient(updated as Client);
+      setIsEditOpen(false);
+    } catch (err: any) {
+      setEntryError(err?.message || 'Speichern fehlgeschlagen.');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -303,6 +355,7 @@ export const ClientDetail: React.FC = () => {
           </div>
         </div>
         <div className="ml-auto flex gap-3">
+            <Button variant="outline" icon={<FileText size={16}/>} onClick={openEdit}>Bearbeiten</Button>
             <Button variant="secondary" icon={<FileSignature size={16}/>} onClick={() => setIsProtocolModalOpen(true)}>Beratungsprotokoll AI</Button>
             <Button>Termin buchen</Button>
         </div>
@@ -581,6 +634,34 @@ export const ClientDetail: React.FC = () => {
             </div>
         )}
       </div>
+
+      {/* EDIT CLIENT MODAL */}
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Stammdaten bearbeiten" maxWidth="max-w-xl">
+        <div className="space-y-4">
+          {client.companyName !== undefined && client.companyName !== null && (
+            <EntryField label="Firmenname" value={editForm.companyName} onChange={(v) => setEditForm({ ...editForm, companyName: v })} />
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="Vorname *" value={editForm.firstName} onChange={(v) => setEditForm({ ...editForm, firstName: v })} />
+            <EntryField label="Nachname *" value={editForm.lastName} onChange={(v) => setEditForm({ ...editForm, lastName: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="E-Mail" type="email" value={editForm.email} onChange={(v) => setEditForm({ ...editForm, email: v })} />
+            <EntryField label="Telefon" value={editForm.phone} onChange={(v) => setEditForm({ ...editForm, phone: v })} />
+          </div>
+          <EntryField label="Adresse" value={editForm.address} onChange={(v) => setEditForm({ ...editForm, address: v })} />
+          <div className="grid grid-cols-2 gap-3">
+            <EntryField label="PLZ / Ort" value={editForm.zipCity} onChange={(v) => setEditForm({ ...editForm, zipCity: v })} />
+            <EntryField label="Steuerdomizil (Kanton)" value={editForm.taxDomicile} onChange={(v) => setEditForm({ ...editForm, taxDomicile: v })} />
+          </div>
+          <EntryField label="Geburtsdatum" type="date" value={editForm.birthDate} onChange={(v) => setEditForm({ ...editForm, birthDate: v })} />
+          {entryError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{entryError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={savingEdit}>Abbrechen</Button>
+            <Button onClick={handleUpdateClient} disabled={savingEdit}>{savingEdit ? <Loader2 className="animate-spin" size={18} /> : 'Speichern'}</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* NEW POLICY MODAL */}
       <Modal isOpen={isPolicyModalOpen} onClose={() => setIsPolicyModalOpen(false)} title="Neue Police erfassen" maxWidth="max-w-xl">
