@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_TAX_RETURNS, MOCK_CLIENTS } from '../constants';
+import { useTaxReturns, useClients } from '../src/hooks/useData';
 import { TaxReturn, TaxReturnStatus, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
@@ -36,6 +36,8 @@ import { Navigate } from 'react-router-dom';
 export const TaxManagement: React.FC = () => {
     const { role } = useAuth();
     const { isAIEnabled } = useSecurity();
+    const { data: taxReturns } = useTaxReturns();
+    const { data: clients } = useClients();
     
     // View State
     const [viewMode, setViewMode] = useState<'KANBAN' | 'LIST'>('KANBAN');
@@ -62,15 +64,15 @@ export const TaxManagement: React.FC = () => {
     }
 
     // Filter Logic
-    const filteredReturns = MOCK_TAX_RETURNS.filter(tr => {
-        const client = MOCK_CLIENTS.find(c => c.id === tr.clientId);
-        const matchesSearch = client 
+    const filteredReturns = taxReturns.filter(tr => {
+        const client = clients.find(c => c.id === tr.clientId);
+        const matchesSearch = client
             ? `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
             : false;
         return tr.year === selectedYear && matchesSearch;
     });
 
-    const getClient = (id: string) => MOCK_CLIENTS.find(c => c.id === id);
+    const getClient = (id: string) => clients.find(c => c.id === id);
 
     // --- Simulation Logic (Heuristic Mock) ---
     const calculateTaxLoad = (canton: string, amount: number, type: 'PRIVATE' | 'BUSINESS') => {
