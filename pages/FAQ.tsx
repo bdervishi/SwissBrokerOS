@@ -21,7 +21,7 @@ import {
   HelpCircle,
   Loader2
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 
 export const FAQPage: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -65,21 +65,12 @@ export const FAQPage: React.FC = () => {
     setAiResponse("");
 
     try {
-      if (process.env.API_KEY) {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: `Du bist der Support-Assistent von SwissBroker OS. Beantworte die folgende Frage kurz und präzise auf Deutsch: "${aiInput}". Falls die Frage nichts mit SwissBroker OS, Versicherungen oder Finanzierung zu tun hat, weise höflich darauf hin.`
-        });
-        setAiResponse(response.text || "Entschuldigung, ich konnte keine Antwort generieren.");
-      } else {
-        // Fallback for missing key
-        setTimeout(() => {
-          setAiResponse("Ich bin ein KI-Assistent. Aktuell ist meine API-Verbindung getrennt, aber normalerweise würde ich Ihnen hier direkt helfen!");
-          setAiLoading(false);
-        }, 1000);
-        return;
-      }
+      const ai = getAIClient();
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Du bist der Support-Assistent von SwissBroker OS. Beantworte die folgende Frage kurz und präzise auf Deutsch: "${aiInput}". Falls die Frage nichts mit SwissBroker OS, Versicherungen oder Finanzierung zu tun hat, weise höflich darauf hin.`
+      });
+      setAiResponse(response.text || "Entschuldigung, ich konnte keine Antwort generieren.");
     } catch (e) {
       setAiResponse("Leider gab es ein technisches Problem bei der KI-Anfrage. Bitte kontaktieren Sie unseren Support.");
     } finally {

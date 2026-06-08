@@ -7,7 +7,7 @@ import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { Navigate, Link } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { 
     Play, 
     User, 
@@ -177,12 +177,12 @@ export const SaaSDemo: React.FC = () => {
     ];
 
     const handleHandleObjection = async () => {
-        if (!objectionInput.trim() || !process.env.API_KEY) return;
+        if (!objectionInput.trim()) return;
         setIsHandlingLoading(true);
         setHandlingResult(null);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Du bist ein erfahrener Sales-Coach für SaaS-Vertrieb im Schweizer Finanzmarkt.
                 Ein potenzieller Kunde (Broker) bringt folgenden Einwand bezüglich Compliance oder HR: "${objectionInput}"

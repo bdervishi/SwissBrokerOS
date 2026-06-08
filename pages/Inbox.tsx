@@ -8,7 +8,7 @@ import { Email, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
 import { Navigate } from 'react-router-dom';
-import { GoogleGenAI } from "@google/genai";
+import { getAIClient } from '../services/aiService';
 import { 
     Search, 
     Inbox as InboxIcon, 
@@ -161,11 +161,11 @@ export const Inbox: React.FC = () => {
     };
 
     const handleAiAnalysis = async () => {
-        if (!selectedEmail || !process.env.API_KEY) return;
+        if (!selectedEmail) return;
         setIsGeneratingAi(true);
         
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = getAIClient();
             const prompt = `
                 Analysiere diese E-Mail für einen Versicherungsbroker.
                 Email Inhalt: "${selectedEmail.content.replace(/<[^>]*>?/gm, '')}"
