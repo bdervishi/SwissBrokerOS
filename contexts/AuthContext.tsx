@@ -24,6 +24,7 @@ interface AuthContextType {
   switchRole: (role: UserRole) => void;
   impersonateUser: (userId: string) => void;
   stopImpersonation: () => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>(null!);
@@ -49,13 +50,35 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
     }
   };
 
+  // Load the profile; if a self-signed-up user has none yet, provision their
+  // tenant from the signup metadata (covers the email-confirmation flow).
+  const loadOrProvisionProfile = async (sessionUser: any): Promise<User | null> => {
+    let profile = await loadProfile(sessionUser.id);
+    if (profile) return profile;
+    const meta = sessionUser.user_metadata || {};
+    if (meta.company_name) {
+      try {
+        await supabase.rpc('provision_tenant', {
+          p_company: meta.company_name,
+          p_first: meta.first_name || '',
+          p_last: meta.last_name || '',
+          p_username: null,
+        });
+        profile = await loadProfile(sessionUser.id);
+      } catch (e) {
+        console.warn('[Auth] auto-provision failed:', (e as Error).message);
+      }
+    }
+    return profile;
+  };
+
   // ----- Session bootstrap -------------------------------------------------
   useEffect(() => {
     if (USE_REAL_AUTH) {
       // Restore an existing Supabase session and subscribe to auth changes.
       supabase.auth.getSession().then(async ({ data }) => {
         if (data.session?.user) {
-          const profile = await loadProfile(data.session.user.id);
+          const profile = await loadOrProvisionProfile(data.session.user);
           if (profile) setUser(profile);
         }
         setIsLoading(false);
@@ -63,7 +86,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
 
       const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
-          const profile = await loadProfile(session.user.id);
+          const profile = await loadOrProvisionProfile(session.user);
           setUser(profile);
         } else {
           setUser(null);
@@ -213,6 +236,17 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
     }
   };
 
+  // Re-load the profile for the current Supabase session (e.g. right after
+  // self-serve signup provisions a new tenant + profile).
+  const refreshProfile = async () => {
+    if (!USE_REAL_AUTH) return;
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      const profile = await loadProfile(data.session.user.id);
+      if (profile) setUser(profile);
+    }
+  };
+
   if (isLoading) return null; // Prevent flash of unauthenticated content
 
   return (
@@ -232,6 +266,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
         switchRole,
         impersonateUser,
         stopImpersonation,
+        refreshProfile,
       }}
     >
       {children}
