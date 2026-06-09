@@ -2,6 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase, isSupabaseConfigured } from '../src/lib/supabase';
+import { USE_MOCK } from '../src/services/db';
 import { 
     Check, 
     CheckCircle,
@@ -32,9 +35,14 @@ type Step = 'NEEDS' | 'ANALYSIS' | 'PLAN' | 'ACCOUNT' | 'FINISH';
 
 export const OnboardingWizard: React.FC = () => {
     const navigate = useNavigate();
+    const { refreshProfile } = useAuth();
     const [currentStep, setCurrentStep] = useState<Step>('NEEDS');
     const [analysisProgress, setAnalysisProgress] = useState(0);
-    
+    const [password, setPassword] = useState('');
+    const [registering, setRegistering] = useState(false);
+    const [regError, setRegError] = useState<string | null>(null);
+    const realAuth = isSupabaseConfigured && !USE_MOCK;
+
     // Form State
     const [formData, setFormData] = useState({
         companySize: 1,
@@ -88,9 +96,53 @@ export const OnboardingWizard: React.FC = () => {
         }
     }, [currentStep]);
 
-    const handleRegister = () => {
-        setCurrentStep('FINISH');
-        setTimeout(() => navigate('/dashboard'), 3500);
+    const handleRegister = async () => {
+        setRegError(null);
+
+        // Mock mode: keep the demo animation (no real account is created).
+        if (!realAuth) {
+            setCurrentStep('FINISH');
+            setTimeout(() => navigate('/dashboard'), 3000);
+            return;
+        }
+
+        if (password.length < 8) { setRegError('Bitte ein Passwort mit mindestens 8 Zeichen wählen.'); return; }
+        setRegistering(true);
+        try {
+            // 1. Create the auth user
+            const [mFirst, ...mRest] = formData.adminName.trim().split(/\s+/);
+            const { data, error } = await supabase.auth.signUp({
+                email: formData.email,
+                password,
+                options: { data: { company_name: formData.companyName, first_name: mFirst || '', last_name: mRest.join(' ') } },
+            });
+            if (error) { setRegError(error.message); setRegistering(false); return; }
+
+            // 2. Without a session, email confirmation is required first.
+            if (!data.session) {
+                setRegError('Konto erstellt. Bitte bestätige deine E-Mail und melde dich anschliessend an.');
+                setRegistering(false);
+                return;
+            }
+
+            // 3. Provision the tenant + admin profile (SECURITY DEFINER RPC)
+            const [first, ...rest] = formData.adminName.trim().split(/\s+/);
+            const { error: pErr } = await supabase.rpc('provision_tenant', {
+                p_company: formData.companyName,
+                p_first: first || '',
+                p_last: rest.join(' '),
+                p_username: null,
+            });
+            if (pErr) { setRegError(`Konto erstellt, aber Einrichtung fehlgeschlagen: ${pErr.message}`); setRegistering(false); return; }
+
+            await refreshProfile();
+            setCurrentStep('FINISH');
+            setTimeout(() => navigate('/dashboard'), 1500);
+        } catch (e: any) {
+            setRegError(e?.message || 'Registrierung fehlgeschlagen.');
+        } finally {
+            setRegistering(false);
+        }
     };
 
     const ProgressBar = () => {
@@ -422,25 +474,38 @@ export const OnboardingWizard: React.FC = () => {
                                             <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                                                 <Mail size={16} className="text-brand-500" /> Business Email
                                             </label>
-                                            <input 
-                                                type="email" 
+                                            <input
+                                                type="email"
                                                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-bold placeholder:text-slate-300 dark:placeholder:text-slate-700"
                                                 placeholder="kontakt@firma.ch"
                                                 value={formData.email}
                                                 onChange={e => setFormData({...formData, email: e.target.value})}
                                             />
                                         </div>
+                                        <div className="space-y-3 md:col-span-2">
+                                            <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <Lock size={16} className="text-brand-500" /> Passwort
+                                            </label>
+                                            <input
+                                                type="password"
+                                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-bold placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                                                placeholder="Mindestens 8 Zeichen"
+                                                value={password}
+                                                onChange={e => setPassword(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
+                                    {regError && <p className="mt-4 text-sm font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-xl">{regError}</p>}
                                 </div>
 
                                 <div className="pt-6">
-                                    <Button 
-                                        className="w-full py-8 text-2xl font-black shadow-2xl shadow-brand-600/30 group rounded-2xl" 
-                                        size="lg" 
+                                    <Button
+                                        className="w-full py-8 text-2xl font-black shadow-2xl shadow-brand-600/30 group rounded-2xl"
+                                        size="lg"
                                         onClick={handleRegister}
-                                        disabled={!formData.companyName || !formData.email || !formData.adminName}
+                                        disabled={registering || !formData.companyName || !formData.email || !formData.adminName || (realAuth && password.length < 8)}
                                     >
-                                        Jetzt Instanz provisionieren
+                                        {registering ? 'Wird eingerichtet…' : 'Jetzt Instanz provisionieren'}
                                         <Zap className="ml-3 fill-current group-hover:scale-125 transition-transform" size={24}/>
                                     </Button>
                                     <div className="mt-8 flex flex-col items-center gap-4 opacity-60">

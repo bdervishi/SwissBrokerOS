@@ -19,6 +19,7 @@ depend on earlier files).
 | 11 | `database_lead_offers.sql` | `lead_offers` marketplace table (public browse + seller write) |
 | 12 | `database_integrations.sql` | integration tables (providers / tenant_integrations / mappings / sync logs) for drive OAuth – already applied on the live instance |
 | 13 | `database_calls.sql` | `calls` table + RLS (call agent post-call pipeline) |
+| 14 | `database_signup.sql` | `provision_tenant()` RPC for self-serve tenant signup |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |
