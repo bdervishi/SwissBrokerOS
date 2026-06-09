@@ -28,7 +28,9 @@ async function handleAuthCallback(): Promise<void> {
     next = '/login/broker';
   } else if (params.has('code')) {
     try {
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+      // exchangeCodeForSession expects the CODE value (not the full URL); it
+      // posts it as `auth_code` together with the stored PKCE verifier.
+      const { error } = await supabase.auth.exchangeCodeForSession(params.get('code') as string);
       if (error) {
         console.warn('[Auth] exchangeCodeForSession failed:', error.message);
         next = '/login/broker';
