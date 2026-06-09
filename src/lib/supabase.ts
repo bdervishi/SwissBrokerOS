@@ -44,9 +44,11 @@ export const supabase = createClient(
 
 /**
  * Build the e-mail redirect target for magic-link / recovery / signup-confirm
- * flows. Uses a real path (`/auth/callback`) – NOT a hash route – so Supabase
- * appends `?code=…` cleanly. `next` is where the user lands after the session
- * is established (handled in `index.tsx`).
+ * flows. Targets the site ROOT (`/?next=…`) – NOT a hash route and NOT a
+ * sub-path. Supabase appends `?code=…` cleanly (PKCE), and the root is the one
+ * path Vercel reliably serves as `index.html` (a sub-path like `/auth/callback`
+ * depends on the SPA rewrite, which 404'd in production). `index.tsx` exchanges
+ * the code and forwards to `next` before React mounts.
  */
 export const authCallbackUrl = (next: string): string =>
-  `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  `${window.location.origin}/?next=${encodeURIComponent(next)}`;
