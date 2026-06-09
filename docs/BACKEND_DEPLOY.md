@@ -85,6 +85,10 @@ After the backend is live:
 Set each OAuth app's redirect URI to
 `${BACKEND_PUBLIC_URL}/api/integrations/<provider>/callback`.
 
+> 📧 **E-Mail-Versand:** Der eingebaute Supabase-Mailer ist auf ~2 Mails/Stunde
+> limitiert. Für zuverlässigen Magic-Link-/Reset-/Signup-Versand einen Custom
+> SMTP einrichten – Schritt-für-Schritt mit Mailjet: **`docs/EMAIL_MAILJET.md`**.
+
 ## 3. Supabase URL configuration
 Auth → URL Configuration → Site URL = the Vercel app; add `https://<app>/**`
 to Redirect URLs (needed for magic-link login/demo, password reset, signup
