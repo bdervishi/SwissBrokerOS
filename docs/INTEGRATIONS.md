@@ -90,3 +90,21 @@ redirect URIs exactly.
 - Encrypt stored tokens at rest.
 - Bexio / Abacus / other providers (the Integrations page still shows these as a
   mock demo).
+
+## AI document extraction (prepared)
+Backend + frontend client are in place; only the UI button remains.
+
+- **Backend:** `POST /api/integrations/:provider/extract` (JWT-protected) —
+  downloads a drive file and asks Gemini to extract fields. Schemas in
+  `EXTRACT_SCHEMAS` (`policy`, `client`).
+- **Frontend:** `integrationsApi.extractDocument(provider, tenantId, fileId, 'policy'|'client')`
+  returns camelCase fields to pre-fill a create form.
+
+### To finish (easy)
+In a create modal (e.g. new policy on the client page), add an "Aus Dokument
+ausfüllen" action that:
+1. opens `DriveBrowser` to pick a file (add an `onPickFile` callback to it),
+2. calls `extractDocument(...)`,
+3. merges the returned fields into the form state.
+
+Requires the backend's `GOOGLE_API_KEY` (already used by the AI proxy).

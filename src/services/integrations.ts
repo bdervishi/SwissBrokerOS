@@ -108,4 +108,20 @@ export const integrationsApi = {
   unlinkClientFolder: async (tenantId: string, clientId: string, provider: DriveProvider): Promise<void> => {
     await fetch(`${API_BASE}/api/integrations/mappings?${q({ tenantId, clientId, provider })}`, { method: 'DELETE', headers: await authHeaders() });
   },
+
+  /**
+   * AI: extract structured fields from a drive document. documentType: 'policy' | 'client'.
+   * Returns a partial record of camelCase fields to pre-fill a create form.
+   */
+  extractDocument: async (
+    provider: DriveProvider, tenantId: string, fileId: string, documentType: 'policy' | 'client', mimeType = 'application/pdf',
+  ): Promise<Record<string, any>> => {
+    const res = await fetch(`${API_BASE}/api/integrations/${provider}/extract`, {
+      method: 'POST',
+      headers: await authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ tenantId, fileId, mimeType, documentType }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Extraktion fehlgeschlagen.');
+    return (await res.json()).fields || {};
+  },
 };

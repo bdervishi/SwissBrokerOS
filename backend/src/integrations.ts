@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { encryptJson, decryptJson, signState, verifyState } from './crypto';
 import { requireTenant, tenantFromQuery, tenantFromBody } from './auth';
+import { GoogleGenAI } from '@google/genai';
 
 /**
  * Per-tenant OAuth drive integrations (Google Drive, Microsoft OneDrive).
@@ -218,6 +219,53 @@ async function listFiles(tenantId: string, code: ProviderCode, folderId?: string
   }));
 }
 
+// ---- file download + AI extraction --------------------------------------
+async function downloadFile(tenantId: string, code: ProviderCode, fileId: string): Promise<Buffer> {
+  const token = await getAccessToken(tenantId, code);
+  if (code === 'google_drive') {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(await res.text());
+    return Buffer.from(await res.arrayBuffer());
+  }
+  if (code === 'microsoft_onedrive') {
+    const res = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(await res.text());
+    return Buffer.from(await res.arrayBuffer());
+  }
+  // dropbox
+  const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Dropbox-API-Arg': JSON.stringify({ path: fileId }) },
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return Buffer.from(await res.arrayBuffer());
+}
+
+// Field schemas the extraction can fill (mirrors the create forms in the app).
+const EXTRACT_SCHEMAS: Record<string, string> = {
+  policy: 'insurer, type, policyNumber, premiumAmount (number), premiumFrequency, startDate (YYYY-MM-DD), endDate (YYYY-MM-DD), deductible (number)',
+  client: 'firstName, lastName, companyName, email, phone, address, zipCity, birthDate (YYYY-MM-DD), taxDomicile',
+};
+
+async function extractFields(tenantId: string, code: ProviderCode, fileId: string, mimeType: string, documentType: string) {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) throw new Error('AI not configured');
+  const schema = EXTRACT_SCHEMAS[documentType] || EXTRACT_SCHEMAS.policy;
+  const buf = await downloadFile(tenantId, code, fileId);
+  const ai = new GoogleGenAI({ apiKey });
+  const prompt = `Extrahiere aus diesem Dokument (Schweizer Versicherungs-/Finanzkontext) die folgenden Felder als JSON: ${schema}. Unbekannte Felder als null. Antworte NUR mit JSON.`;
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: [{ inlineData: { mimeType: mimeType || 'application/pdf', data: buf.toString('base64') } }, { text: prompt }] as any,
+    config: { responseMimeType: 'application/json' },
+  });
+  try {
+    return JSON.parse(response.text || '{}');
+  } catch {
+    return {};
+  }
+}
+
 // ---- router -------------------------------------------------------------
 export const integrationsRouter = Router();
 
@@ -346,6 +394,19 @@ integrationsRouter.delete('/mappings', requireTenant(tenantFromQuery), async (re
     .eq('tenant_id', tenantId).eq('provider_code', provider).eq('local_table', 'clients').eq('local_id', clientId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+});
+
+// AI: extract structured fields from a drive document (policy / client)
+integrationsRouter.post('/:provider/extract', requireTenant(tenantFromBody), async (req, res) => {
+  const { provider } = req.params;
+  const { tenantId, fileId, mimeType, documentType } = req.body || {};
+  if (!isValidProvider(provider) || !tenantId || !fileId) return res.status(400).json({ error: 'Bad request' });
+  try {
+    const fields = await extractFields(tenantId, provider, fileId, mimeType, documentType || 'policy');
+    res.json({ fields });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || 'Extraction failed' });
+  }
 });
 
 // Disconnect
