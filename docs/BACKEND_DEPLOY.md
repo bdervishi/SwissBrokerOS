@@ -87,7 +87,12 @@ Set each OAuth app's redirect URI to
 
 ## 3. Supabase URL configuration
 Auth → URL Configuration → Site URL = the Vercel app; add `https://<app>/**`
-to Redirect URLs (needed for magic-link demo, password reset, signup confirm).
+to Redirect URLs (needed for magic-link login/demo, password reset, signup
+confirm). All auth e-mails redirect to the real path `https://<app>/auth/callback`
+(NOT a `/#/...` hash route) — the app uses the PKCE flow and exchanges the
+`?code=` there before entering the hash-routed SPA, so the `/**` wildcard must
+be present. PKCE requires the link to be opened in the same browser that
+requested it.
 
 ## 4. Verify end-to-end
 - `GET /health` → online.

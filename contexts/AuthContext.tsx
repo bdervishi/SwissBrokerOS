@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { MOCK_USERS } from '../constants';
-import { supabase, isSupabaseConfigured } from '../src/lib/supabase';
+import { supabase, isSupabaseConfigured, authCallbackUrl } from '../src/lib/supabase';
 import { db, USE_MOCK } from '../src/services/db';
 
 // Real Supabase auth is used only when a backend is configured AND mock data is
@@ -201,7 +201,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
       email: addr,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/#/dashboard`,
+        emailRedirectTo: authCallbackUrl('/dashboard'),
       },
     });
     if (error) {
@@ -223,7 +223,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
   const resetPasswordRequest = async (username: string) => {
     if (USE_REAL_AUTH && username.includes('@')) {
       await supabase.auth.resetPasswordForEmail(username, {
-        redirectTo: `${window.location.origin}/#/reset-password`,
+        redirectTo: authCallbackUrl('/reset-password'),
       });
       return;
     }

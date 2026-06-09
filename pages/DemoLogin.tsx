@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../src/lib/supabase';
+import { supabase, isSupabaseConfigured, authCallbackUrl } from '../src/lib/supabase';
 import { demoApi } from '../src/services/demo';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -25,7 +25,7 @@ export const DemoLogin: React.FC = () => {
       if (eligible) {
         await supabase.auth.signInWithOtp({
           email: email.trim().toLowerCase(),
-          options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/#/dashboard` },
+          options: { shouldCreateUser: false, emailRedirectTo: authCallbackUrl('/dashboard') },
         });
       }
       // Always show the same message – never reveal who is on the list.
