@@ -40,6 +40,14 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Authenticated but no profile/tenant row -> the user can't enter the app and
+  // ProtectedRoute bounces them to login. Surface why (read by pages/Login.tsx).
+  const warnNoProfile = (sessionUser: any) => {
+    const msg = `Angemeldet als ${sessionUser?.email ?? 'unbekannt'}, aber es existiert kein Profil/Tenant für dieses Konto. Bitte zuerst registrieren oder den Account freischalten.`;
+    console.warn('[Auth]', msg);
+    try { sessionStorage.setItem('sb_auth_error', msg); } catch { /* ignore */ }
+  };
+
   // Load the profile row for an authenticated Supabase user.
   const loadProfile = async (userId: string): Promise<User | null> => {
     try {
@@ -81,6 +89,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
         if (data.session?.user) {
           const profile = await loadOrProvisionProfile(data.session.user);
           if (profile) setUser(profile);
+          else warnNoProfile(data.session.user);
         }
         setIsLoading(false);
       });
@@ -89,6 +98,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
         if (session?.user) {
           const profile = await loadOrProvisionProfile(session.user);
           setUser(profile);
+          if (!profile) warnNoProfile(session.user);
         } else {
           setUser(null);
           setOriginalUser(null);
