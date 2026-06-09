@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, isSupabaseConfigured } from '../src/lib/supabase';
+import { supabase, isSupabaseConfigured, authCallbackUrl } from '../src/lib/supabase';
 import { USE_MOCK } from '../src/services/db';
 import { 
     Check, 
@@ -114,7 +114,10 @@ export const OnboardingWizard: React.FC = () => {
             const { data, error } = await supabase.auth.signUp({
                 email: formData.email,
                 password,
-                options: { data: { company_name: formData.companyName, first_name: mFirst || '', last_name: mRest.join(' ') } },
+                options: {
+                    data: { company_name: formData.companyName, first_name: mFirst || '', last_name: mRest.join(' ') },
+                    emailRedirectTo: authCallbackUrl('/dashboard'),
+                },
             });
             if (error) { setRegError(error.message); setRegistering(false); return; }
 
