@@ -201,7 +201,9 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
 
   const resetPasswordRequest = async (username: string) => {
     if (USE_REAL_AUTH && username.includes('@')) {
-      await supabase.auth.resetPasswordForEmail(username);
+      await supabase.auth.resetPasswordForEmail(username, {
+        redirectTo: `${window.location.origin}/#/reset-password`,
+      });
       return;
     }
     console.log('Reset requested', username);
