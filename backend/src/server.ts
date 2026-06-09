@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
+import { integrationsRouter } from './integrations';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ const API_KEY = process.env.GOOGLE_API_KEY;
 app.use(helmet()); // Sets various HTTP headers for security
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Restrict to your frontend
-    methods: ['POST']
+    methods: ['GET', 'POST']
 }));
 app.use(express.json());
 
@@ -31,6 +32,9 @@ const apiLimiter = rateLimit({
 
 // Apply rate limiter to API routes
 app.use('/api', apiLimiter);
+
+// Per-tenant OAuth drive integrations (Google Drive, Microsoft OneDrive)
+app.use('/api/integrations', integrationsRouter);
 
 // 3. AI Proxy Route
 app.post('/api/generate', async (req, res) => {

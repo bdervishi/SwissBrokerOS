@@ -4,6 +4,7 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { CloudDrives } from '../components/integrations/CloudDrives';
 import { MOCK_INTEGRATIONS, MOCK_DRIVE_FOLDERS } from '../constants';
 import { Integration, IntegrationStatus, IntegrationCategory } from '../types';
 import { useBranding } from '../contexts/BrandingContext';
@@ -216,6 +217,9 @@ export const Integrations: React.FC = () => {
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Integrationen & API</h1>
         <p className="text-slate-500 dark:text-slate-400">Verbinden Sie SwissBroker OS mit Ihren bevorzugten Tools und Schweizer Services.</p>
       </div>
+
+      {/* Real per-tenant cloud storage (Google Drive / OneDrive) */}
+      <CloudDrives />
 
       {/* Categories */}
       <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">

@@ -17,6 +17,7 @@ depend on earlier files).
 | 9 | `database_tax.sql` | `tax_returns` table + RLS (seeds one return per client) |
 | 10 | `database_emails.sql` | `emails` table + RLS (seeds demo mail) |
 | 11 | `database_lead_offers.sql` | `lead_offers` marketplace table (public browse + seller write) |
+| 12 | `database_integrations.sql` | integration tables (providers / tenant_integrations / mappings / sync logs) for drive OAuth – already applied on the live instance |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |
