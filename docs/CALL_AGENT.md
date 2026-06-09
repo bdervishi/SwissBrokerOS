@@ -121,8 +121,9 @@ All via the existing `db` services / tables.
 7. **Retention:** define and enforce a recording/transcript retention period.
 
 ## 8. Phased roadmap
-- **Phase 1 (no telephony, buildable now):** `calls` table + post-call pipeline
-  (transcript/upload → AI → follow-up actions). Immediate value, fully testable.
+- **Phase 1 (built ✅):** `calls` table (`database_calls.sql`) + post-call pipeline
+  — `POST /api/calls/process` (transcript → Gemini summary + follow-up actions →
+  client note + calendar tasks). UI: "Gespräch verarbeiten" on the client page.
 - **Phase 2:** managed-provider adapter (Vapi/Retell) behind `POST /calls/initiate`
   + signed webhook → live outbound calls, per-tenant creds, consent capture.
 - **Phase 3:** call history UI, suppression list, retention jobs, analytics.

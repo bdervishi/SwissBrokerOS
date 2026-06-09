@@ -10,6 +10,7 @@ import { MOCK_ADVICE, MOCK_ACTIVITY_LOGS } from '../constants';
 import { useClient, usePolicies, useAssets, useClientNotes } from '../src/hooks/useData';
 import { db } from '../src/services/db';
 import { ClientDocuments } from '../components/integrations/ClientDocuments';
+import { CallProcessor } from '../components/CallProcessor';
 import { useAuth } from '../contexts/AuthContext';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -90,6 +91,9 @@ export const ClientDetail: React.FC = () => {
   const [assetForm, setAssetForm] = useState({
     type: AssetType.PILLAR_3A, name: '', value: '', provider: '',
   });
+
+  // Call processing
+  const [isCallOpen, setIsCallOpen] = useState(false);
 
   // Edit client master data
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -376,6 +380,7 @@ export const ClientDetail: React.FC = () => {
         </div>
         <div className="ml-auto flex gap-3">
             <Button variant="outline" icon={<FileText size={16}/>} onClick={openEdit}>Bearbeiten</Button>
+            <Button variant="outline" icon={<MessageSquare size={16}/>} onClick={() => setIsCallOpen(true)}>Gespräch verarbeiten</Button>
             <Button variant="secondary" icon={<FileSignature size={16}/>} onClick={() => setIsProtocolModalOpen(true)}>Beratungsprotokoll AI</Button>
             <Button>Termin buchen</Button>
         </div>
@@ -670,6 +675,8 @@ export const ClientDetail: React.FC = () => {
             </div>
         )}
       </div>
+
+      <CallProcessor isOpen={isCallOpen} onClose={() => setIsCallOpen(false)} tenantId={client.tenantId} clientId={client.id} onDone={refetchNotes} />
 
       {/* EDIT CLIENT MODAL */}
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Stammdaten bearbeiten" maxWidth="max-w-xl">
