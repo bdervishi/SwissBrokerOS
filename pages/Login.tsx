@@ -9,7 +9,14 @@ import { User, ArrowRight, ShieldCheck, Loader2, Lock, Building2, Users, ShieldA
 
 export const Login: React.FC = () => {
   const { role: roleParam } = useParams<{ role: string }>();
-  const { loginStep, requestOtl, verifyOtl, completeLogin, isAuthenticated } = useAuth();
+  const { loginStep, requestOtl, verifyOtl, completeLogin, isAuthenticated, resetPasswordRequest } = useAuth();
+  const [resetInfo, setResetInfo] = useState<string | null>(null);
+
+  const handleForgotPassword = async () => {
+    if (!username.includes('@')) { setResetInfo('Bitte gib oben deine E-Mail-Adresse ein.'); return; }
+    await resetPasswordRequest(username);
+    setResetInfo('Falls ein Konto existiert, wurde ein Link zum Zurücksetzen gesendet.');
+  };
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -110,7 +117,10 @@ export const Login: React.FC = () => {
           {loginStep === 'PASSWORD' && (
             <form onSubmit={handleFinalLogin} className="space-y-6 animate-in slide-in-from-right-4 duration-500">
               <div className="space-y-1">
-                <div className="flex justify-between items-end mb-1"><label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Passwort</label></div>
+                <div className="flex justify-between items-end mb-1">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Passwort</label>
+                  <button type="button" onClick={handleForgotPassword} className="text-[11px] font-bold text-brand-600 hover:underline">Passwort vergessen?</button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
                   <input type="password" required autoFocus className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-mono" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
@@ -118,6 +128,7 @@ export const Login: React.FC = () => {
                 <p className="text-[10px] text-slate-400 ml-1">Demo-Passwort: <span className="font-mono">password123</span></p>
               </div>
               {error && <p className="text-xs text-red-500 font-bold text-center bg-red-50 dark:bg-red-900/20 py-2 rounded">{error}</p>}
+              {resetInfo && <p className="text-xs text-brand-600 font-bold text-center bg-brand-50 dark:bg-brand-900/20 py-2 rounded">{resetInfo}</p>}
               <Button className="w-full py-6 font-black uppercase tracking-widest" disabled={isLoading}>{isLoading ? <Loader2 className="animate-spin" /> : "Sicher Anmelden"}</Button>
             </form>
           )}

@@ -20,6 +20,7 @@ depend on earlier files).
 | 12 | `database_integrations.sql` | integration tables (providers / tenant_integrations / mappings / sync logs) for drive OAuth – already applied on the live instance |
 | 13 | `database_calls.sql` | `calls` table + RLS (call agent post-call pipeline) |
 | 14 | `database_signup.sql` | `provision_tenant()` RPC for self-serve tenant signup |
+| 15 | `database_demo_allowlist.sql` | `demo_allowlist` table for gated demo access |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |

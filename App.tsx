@@ -3,6 +3,8 @@ import React, { lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 const Landing = lazy(() => import('./pages/Landing').then(m => ({ default: m.Landing })));
 const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const DemoLogin = lazy(() => import('./pages/DemoLogin').then(m => ({ default: m.DemoLogin })));
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const ClientDetail = lazy(() => import('./pages/ClientDetail').then(m => ({ default: m.ClientDetail })));
 const Clients = lazy(() => import('./pages/Clients').then(m => ({ default: m.Clients })));
@@ -122,6 +124,8 @@ const App = () => {
                     <Route path="/register" element={<OnboardingWizard />} />
                     <Route path="/login/:role" element={<Login />} />
                     <Route path="/login" element={<Navigate to="/login/broker" />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/demo" element={<DemoLogin />} />
 
                     <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
                     
