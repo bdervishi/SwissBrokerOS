@@ -22,9 +22,11 @@ async function handleAuthCallback(): Promise<void> {
 
   let next = params.get('next') || '/dashboard';
   if (!next.startsWith('/')) next = `/${next}`;
+  let authError: string | null = null;
 
   if (params.has('error')) {
-    console.warn('[Auth] callback error:', params.get('error_description') || params.get('error'));
+    authError = params.get('error_description') || params.get('error');
+    console.warn('[Auth] callback error:', authError);
     next = '/login/broker';
   } else if (params.has('code')) {
     try {
@@ -32,13 +34,20 @@ async function handleAuthCallback(): Promise<void> {
       // posts it as `auth_code` together with the stored PKCE verifier.
       const { error } = await supabase.auth.exchangeCodeForSession(params.get('code') as string);
       if (error) {
+        authError = error.message;
         console.warn('[Auth] exchangeCodeForSession failed:', error.message);
         next = '/login/broker';
       }
     } catch (e) {
-      console.warn('[Auth] exchangeCodeForSession threw:', (e as Error).message);
+      authError = (e as Error).message;
+      console.warn('[Auth] exchangeCodeForSession threw:', authError);
       next = '/login/broker';
     }
+  }
+
+  // Surface the reason on the login page (read + cleared by pages/Login.tsx).
+  if (authError) {
+    try { sessionStorage.setItem('sb_auth_error', authError); } catch { /* ignore */ }
   }
 
   // Replace the address bar with the clean hash route (removes the code/query).
