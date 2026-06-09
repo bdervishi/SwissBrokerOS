@@ -6,11 +6,12 @@ import { supabase, isSupabaseConfigured } from './src/lib/supabase';
 /**
  * Auth callback handler (runs before React mounts).
  *
- * Magic-link / password-reset / signup-confirm e-mails redirect to the real
- * path `/auth/callback?next=<route>&code=<pkce-code>` (Vercel serves index.html
- * for any path). We exchange the PKCE code for a session here, then drop the
- * query and enter the hash-routed SPA at `<next>`. Doing this before mounting
- * avoids a flash of the (unauthenticated) login screen and any router race.
+ * Magic-link / password-reset / signup-confirm e-mails redirect to the site
+ * root `/?next=<route>&code=<pkce-code>`. We exchange the PKCE code for a
+ * session here, then drop the query and enter the hash-routed SPA at `<next>`.
+ * Doing this before mounting avoids a flash of the (unauthenticated) login
+ * screen and any router race. Triggered by the presence of `code`/`error`
+ * (any path), so it also covers the legacy `/auth/callback` target.
  */
 async function handleAuthCallback(): Promise<void> {
   if (!isSupabaseConfigured) return;
