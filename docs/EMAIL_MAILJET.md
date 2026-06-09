@@ -41,6 +41,27 @@ damit du z. B. `no-reply@trifti.ch` nutzen kannst:
 > verifizieren (Mailjet schickt eine Bestätigungsmail). Zustellbarkeit ist dann
 > schlechter (kein DKIM) – für Produktion die Domain authentifizieren.
 
+### Domain wird schon von einem anderen Mailserver genutzt?
+Du kannst Mailjet **parallel** betreiben, ohne deinen bestehenden Mailverkehr
+zu stören – Mailjet versendet nur, es empfängt nichts.
+
+- **MX-Einträge nicht anfassen.** Mailjet braucht keine MX-Änderung; dein
+  Posteingang bleibt auf dem aktuellen Server.
+- **SPF zusammenführen, nicht verdoppeln.** Pro Domain darf es nur EINEN
+  `v=spf1`-Eintrag geben. Ergänze `include:spf.mailjet.com` im bestehenden:
+  ```
+  # vorher:   v=spf1 include:_spf.google.com ~all
+  # nachher:  v=spf1 include:_spf.google.com include:spf.mailjet.com ~all
+  ```
+- **DKIM kollidiert nicht.** Mailjet nutzt den Selector `mailjet._domainkey`;
+  dein bestehender Server hat einen anderen Selector. Beide DKIM-TXT-Einträge
+  existieren parallel.
+
+**Noch sauberer (null Risiko):** In Mailjet eine **Subdomain** authentifizieren,
+z. B. `mail.trifti.ch`, und von `no-reply@mail.trifti.ch` senden. Dann liegen
+SPF + DKIM nur auf der Subdomain und dein `trifti.ch`-Hauptverkehr bleibt
+komplett unberührt.
+
 ## 3. SMTP-Zugangsdaten holen
 Mailjet → **Account Settings → REST API → API Key Management (Primary)**.
 Dort stehen zwei Schlüssel:
