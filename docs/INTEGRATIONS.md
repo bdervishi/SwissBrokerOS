@@ -32,6 +32,13 @@ and browses files from inside the app. Tokens live only on the backend.
    `offline_access`, `User.Read`.
 4. **Certificates & secrets** → new client secret. Note **Application (client) ID** + secret.
 
+### Dropbox
+1. Dropbox App Console → **Create app** → Scoped access → Full Dropbox.
+2. **Permissions** tab → enable `files.metadata.read`, `files.content.read`.
+3. **Settings** → OAuth 2 → Redirect URI:
+   `https://<your-backend>/api/integrations/dropbox/callback`
+4. Note the **App key** (client id) + **App secret**.
+
 ## 2. Backend env (`backend/.env`)
 ```
 SUPABASE_URL=https://<ref>.supabase.co
@@ -42,6 +49,8 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 MS_CLIENT_ID=...
 MS_CLIENT_SECRET=...
+DROPBOX_CLIENT_ID=...
+DROPBOX_CLIENT_SECRET=...
 GOOGLE_API_KEY=...                              # (existing AI proxy)
 ```
 
@@ -59,8 +68,11 @@ Run / Render / Fly with the env vars above (see `docs/DEPLOYMENT_GCP.md`). The
 redirect URIs exactly.
 
 ## 5. Use it
-Integrations page → **Cloud-Speicher** → *Verbinden* → provider consent → back in
-the app, *Dateien anzeigen* browses the drive.
+- **Connect (per tenant):** Integrations page → **Cloud-Speicher** → *Verbinden*
+  (Google Drive / OneDrive / Dropbox) → consent → *Dateien anzeigen*.
+- **Per-client folders:** open a client → **Dokumente** tab → *Ordner verknüpfen*
+  → navigate to the client's folder → *Ordner verknüpfen*. The folder's files then
+  appear directly on the client record. Stored in `integration_external_mappings`.
 
 ## Security notes / hardening
 - Client secrets and refresh tokens never reach the browser.
@@ -71,8 +83,8 @@ the app, *Dateien anzeigen* browses the drive.
 - Scopes are read-only (`drive.readonly` / `Files.Read.All`).
 
 ## Next steps (not yet built)
-- Map a drive folder to a specific client (`integration_external_mappings`) so a
-  client's documents appear on their record.
-- File download proxy/streaming through the backend.
+- File download proxy/streaming through the backend (currently open via provider
+  web links).
+- Encrypt stored tokens at rest.
 - Bexio / Abacus / other providers (the Integrations page still shows these as a
   mock demo).

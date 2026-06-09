@@ -9,6 +9,7 @@ import { ComplianceShield } from '../components/ui/ComplianceShield';
 import { MOCK_ADVICE, MOCK_ACTIVITY_LOGS } from '../constants';
 import { useClient, usePolicies, useAssets, useClientNotes } from '../src/hooks/useData';
 import { db } from '../src/services/db';
+import { ClientDocuments } from '../components/integrations/ClientDocuments';
 import { useAuth } from '../contexts/AuthContext';
 import { WealthVis } from '../components/3d/WealthVis';
 import { SensitiveData } from '../components/ui/SensitiveData';
@@ -49,7 +50,7 @@ import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore, Client } 
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL' | 'COMPLIANCE'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL' | 'COMPLIANCE' | 'DOCUMENTS'>('OVERVIEW');
   
   // Note State
   const [noteInput, setNoteInput] = useState('');
@@ -386,6 +387,7 @@ export const ClientDetail: React.FC = () => {
         <TabButton active={activeTab === 'POLICIES'} onClick={() => setActiveTab('POLICIES')} icon={<FileText size={16} />} label="Versicherungen" />
         <TabButton active={activeTab === 'WEALTH'} onClick={() => setActiveTab('WEALTH')} icon={<Landmark size={16} />} label="Vermögen & Vorsorge" />
         <TabButton active={activeTab === 'TAX'} onClick={() => setActiveTab('TAX')} icon={<Calculator size={16} />} label="Steuern" />
+        <TabButton active={activeTab === 'DOCUMENTS'} onClick={() => setActiveTab('DOCUMENTS')} icon={<FileBox size={16} />} label="Dokumente" />
         <TabButton active={activeTab === 'JOURNAL'} onClick={() => setActiveTab('JOURNAL')} icon={<History size={16} />} label="Journal" />
         <TabButton active={activeTab === 'COMPLIANCE'} onClick={() => setActiveTab('COMPLIANCE')} icon={<Scale size={16} />} label="Due Diligence" />
       </div>
@@ -547,6 +549,16 @@ export const ClientDetail: React.FC = () => {
                 </div>
              </Card>
            </div>
+        )}
+
+        {activeTab === 'DOCUMENTS' && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Dokumente vom Cloud-Speicher</h3>
+              <p className="text-sm text-slate-500">Verknüpfe pro Cloud-Anbieter einen Ordner mit diesem Kunden — seine Dateien erscheinen dann direkt hier.</p>
+            </div>
+            <ClientDocuments tenantId={client.tenantId} clientId={client.id} />
+          </div>
         )}
 
         {activeTab === 'JOURNAL' && (

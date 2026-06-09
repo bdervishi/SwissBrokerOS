@@ -9,6 +9,7 @@ import { Cloud, CheckCircle2, FolderOpen, Loader2 } from 'lucide-react';
 const PROVIDERS: { code: DriveProvider; name: string; hint: string }[] = [
   { code: 'google_drive', name: 'Google Drive', hint: 'Google Workspace' },
   { code: 'microsoft_onedrive', name: 'Microsoft OneDrive', hint: 'Office 365' },
+  { code: 'dropbox', name: 'Dropbox', hint: 'Dropbox Business' },
 ];
 
 export const CloudDrives: React.FC = () => {
@@ -37,7 +38,8 @@ export const CloudDrives: React.FC = () => {
       const params = new URLSearchParams(hash.slice(qIndex + 1));
       const st = params.get('status');
       const prov = params.get('provider');
-      if (st === 'connected') setNotice(`${prov === 'microsoft_onedrive' ? 'OneDrive' : 'Google Drive'} erfolgreich verbunden.`);
+      const provName = PROVIDERS.find((p) => p.code === prov)?.name || 'Cloud-Speicher';
+      if (st === 'connected') setNotice(`${provName} erfolgreich verbunden.`);
       else if (st === 'error') setNotice('Verbindung fehlgeschlagen. Bitte erneut versuchen.');
     }
     refresh();

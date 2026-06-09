@@ -20,7 +20,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-type ProviderCode = 'google_drive' | 'microsoft_onedrive';
+type ProviderCode = 'google_drive' | 'microsoft_onedrive' | 'dropbox';
 
 interface ProviderConfig {
   name: string;
@@ -53,6 +53,17 @@ const PROVIDERS: Record<ProviderCode, ProviderConfig> = {
     scope: 'Files.Read.All offline_access User.Read',
     clientId: process.env.MS_CLIENT_ID || '',
     clientSecret: process.env.MS_CLIENT_SECRET || '',
+  },
+  dropbox: {
+    name: 'Dropbox',
+    category: 'document_storage',
+    authUrl: 'https://www.dropbox.com/oauth2/authorize',
+    tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
+    scope: 'files.metadata.read files.content.read',
+    clientId: process.env.DROPBOX_CLIENT_ID || '',
+    clientSecret: process.env.DROPBOX_CLIENT_SECRET || '',
+    // token_access_type=offline is required to receive a refresh_token.
+    extraAuth: { token_access_type: 'offline' },
   },
 };
 
@@ -173,28 +184,45 @@ async function listFiles(tenantId: string, code: ProviderCode, folderId?: string
       webUrl: f.webViewLink,
     }));
   }
-  // microsoft_onedrive
-  const path = folderId ? `items/${folderId}/children` : 'root/children';
-  const url = `https://graph.microsoft.com/v1.0/me/drive/${path}?$top=100`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (code === 'microsoft_onedrive') {
+    const path = folderId ? `items/${folderId}/children` : 'root/children';
+    const url = `https://graph.microsoft.com/v1.0/me/drive/${path}?$top=100`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(await res.text());
+    const data: any = await res.json();
+    return (data.value || []).map((f: any) => ({
+      id: f.id,
+      name: f.name,
+      type: f.folder ? 'folder' : 'file',
+      mimeType: f.file?.mimeType,
+      size: f.size,
+      modified: f.lastModifiedDateTime,
+      webUrl: f.webUrl,
+      downloadUrl: f['@microsoft.graph.downloadUrl'],
+    }));
+  }
+  // dropbox
+  const res = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: folderId || '', limit: 100 }),
+  });
   if (!res.ok) throw new Error(await res.text());
   const data: any = await res.json();
-  return (data.value || []).map((f: any) => ({
+  return (data.entries || []).map((f: any) => ({
     id: f.id,
     name: f.name,
-    type: f.folder ? 'folder' : 'file',
-    mimeType: f.file?.mimeType,
+    type: f['.tag'] === 'folder' ? 'folder' : 'file',
     size: f.size,
-    modified: f.lastModifiedDateTime,
-    webUrl: f.webUrl,
-    downloadUrl: f['@microsoft.graph.downloadUrl'],
+    modified: f.server_modified,
   }));
 }
 
 // ---- router -------------------------------------------------------------
 export const integrationsRouter = Router();
 
-const isValidProvider = (p: string): p is ProviderCode => p === 'google_drive' || p === 'microsoft_onedrive';
+const isValidProvider = (p: string): p is ProviderCode =>
+  p === 'google_drive' || p === 'microsoft_onedrive' || p === 'dropbox';
 
 // List providers + config availability
 integrationsRouter.get('/providers', (_req, res) => {
@@ -276,6 +304,46 @@ integrationsRouter.get('/:provider/files', async (req, res) => {
     const msg = e?.message === 'NOT_CONNECTED' ? 'Not connected' : (e?.message || 'Error');
     res.status(e?.message === 'NOT_CONNECTED' ? 409 : 500).json({ error: msg });
   }
+});
+
+// ---- per-client folder mappings (integration_external_mappings) ---------
+// Link a tenant's drive folder to a specific client so their documents appear
+// on the client record.
+integrationsRouter.get('/mappings', async (req, res) => {
+  const tenantId = String(req.query.tenantId || '');
+  const clientId = String(req.query.clientId || '');
+  if (!tenantId || !clientId) return res.status(400).json({ error: 'Bad request' });
+  const { data, error } = await supabase
+    .from('integration_external_mappings')
+    .select('provider_code, external_id, external_url')
+    .eq('tenant_id', tenantId).eq('local_table', 'clients').eq('local_id', clientId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mappings: (data || []).map((m) => ({ provider: m.provider_code, folderId: m.external_id, folderUrl: m.external_url })) });
+});
+
+integrationsRouter.post('/mappings', async (req, res) => {
+  const { tenantId, clientId, provider, folderId, folderUrl } = req.body || {};
+  if (!tenantId || !clientId || !provider || !folderId) return res.status(400).json({ error: 'Bad request' });
+  const { error } = await supabase.from('integration_external_mappings').upsert(
+    {
+      tenant_id: tenantId, provider_code: provider, local_table: 'clients', local_id: clientId,
+      external_id: folderId, external_url: folderUrl || null, updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'tenant_id,provider_code,local_table,local_id' },
+  );
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+integrationsRouter.delete('/mappings', async (req, res) => {
+  const tenantId = String(req.query.tenantId || '');
+  const clientId = String(req.query.clientId || '');
+  const provider = String(req.query.provider || '');
+  if (!tenantId || !clientId || !provider) return res.status(400).json({ error: 'Bad request' });
+  const { error } = await supabase.from('integration_external_mappings').delete()
+    .eq('tenant_id', tenantId).eq('provider_code', provider).eq('local_table', 'clients').eq('local_id', clientId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 // Disconnect

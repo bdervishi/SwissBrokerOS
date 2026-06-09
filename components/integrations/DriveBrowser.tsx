@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { integrationsApi, DriveProvider, DriveFile } from '../../src/services/integrations';
-import { Folder, FileText, ExternalLink, ChevronRight, Loader2, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Folder, FileText, ExternalLink, ChevronRight, Loader2, RefreshCw, ArrowLeft, Link2 } from 'lucide-react';
 
 interface Props {
   provider: DriveProvider;
   tenantId: string;
+  /** Start the browser inside a specific folder (e.g. a client's linked folder). */
+  rootId?: string;
+  rootName?: string;
+  /** When set, shows a "link this folder" action for the currently open folder. */
+  onLinkFolder?: (folderId: string, folderName: string) => void;
 }
 
 interface Crumb { id?: string; name: string; }
@@ -17,8 +22,8 @@ const formatSize = (bytes?: number) => {
   return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 };
 
-export const DriveBrowser: React.FC<Props> = ({ provider, tenantId }) => {
-  const [path, setPath] = useState<Crumb[]>([{ name: 'Start' }]);
+export const DriveBrowser: React.FC<Props> = ({ provider, tenantId, rootId, rootName, onLinkFolder }) => {
+  const [path, setPath] = useState<Crumb[]>([{ id: rootId, name: rootName || 'Start' }]);
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +61,14 @@ export const DriveBrowser: React.FC<Props> = ({ provider, tenantId }) => {
             <button onClick={() => goTo(i)} className={`whitespace-nowrap ${i === path.length - 1 ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-700'}`}>{c.name}</button>
           </React.Fragment>
         ))}
-        <button onClick={() => load(current.id)} className="ml-auto p-1 text-slate-400 hover:text-slate-700" title="Aktualisieren"><RefreshCw size={14} /></button>
+        <div className="ml-auto flex items-center gap-1">
+          {onLinkFolder && current.id && (
+            <button onClick={() => onLinkFolder(current.id!, current.name)} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline whitespace-nowrap" title="Diesen Ordner mit dem Kunden verknüpfen">
+              <Link2 size={13} /> Ordner verknüpfen
+            </button>
+          )}
+          <button onClick={() => load(current.id)} className="p-1 text-slate-400 hover:text-slate-700" title="Aktualisieren"><RefreshCw size={14} /></button>
+        </div>
       </div>
 
       <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">

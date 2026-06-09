@@ -17,7 +17,7 @@ const API_KEY = process.env.GOOGLE_API_KEY;
 app.use(helmet()); // Sets various HTTP headers for security
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Restrict to your frontend
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST', 'DELETE']
 }));
 app.use(express.json());
 
