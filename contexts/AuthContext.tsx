@@ -18,6 +18,7 @@ interface AuthContextType {
   requestOtl: (username: string) => Promise<boolean>;
   verifyOtl: (token: string) => Promise<boolean>;
   completeLogin: (password: string) => Promise<boolean>;
+  sendMagicLink: (email: string) => Promise<boolean>;
   logout: () => void;
   resetPasswordRequest: (username: string) => Promise<void>;
   adminResetPassword: (userId: string) => Promise<string>;
@@ -190,6 +191,26 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
     return false;
   };
 
+  // Passwordless broker login: send a magic link to an existing account. The
+  // link lands on /#/dashboard; onAuthStateChange then loads the profile.
+  const sendMagicLink = async (email: string): Promise<boolean> => {
+    if (!USE_REAL_AUTH) return false;
+    const addr = email.trim().toLowerCase();
+    if (!addr.includes('@')) return false;
+    const { error } = await supabase.auth.signInWithOtp({
+      email: addr,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/#/dashboard`,
+      },
+    });
+    if (error) {
+      console.warn('[Auth] Magic-link request failed:', error.message);
+      return false;
+    }
+    return true;
+  };
+
   const logout = () => {
     if (USE_REAL_AUTH) supabase.auth.signOut();
     setUser(null);
@@ -262,6 +283,7 @@ export const AuthProvider: React.FC<{ children?: React.ReactNode }> = ({ childre
         requestOtl,
         verifyOtl,
         completeLogin,
+        sendMagicLink,
         logout,
         resetPasswordRequest,
         adminResetPassword,
