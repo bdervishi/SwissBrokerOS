@@ -36,6 +36,18 @@ export const Login: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Surface a failed magic-link/PKCE exchange (set by index.tsx) so the user
+  // sees why they were sent back here instead of into the app.
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('sb_auth_error');
+      if (stored) {
+        setError(`Anmelde-Link ungültig oder abgelaufen: ${stored}`);
+        sessionStorage.removeItem('sb_auth_error');
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   // ----- Real mode: passwordless magic-link login --------------------------
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
