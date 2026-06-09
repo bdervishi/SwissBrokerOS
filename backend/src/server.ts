@@ -7,6 +7,7 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
 import { integrationsRouter } from './integrations';
 import { callsRouter } from './calls';
+import { demoRouter } from './demo';
 import cron from 'node-cron';
 import { runAllAutomation } from './automation';
 
@@ -41,6 +42,9 @@ app.use('/api/integrations', integrationsRouter);
 
 // Call agent – post-call pipeline (transcript -> summary + follow-up actions)
 app.use('/api/calls', callsRouter);
+
+// Demo access (email allow-list -> magic-link into the shared demo tenant)
+app.use('/api/demo', demoRouter);
 
 // 3. AI Proxy Route
 app.post('/api/generate', async (req, res) => {
