@@ -7,7 +7,7 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
 import { integrationsRouter } from './integrations';
 import cron from 'node-cron';
-import { runDeadlineAutomation } from './automation';
+import { runAllAutomation } from './automation';
 
 dotenv.config();
 
@@ -87,7 +87,7 @@ app.post('/api/automation/run', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized' });
     }
     try {
-        const result = await runDeadlineAutomation();
+        const result = await runAllAutomation();
         res.json(result);
     } catch (e: any) {
         console.error('Automation error:', e?.message);
@@ -98,7 +98,7 @@ app.post('/api/automation/run', async (req, res) => {
 // Run every day at 06:00 (server time) if Supabase is configured.
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     cron.schedule('0 6 * * *', () => {
-        runDeadlineAutomation()
+        runAllAutomation()
             .then((r) => console.log('🗓️  Deadline automation:', r))
             .catch((e) => console.error('Deadline automation failed:', e?.message));
     });

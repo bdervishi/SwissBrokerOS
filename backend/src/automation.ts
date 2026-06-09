@@ -33,20 +33,34 @@ export async function runDeadlineAutomation(): Promise<{ created: number; scanne
   const bdayHorizon = new Date(now.getTime() + 30 * DAY);
   const candidates: Candidate[] = [];
 
-  // 1. Policy cancellation deadlines
+  // 1. Policy cancellation deadlines + storno (clawback) watch
   const { data: policies } = await supabase
     .from('policies')
-    .select('id, tenant_id, insurer, type, end_date, cancellation_notice_period, status');
+    .select('id, tenant_id, insurer, type, end_date, cancellation_notice_period, status, start_date, liability_duration_months, initial_commission');
   for (const p of policies || []) {
-    if (p.status === 'CANCELLED' || !p.end_date) continue;
-    const end = new Date(p.end_date);
-    const deadline = addMonths(end, p.cancellation_notice_period || 3);
-    if (deadline >= now && deadline <= horizon) {
-      candidates.push({
-        tenantId: p.tenant_id, relatedId: p.id, relatedType: 'POLICY', type: 'DEADLINE',
-        title: `Kündigungsfrist: ${p.insurer} ${p.type}`, start: deadline,
-        description: `Letzter Termin zur Kündigung der Police bei ${p.insurer}.`,
-      });
+    if (p.status === 'CANCELLED') continue;
+    if (p.end_date) {
+      const end = new Date(p.end_date);
+      const deadline = addMonths(end, p.cancellation_notice_period || 3);
+      if (deadline >= now && deadline <= horizon) {
+        candidates.push({
+          tenantId: p.tenant_id, relatedId: p.id, relatedType: 'POLICY', type: 'DEADLINE',
+          title: `Kündigungsfrist: ${p.insurer} ${p.type}`, start: deadline,
+          description: `Letzter Termin zur Kündigung der Police bei ${p.insurer}.`,
+        });
+      }
+    }
+    // Storno watch: reminder when the clawback liability period is about to end.
+    if (p.start_date && (p.liability_duration_months || 0) > 0 && (p.initial_commission || 0) > 0) {
+      const clawbackEnd = new Date(p.start_date);
+      clawbackEnd.setMonth(clawbackEnd.getMonth() + p.liability_duration_months);
+      if (clawbackEnd >= now && clawbackEnd <= horizon) {
+        candidates.push({
+          tenantId: p.tenant_id, relatedId: p.id, relatedType: 'POLICY', type: 'TASK',
+          title: `Stornohaftung endet: ${p.insurer} ${p.type}`, start: clawbackEnd,
+          description: 'Ab diesem Datum besteht kein Stornorückforderungs-Risiko mehr für diese Police.',
+        });
+      }
     }
   }
 
@@ -111,4 +125,42 @@ export async function runDeadlineAutomation(): Promise<{ created: number; scanne
   const { error } = await supabase.from('calendar_events').insert(toInsert);
   if (error) throw error;
   return { created: toInsert.length, scanned: candidates.length };
+}
+
+/**
+ * Lead follow-ups: leads stuck in NEW/CONTACTED without an update for 7+ days
+ * get an open "Nachfassen" task (idempotent – skips leads that already have an
+ * open follow-up task).
+ */
+export async function runLeadFollowups(): Promise<{ created: number }> {
+  const staleBefore = new Date(Date.now() - 7 * DAY).toISOString();
+  const { data: leads } = await supabase
+    .from('leads')
+    .select('id, tenant_id, name, status, updated_at')
+    .in('status', ['NEW', 'CONTACTED'])
+    .lt('updated_at', staleBefore);
+  if (!leads || leads.length === 0) return { created: 0 };
+
+  const leadIds = leads.map((l) => l.id);
+  const { data: openTasks } = await supabase
+    .from('lead_tasks')
+    .select('lead_id, label, is_completed')
+    .in('lead_id', leadIds)
+    .eq('is_completed', false);
+  const hasOpenFollowup = new Set((openTasks || []).filter((t) => t.label === 'Nachfassen').map((t) => t.lead_id));
+
+  const toInsert = leads
+    .filter((l) => !hasOpenFollowup.has(l.id))
+    .map((l) => ({ lead_id: l.id, label: 'Nachfassen', due_date: ymd(new Date()), priority: 'HIGH', is_completed: false }));
+  if (toInsert.length === 0) return { created: 0 };
+  const { error } = await supabase.from('lead_tasks').insert(toInsert);
+  if (error) throw error;
+  return { created: toInsert.length };
+}
+
+/** Runs every automation and aggregates the result. */
+export async function runAllAutomation() {
+  const deadlines = await runDeadlineAutomation();
+  const followups = await runLeadFollowups();
+  return { deadlineEvents: deadlines.created, leadFollowups: followups.created };
 }
