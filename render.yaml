@@ -1,0 +1,54 @@
+# Render Blueprint for the SwissBroker OS backend (Express).
+# Create a Blueprint in Render from this repo; it builds backend/ and runs it.
+# Secrets (sync:false) must be set in the Render dashboard after creation.
+
+services:
+  - type: web
+    name: swissbroker-backend
+    runtime: node
+    rootDir: backend
+    region: frankfurt            # EU data residency
+    plan: free                   # NOTE: free instances sleep -> the daily cron
+                                 # won't fire reliably. Use a paid plan or an
+                                 # external scheduler hitting /api/automation/run.
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # --- set these in the Render dashboard ---
+      - key: FRONTEND_URL
+        sync: false              # https://<your-vercel-app>
+      - key: BACKEND_PUBLIC_URL
+        sync: false              # the Render URL of THIS service
+      - key: GOOGLE_API_KEY
+        sync: false              # Gemini key (AI proxy + extraction)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false              # server-side only!
+      - key: DEMO_TENANT_ID
+        sync: false              # optional; defaults to seeded Muster Broker AG
+      # --- OAuth apps (optional; only if you use drive integrations) ---
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: MS_CLIENT_SECRET
+        sync: false
+      - key: DROPBOX_CLIENT_ID
+        sync: false
+      - key: DROPBOX_CLIENT_SECRET
+        sync: false
+      # --- auto-generated secrets ---
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: STATE_SECRET
+        generateValue: true
+      - key: AUTOMATION_SECRET
+        generateValue: true
