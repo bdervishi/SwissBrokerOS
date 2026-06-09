@@ -1,16 +1,18 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import { encryptJson, decryptJson, signState, verifyState } from './crypto';
+import { requireTenant, tenantFromQuery, tenantFromBody } from './auth';
 
 /**
  * Per-tenant OAuth drive integrations (Google Drive, Microsoft OneDrive).
  *
  * Security model:
  *  - Client secrets live ONLY here (backend env vars), never in the browser.
- *  - Per-tenant tokens are stored in public.tenant_integrations.encrypted_credentials
- *    (JSONB) via the Supabase service role (bypasses RLS). RLS still protects the
- *    rows from the anon/browser client.
- *  - TODO(hardening): encrypt encrypted_credentials at rest (Supabase Vault /
- *    pgsodium or app-level AES) instead of storing tokens in plaintext JSONB.
+ *  - Data routes require a valid Supabase JWT whose tenant matches the request
+ *    (requireTenant) – prevents cross-tenant access via a guessed tenantId.
+ *  - Per-tenant tokens are AES-256-GCM encrypted at rest (ENCRYPTION_KEY) in
+ *    tenant_integrations.encrypted_credentials.
+ *  - OAuth state is HMAC-signed with an expiry (signState/verifyState).
  */
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
@@ -68,8 +70,6 @@ const PROVIDERS: Record<ProviderCode, ProviderConfig> = {
 };
 
 const redirectUri = (provider: string) => `${BACKEND_PUBLIC_URL}/api/integrations/${provider}/callback`;
-const encodeState = (obj: Record<string, string>) => Buffer.from(JSON.stringify(obj)).toString('base64url');
-const decodeState = (s: string) => { try { return JSON.parse(Buffer.from(s, 'base64url').toString()); } catch { return {}; } };
 
 // ---- token storage (tenant_integrations) --------------------------------
 async function getOrCreateProviderId(code: ProviderCode): Promise<string> {
@@ -90,7 +90,7 @@ async function saveCredentials(tenantId: string, code: ProviderCode, creds: any)
   await supabase
     .from('tenant_integrations')
     .upsert(
-      { tenant_id: tenantId, provider_id: providerId, status: 'CONNECTED', encrypted_credentials: creds },
+      { tenant_id: tenantId, provider_id: providerId, status: 'CONNECTED', encrypted_credentials: encryptJson(creds) },
       { onConflict: 'tenant_id,provider_id' },
     );
 }
@@ -104,7 +104,7 @@ async function loadCredentials(tenantId: string, code: ProviderCode): Promise<an
     .eq('provider_id', providerId)
     .maybeSingle();
   if (!data || data.status !== 'CONNECTED') return null;
-  return data.encrypted_credentials;
+  return decryptJson(data.encrypted_credentials);
 }
 
 async function disconnect(tenantId: string, code: ProviderCode) {
@@ -236,24 +236,25 @@ integrationsRouter.get('/providers', (_req, res) => {
   );
 });
 
-// Begin OAuth: redirect the tenant admin to the provider consent screen
-integrationsRouter.get('/:provider/connect', (req, res) => {
+// Begin OAuth (authenticated): return the provider consent URL with a signed
+// state. Only an authenticated user of the tenant can obtain it; the frontend
+// then navigates the browser to the returned URL.
+integrationsRouter.post('/:provider/connect-url', requireTenant(tenantFromBody), (req, res) => {
   const { provider } = req.params;
-  const tenantId = String(req.query.tenantId || '');
-  if (!isValidProvider(provider)) return res.status(400).send('Unknown provider');
-  if (!tenantId) return res.status(400).send('Missing tenantId');
+  const tenantId = String(req.body?.tenantId || '');
+  if (!isValidProvider(provider)) return res.status(400).json({ error: 'Unknown provider' });
   const cfg = PROVIDERS[provider];
-  if (!cfg.clientId) return res.status(500).send(`${cfg.name} is not configured on the server`);
+  if (!cfg.clientId) return res.status(500).json({ error: `${cfg.name} is not configured on the server` });
 
   const params = new URLSearchParams({
     client_id: cfg.clientId,
     redirect_uri: redirectUri(provider),
     response_type: 'code',
     scope: cfg.scope,
-    state: encodeState({ tenantId, provider }),
+    state: signState({ tenantId, provider }),
     ...(cfg.extraAuth || {}),
   });
-  res.redirect(`${cfg.authUrl}?${params.toString()}`);
+  res.json({ url: `${cfg.authUrl}?${params.toString()}` });
 });
 
 // OAuth callback: exchange code, store tokens, redirect back to the app
@@ -261,9 +262,10 @@ integrationsRouter.get('/:provider/callback', async (req, res) => {
   const { provider } = req.params;
   const { code, state, error } = req.query as Record<string, string>;
   if (!isValidProvider(provider)) return res.status(400).send('Unknown provider');
-  const { tenantId } = decodeState(String(state || ''));
+  const payload = verifyState(String(state || ''));
+  const tenantId = payload?.tenantId;
   const back = (status: string) => res.redirect(`${FRONTEND_URL}/#/integrations?provider=${provider}&status=${status}`);
-  if (error || !code || !tenantId) return back('error');
+  if (error || !code || !tenantId || payload?.provider !== provider) return back('error');
   try {
     const tokens: any = await exchangeCode(provider, code);
     await saveCredentials(tenantId, provider, {
@@ -279,7 +281,7 @@ integrationsRouter.get('/:provider/callback', async (req, res) => {
 });
 
 // Connection status for a tenant
-integrationsRouter.get('/:provider/status', async (req, res) => {
+integrationsRouter.get('/:provider/status', requireTenant(tenantFromQuery), async (req, res) => {
   const { provider } = req.params;
   const tenantId = String(req.query.tenantId || '');
   if (!isValidProvider(provider) || !tenantId) return res.status(400).json({ connected: false });
@@ -292,7 +294,7 @@ integrationsRouter.get('/:provider/status', async (req, res) => {
 });
 
 // List files/folders
-integrationsRouter.get('/:provider/files', async (req, res) => {
+integrationsRouter.get('/:provider/files', requireTenant(tenantFromQuery), async (req, res) => {
   const { provider } = req.params;
   const tenantId = String(req.query.tenantId || '');
   const folderId = req.query.folderId ? String(req.query.folderId) : undefined;
@@ -309,7 +311,7 @@ integrationsRouter.get('/:provider/files', async (req, res) => {
 // ---- per-client folder mappings (integration_external_mappings) ---------
 // Link a tenant's drive folder to a specific client so their documents appear
 // on the client record.
-integrationsRouter.get('/mappings', async (req, res) => {
+integrationsRouter.get('/mappings', requireTenant(tenantFromQuery), async (req, res) => {
   const tenantId = String(req.query.tenantId || '');
   const clientId = String(req.query.clientId || '');
   if (!tenantId || !clientId) return res.status(400).json({ error: 'Bad request' });
@@ -321,7 +323,7 @@ integrationsRouter.get('/mappings', async (req, res) => {
   res.json({ mappings: (data || []).map((m) => ({ provider: m.provider_code, folderId: m.external_id, folderUrl: m.external_url })) });
 });
 
-integrationsRouter.post('/mappings', async (req, res) => {
+integrationsRouter.post('/mappings', requireTenant(tenantFromBody), async (req, res) => {
   const { tenantId, clientId, provider, folderId, folderUrl } = req.body || {};
   if (!tenantId || !clientId || !provider || !folderId) return res.status(400).json({ error: 'Bad request' });
   const { error } = await supabase.from('integration_external_mappings').upsert(
@@ -335,7 +337,7 @@ integrationsRouter.post('/mappings', async (req, res) => {
   res.json({ ok: true });
 });
 
-integrationsRouter.delete('/mappings', async (req, res) => {
+integrationsRouter.delete('/mappings', requireTenant(tenantFromQuery), async (req, res) => {
   const tenantId = String(req.query.tenantId || '');
   const clientId = String(req.query.clientId || '');
   const provider = String(req.query.provider || '');
@@ -347,7 +349,7 @@ integrationsRouter.delete('/mappings', async (req, res) => {
 });
 
 // Disconnect
-integrationsRouter.post('/:provider/disconnect', async (req, res) => {
+integrationsRouter.post('/:provider/disconnect', requireTenant(tenantFromQuery), async (req, res) => {
   const { provider } = req.params;
   const tenantId = String(req.query.tenantId || req.body?.tenantId || '');
   if (!isValidProvider(provider) || !tenantId) return res.status(400).json({ error: 'Bad request' });

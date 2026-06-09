@@ -76,11 +76,13 @@ redirect URIs exactly.
 
 ## Security notes / hardening
 - Client secrets and refresh tokens never reach the browser.
+- Data routes require a valid Supabase JWT whose tenant matches the request
+  (cross-tenant access is blocked even with a guessed tenantId).
+- Tokens are **AES-256-GCM encrypted at rest** (`ENCRYPTION_KEY`).
+- OAuth `state` is **HMAC-signed with a 10-min expiry**; connect is initiated via
+  an authenticated `POST /connect-url`.
 - `tenant_integrations` is RLS-protected; the backend uses the service role.
-- **TODO:** encrypt `encrypted_credentials` at rest (Supabase Vault / pgsodium
-  or app-level AES) – currently stored as plaintext JSONB.
-- `state` carries the tenantId; consider a signed/expiring state for stricter CSRF.
-- Scopes are read-only (`drive.readonly` / `Files.Read.All`).
+- Scopes are read-only (`drive.readonly` / `Files.Read.All` / Dropbox read).
 
 ## Next steps (not yet built)
 - File download proxy/streaming through the backend (currently open via provider

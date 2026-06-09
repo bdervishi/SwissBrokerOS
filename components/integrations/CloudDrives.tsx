@@ -46,8 +46,13 @@ export const CloudDrives: React.FC = () => {
     // eslint-disable-next-line
   }, [tenantId]);
 
-  const connect = (code: DriveProvider) => {
-    window.location.href = integrationsApi.connectUrl(code, tenantId);
+  const connect = async (code: DriveProvider) => {
+    try {
+      const url = await integrationsApi.getConnectUrl(code, tenantId);
+      window.location.href = url;
+    } catch (e: any) {
+      setNotice(e?.message || 'Verbinden fehlgeschlagen.');
+    }
   };
   const disconnect = async (code: DriveProvider) => {
     await integrationsApi.disconnect(code, tenantId);
