@@ -6,7 +6,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 // Fix: Imported Modal component
 import { Modal } from '../components/ui/Modal';
-import { MOCK_TEAMS, MOCK_USERS } from '../constants';
+import { MOCK_TEAMS } from '../constants';
+import { useProfiles } from '../src/hooks/useData';
 import { UserRole, User } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -33,6 +34,7 @@ export const TeamDetail: React.FC = () => {
 
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const { data: users } = useProfiles();
 
     // Access Control
     if (role !== UserRole.BROKER_ADMIN && role !== UserRole.BROKER_ADMINISTRATION) {
@@ -51,11 +53,11 @@ export const TeamDetail: React.FC = () => {
         );
     }
 
-    const members = MOCK_USERS.filter(u => u.teamId === team.id);
-    const leader = MOCK_USERS.find(u => u.id === team.leaderId);
+    const members = users.filter(u => u.teamId === team.id);
+    const leader = users.find(u => u.id === team.leaderId);
     
     // Employees who could be added (not in this team)
-    const candidates = MOCK_USERS.filter(u => 
+    const candidates = users.filter(u => 
         u.teamId !== team.id && 
         (u.role === UserRole.BROKER_AGENT || u.role === UserRole.BROKER_ADMINISTRATION || u.role === UserRole.BROKER_MARKETING)
     ).filter(u => `${u.firstName} ${u.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()));

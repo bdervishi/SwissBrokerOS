@@ -4,7 +4,8 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_SAAS_PACKAGES, MOCK_TENANTS, MOCK_ADDONS } from '../constants';
+import { MOCK_SAAS_PACKAGES, MOCK_ADDONS } from '../constants';
+import { useTenants } from '../src/hooks/useData';
 import { UserRole, SaaSAddon } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useBranding } from '../contexts/BrandingContext';
@@ -13,6 +14,7 @@ import { Navigate, Link, useNavigate } from 'react-router-dom';
 
 export const SaaSPlans: React.FC = () => {
     const { role } = useAuth();
+    const { data: tenants } = useTenants();
     const { tenant, updateTenant } = useBranding();
     const navigate = useNavigate();
 
@@ -170,7 +172,7 @@ export const SaaSPlans: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {MOCK_TENANTS.map(t => (
+                                {tenants.map(t => (
                                     <tr key={t.id}>
                                         <td className="px-6 py-4 font-medium">{t.name}</td>
                                         <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-xs font-mono">{t.plan}</span></td>

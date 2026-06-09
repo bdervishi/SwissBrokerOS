@@ -4,7 +4,8 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_USERS, MOCK_TEAMS, MOCK_TIME_ENTRIES, MOCK_CLIENTS, MOCK_POLICIES, MOCK_TAX_RETURNS } from '../constants';
+import { MOCK_TEAMS } from '../constants';
+import { useProfiles, useClients, usePolicies, useTimeEntries, useTaxReturns } from '../src/hooks/useData';
 import { UserRole, EmployeeModule, TimeEntryStatus, TimeEntry } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useBranding } from '../contexts/BrandingContext';
@@ -43,6 +44,11 @@ export const EmployeeDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { role, adminResetPassword } = useAuth();
     const { tenant } = useBranding();
+    const { data: users } = useProfiles();
+    const { data: clients } = useClients();
+    const { data: policies } = usePolicies();
+    const { data: timeEntries } = useTimeEntries();
+    const { data: allTaxReturns } = useTaxReturns();
     
     // Check Plan for Time Tracking Feature
     const hasTimeTracking = tenant?.plan === 'PROFESSIONAL' || tenant?.plan === 'ENTERPRISE';
@@ -69,13 +75,13 @@ export const EmployeeDetail: React.FC = () => {
         return <Navigate to="/dashboard" />;
     }
 
-    const employee = MOCK_USERS.find(u => u.id === id);
+    const employee = users.find(u => u.id === id);
     const team = MOCK_TEAMS.find(t => t.id === employee?.teamId);
 
     // Initial Load of Time Entries
     useEffect(() => {
         if(employee) {
-            setLocalTimeEntries(MOCK_TIME_ENTRIES.filter(t => t.userId === employee.id));
+            setLocalTimeEntries(timeEntries.filter(t => t.userId === employee.id));
         }
     }, [employee]);
 
@@ -153,9 +159,9 @@ export const EmployeeDetail: React.FC = () => {
         { name: 'Fr', hours: 6.5 },
     ];
 
-    const assignedClients = MOCK_CLIENTS.filter(c => c.advisorId === employee.id);
-    const managedPolicies = MOCK_POLICIES.filter(p => assignedClients.some(c => c.id === p.clientId));
-    const taxReturns = MOCK_TAX_RETURNS.filter(t => assignedClients.some(c => c.id === t.clientId));
+    const assignedClients = clients.filter(c => c.advisorId === employee.id);
+    const managedPolicies = policies.filter(p => assignedClients.some(c => c.id === p.clientId));
+    const taxReturns = allTaxReturns.filter(t => assignedClients.some(c => c.id === t.clientId));
 
     const getModuleIcon = (mod: EmployeeModule) => {
         switch(mod) {
@@ -517,7 +523,7 @@ export const EmployeeDetail: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {taxReturns.map(tr => {
-                                    const client = MOCK_CLIENTS.find(c => c.id === tr.clientId);
+                                    const client = clients.find(c => c.id === tr.clientId);
                                     return (
                                         <tr key={tr.id}>
                                             <td className="px-6 py-4 font-medium">{client?.firstName} {client?.lastName}</td>

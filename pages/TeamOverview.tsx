@@ -4,7 +4,8 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { MOCK_USERS, MOCK_TEAMS } from '../constants';
+import { MOCK_TEAMS } from '../constants';
+import { useProfiles } from '../src/hooks/useData';
 import { UserRole, EmployeeModule, Team } from '../types';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +26,7 @@ import {
 
 export const TeamOverview: React.FC = () => {
     const { role } = useAuth();
+    const { data: users } = useProfiles();
     const navigate = useNavigate();
     
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -36,7 +38,7 @@ export const TeamOverview: React.FC = () => {
     }
 
     // Filter only broker employees (exclude SaaS admins and Clients)
-    const employees = MOCK_USERS.filter(u => 
+    const employees = users.filter(u => 
         u.role === UserRole.BROKER_ADMIN || 
         u.role === UserRole.BROKER_ADMINISTRATION || 
         u.role === UserRole.BROKER_MARKETING || 

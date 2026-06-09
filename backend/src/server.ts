@@ -5,6 +5,10 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
+import { integrationsRouter } from './integrations';
+import { callsRouter } from './calls';
+import cron from 'node-cron';
+import { runAllAutomation } from './automation';
 
 dotenv.config();
 
@@ -16,7 +20,7 @@ const API_KEY = process.env.GOOGLE_API_KEY;
 app.use(helmet()); // Sets various HTTP headers for security
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Restrict to your frontend
-    methods: ['POST']
+    methods: ['GET', 'POST', 'DELETE']
 }));
 app.use(express.json());
 
@@ -31,6 +35,12 @@ const apiLimiter = rateLimit({
 
 // Apply rate limiter to API routes
 app.use('/api', apiLimiter);
+
+// Per-tenant OAuth drive integrations (Google Drive, Microsoft OneDrive)
+app.use('/api/integrations', integrationsRouter);
+
+// Call agent – post-call pipeline (transcript -> summary + follow-up actions)
+app.use('/api/calls', callsRouter);
 
 // 3. AI Proxy Route
 app.post('/api/generate', async (req, res) => {
@@ -73,6 +83,30 @@ app.post('/api/generate', async (req, res) => {
         res.status(status).json({ error: message });
     }
 });
+
+// Deadline automation: manual trigger (protected by a shared secret) + daily cron.
+const AUTOMATION_SECRET = process.env.AUTOMATION_SECRET;
+app.post('/api/automation/run', async (req, res) => {
+    if (AUTOMATION_SECRET && req.headers['x-automation-key'] !== AUTOMATION_SECRET) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const result = await runAllAutomation();
+        res.json(result);
+    } catch (e: any) {
+        console.error('Automation error:', e?.message);
+        res.status(500).json({ error: e?.message || 'Automation failed' });
+    }
+});
+
+// Run every day at 06:00 (server time) if Supabase is configured.
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    cron.schedule('0 6 * * *', () => {
+        runAllAutomation()
+            .then((r) => console.log('🗓️  Deadline automation:', r))
+            .catch((e) => console.error('Deadline automation failed:', e?.message));
+    });
+}
 
 // Health Check
 app.get('/health', (req, res) => {

@@ -24,7 +24,7 @@ import {
     Zap,
     Briefcase
 } from 'lucide-react';
-import { MOCK_USERS } from '../constants';
+import { useProfiles } from '../src/hooks/useData';
 
 // Mock Internal SaaS Teams
 const INITIAL_SAAS_TEAMS = [
@@ -36,6 +36,7 @@ const INITIAL_SAAS_TEAMS = [
 
 export const SaaSTeams: React.FC = () => {
     const { role } = useAuth();
+    const { data: users } = useProfiles();
     const navigate = useNavigate();
     const [teams, setTeams] = useState(INITIAL_SAAS_TEAMS);
     const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +54,7 @@ export const SaaSTeams: React.FC = () => {
         return <Navigate to="/dashboard" />;
     }
 
-    const saasUsers = MOCK_USERS.filter(u => u.role.startsWith('SAAS_'));
+    const saasUsers = users.filter(u => u.role.startsWith('SAAS_'));
 
     const handleDelete = (id: string) => {
         if(window.confirm("Sind Sie sicher, dass Sie dieses Team löschen möchten?")) {
