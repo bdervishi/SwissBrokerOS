@@ -42,3 +42,16 @@ Im Vercel Dashboard unter **"Environment Variables"** füge hinzu:
 ## Fehlerbehebung
 *   **404 beim Neuladen:** Wurde durch die `vercel.json` behoben.
 *   **KI funktioniert nicht:** Prüfe, ob der `API_KEY` in den Vercel Settings korrekt gesetzt ist und redeploye das Projekt, falls du ihn nachträglich geändert hast.
+
+## Troubleshooting: Vercel "Blocked" / commit author not matched
+
+Vercel's **Hobby** plan only deploys commits whose **author email** belongs to
+the GitHub account that owns the Vercel project. If you see
+*"commit email … could not be matched to a GitHub account"* or *"Hobby teams do
+not support collaboration"*:
+
+1. Add & verify the commit author email on that GitHub account
+   (GitHub → Settings → Emails). Attribution is retroactive and immediate.
+2. Old "Blocked" deployments are **not** re-evaluated automatically — trigger a
+   **new** deployment: merge a PR, click **Redeploy**, or push a fresh commit
+   (`git commit --allow-empty -m "chore: redeploy" && git push`).
