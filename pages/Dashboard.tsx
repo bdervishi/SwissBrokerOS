@@ -36,7 +36,8 @@ import {
   User,
   Building2,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  SearchX,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 
@@ -548,6 +549,22 @@ export const Dashboard: React.FC = () => {
     .sort((a, b) => a.start.getTime() - b.start.getTime())
     .slice(0, 4);
 
+  // 4. Action signals: open Soll, Courtage-Leakage, top cross-sell opportunity.
+  const nowYm = new Date().toISOString().slice(0, 7);
+  const expectedOpenTotal = commissions
+    .filter(c => c.status === CommissionStatus.EXPECTED)
+    .reduce((s, c) => s + (c.expectedAmount ?? 0), 0);
+  const leakage = commissions.filter(c => c.status === CommissionStatus.EXPECTED && (c.period ?? '9999') <= nowYm);
+  const leakageTotal = leakage.reduce((s, c) => s + (c.expectedAmount ?? 0), 0);
+
+  // Cross-sell: client with the most missing standard lines (Haftpflicht / 3a).
+  const STD = [/haftpflicht/i, /hausrat/i, /kranken|kvg|vvg/i, /3a|leben|vorsorge/i, /rechtsschutz/i];
+  const crossSell = clients.map(c => {
+    const own = policies.filter(p => p.clientId === c.id && p.status === PolicyStatus.ACTIVE);
+    const missing = STD.filter(rx => !own.some(p => rx.test(p.type))).length;
+    return { client: c, missing };
+  }).filter(o => o.missing > 0).sort((a, b) => b.missing - a.missing)[0];
+
   return (
     <Layout>
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -682,6 +699,47 @@ export const Dashboard: React.FC = () => {
 
         {/* Side Panel: Tasks & Alerts */}
         <div className="space-y-6">
+          {role !== UserRole.BROKER_MARKETING && (
+            <Card title="Aktion & Chancen">
+              <div className="space-y-3">
+                {leakageTotal > 0 && (
+                  <Link to="/commissions" state={{ tab: 'STATEMENTS' }} className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 hover:shadow-sm transition-shadow">
+                    <SearchX size={18} className="text-red-600 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-red-700 dark:text-red-400">Courtage-Leakage</p>
+                      <p className="text-xs text-red-600/80 dark:text-red-400/80">{leakage.length} fällige, nie abgerechnete Positionen</p>
+                    </div>
+                    <span className="font-mono text-sm font-bold text-red-700 dark:text-red-400"><SensitiveData>CHF {Math.round(leakageTotal).toLocaleString()}</SensitiveData></span>
+                  </Link>
+                )}
+                {expectedOpenTotal > 0 && (
+                  <Link to="/commissions" className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 hover:shadow-sm transition-shadow">
+                    <Wallet size={18} className="text-amber-600 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Offenes Courtage-Soll</p>
+                      <p className="text-xs text-slate-500">erwartet gemäss Courtage-Plan</p>
+                    </div>
+                    <span className="font-mono text-sm font-bold text-slate-700 dark:text-slate-300"><SensitiveData>CHF {Math.round(expectedOpenTotal).toLocaleString()}</SensitiveData></span>
+                  </Link>
+                )}
+                {crossSell && (
+                  <Link to={`/client/${crossSell.client.id}`} className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 hover:shadow-sm transition-shadow">
+                    <Target size={18} className="text-emerald-600 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Cross-Selling-Chance</p>
+                      <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">{crossSell.client.companyName || `${crossSell.client.firstName} ${crossSell.client.lastName}`} — {crossSell.missing} Deckungslücken</p>
+                    </div>
+                    <ChevronRight size={16} className="text-emerald-500 shrink-0" />
+                  </Link>
+                )}
+                {leakageTotal === 0 && expectedOpenTotal === 0 && !crossSell && (
+                  <p className="text-sm text-slate-500 italic py-2 text-center">Alles im grünen Bereich. 🎯</p>
+                )}
+                <Link to="/analytics" className="block pt-1 text-center text-sm text-brand-600 hover:underline font-medium">Zur vollen Analyse →</Link>
+              </div>
+            </Card>
+          )}
+
           <Card title="Nächste Ereignisse">
             <div className="space-y-4">
               {upcomingEvents.length > 0 ? upcomingEvents.map(event => (
