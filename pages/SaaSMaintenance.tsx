@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useConfirm } from '../components/ui/Feedback';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -21,6 +22,7 @@ import {
 import { MaintenanceView } from '../components/MaintenanceView';
 
 export const SaaSMaintenance: React.FC = () => {
+  const confirm = useConfirm();
     const { role } = useAuth();
     const { isMaintenanceMode, toggleMaintenance, maintenanceMessage, setMaintenanceMessage } = useSecurity();
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -37,10 +39,10 @@ export const SaaSMaintenance: React.FC = () => {
         setTimeout(() => setIsSaving(false), 800);
     };
 
-    const handleToggle = () => {
+    const handleToggle = async () => {
         const newState = !isMaintenanceMode;
         if (newState) {
-            const confirmed = window.confirm("ACHTUNG: Dies wird das System für ALLE Makler und Klienten sperren. Nur SaaS-Administratoren behalten Zugriff. Fortfahren?");
+            const confirmed = await confirm({ title: 'Wartungsmodus aktivieren?', body: 'Dies sperrt das System für ALLE Makler und Klienten. Nur SaaS-Administratoren behalten Zugriff.', danger: true, confirmLabel: 'Aktivieren' });
             if (confirmed) toggleMaintenance(true);
         } else {
             toggleMaintenance(false);

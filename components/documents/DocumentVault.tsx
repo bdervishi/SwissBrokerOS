@@ -5,6 +5,7 @@ import { useDocuments } from '../../src/hooks/useData';
 import { documentsService } from '../../src/services/documents';
 import { USE_MOCK } from '../../src/services/db';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast, useConfirm } from '../ui/Feedback';
 import {
   ClientDocument, DocumentCategory, Policy, TaxReturn, MortgageScenario,
 } from '../../types';
@@ -64,6 +65,8 @@ export const DocumentVault: React.FC<DocumentVaultProps> = ({
   tenantId, clientId, policies = [], taxReturns = [], mortgages = [],
 }) => {
   const { user } = useAuth();
+  const toast = useToast();
+  const confirm = useConfirm();
   const { data: documents, loading, refetch } = useDocuments(clientId);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -119,17 +122,18 @@ export const DocumentVault: React.FC<DocumentVaultProps> = ({
       const url = await documentsService.downloadUrl(doc);
       if (url) window.open(url, '_blank', 'noopener');
     } catch (err: any) {
-      alert(err?.message || 'Download fehlgeschlagen.');
+      toast.error(err?.message || 'Download fehlgeschlagen.');
     } finally {
       setBusyDocId(null);
     }
   };
 
   const handleDelete = async (doc: ClientDocument) => {
-    if (!window.confirm(`Dokument «${doc.title}» wirklich löschen?`)) return;
+    if (!(await confirm({ title: 'Dokument löschen?', body: `«${doc.title}» wird unwiderruflich entfernt.`, danger: true, confirmLabel: 'Löschen' }))) return;
     setBusyDocId(doc.id);
     try {
       await documentsService.remove(doc);
+      toast.success('Dokument gelöscht.');
       refetch();
     } finally {
       setBusyDocId(null);

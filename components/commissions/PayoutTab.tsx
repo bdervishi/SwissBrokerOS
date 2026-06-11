@@ -8,6 +8,7 @@ import { Commission, CommissionSplitRule, CommissionStatus, User, UserRole } fro
 import { POLICY_TYPE_SUGGESTIONS } from '../forms/PolicyForm';
 import { SensitiveData } from '../ui/SensitiveData';
 import { Plus, Trash2, Loader2, CheckCircle, Percent, Users } from 'lucide-react';
+import { useToast, useConfirm } from '../ui/Feedback';
 
 /**
  * Splits & Auszahlung (Konzept 4.4): Beteiligungs-Regelwerk pro Berater,
@@ -23,6 +24,8 @@ export const PayoutTab: React.FC<PayoutTabProps> = ({ tenantId }) => {
   const { data: rules, refetch: refetchRules } = useCommissionSplitRules(tenantId);
   const { data: commissions, refetch: refetchCommissions } = useCommissions();
   const { data: users } = useProfiles(tenantId);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [isRuleOpen, setIsRuleOpen] = useState(false);
   const [ruleForm, setRuleForm] = useState({ agentId: '', line: '', rate: '' });
@@ -78,8 +81,9 @@ export const PayoutTab: React.FC<PayoutTabProps> = ({ tenantId }) => {
   };
 
   const removeRule = async (r: CommissionSplitRule) => {
-    if (!window.confirm('Diese Split-Regel löschen?')) return;
+    if (!(await confirm({ title: 'Split-Regel löschen?', danger: true, confirmLabel: 'Löschen' }))) return;
     await db.commissionSplitRules.remove(r.id);
+    toast.success('Split-Regel gelöscht.');
     refetchRules();
   };
 
@@ -87,7 +91,7 @@ export const PayoutTab: React.FC<PayoutTabProps> = ({ tenantId }) => {
   const payOut = async (agentId: string) => {
     const list = byAgent.get(agentId) ?? [];
     const total = list.reduce((s, c) => s + (c.splitAmount ?? 0), 0);
-    if (!window.confirm(`${agentName(agentId)}: ${list.length} Positionen, Saldo CHF ${total.toLocaleString()} — jetzt abrechnen?`)) return;
+    if (!(await confirm({ title: 'Auszahlung abrechnen?', body: `${agentName(agentId)}: ${list.length} Positionen, Saldo CHF ${total.toLocaleString()}.`, confirmLabel: 'Abrechnen' }))) return;
     setPayingAgent(agentId);
     try {
       const today = new Date().toISOString().slice(0, 10);
@@ -95,6 +99,7 @@ export const PayoutTab: React.FC<PayoutTabProps> = ({ tenantId }) => {
         await db.commissions.update(c.id, { splitPaidAt: today } as any);
       }
       refetchCommissions();
+      toast.success('Auszahlung verbucht.');
     } finally {
       setPayingAgent(null);
     }

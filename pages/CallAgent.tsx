@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useToast } from '../components/ui/Feedback';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -47,6 +48,7 @@ const VOICES = [
 ];
 
 export const CallAgent: React.FC = () => {
+  const toast = useToast();
     const { role } = useAuth();
     
     // --- STATE ---
@@ -140,7 +142,7 @@ export const CallAgent: React.FC = () => {
         // shipping a key in the bundle.
         const liveKey = (import.meta as any).env?.VITE_GEMINI_LIVE_KEY;
         if(!liveKey) {
-            alert("Live-Voice ist nicht konfiguriert (VITE_GEMINI_LIVE_KEY fehlt).");
+            toast.warning("Live-Voice ist nicht konfiguriert (VITE_GEMINI_LIVE_KEY fehlt).");
             return;
         }
 

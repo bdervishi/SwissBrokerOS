@@ -21,8 +21,12 @@ const REASON_LABELS: Record<AbsenceReason, string> = {
   VACATION: 'Ferien', SICK: 'Krankheit', OTHER: 'Sonstiges',
 };
 
+import { useToast, useConfirm } from '../ui/Feedback';
+
 export const AbsenceManager: React.FC = () => {
   const { user } = useAuth();
+  const toast = useToast();
+  const confirmDlg = useConfirm();
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [team, setTeam] = useState<User[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -90,7 +94,7 @@ export const AbsenceManager: React.FC = () => {
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm('Diese Abwesenheit löschen?')) return;
+    if (!(await confirmDlg({ title: 'Abwesenheit löschen?', danger: true, confirmLabel: 'Löschen' }))) return;
     await absencesService.remove(id);
     load();
   };
