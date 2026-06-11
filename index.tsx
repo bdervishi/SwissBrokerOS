@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { supabase, isSupabaseConfigured } from './src/lib/supabase';
+import './src/index.css';
 
 /**
  * Auth callback handler (runs before React mounts).

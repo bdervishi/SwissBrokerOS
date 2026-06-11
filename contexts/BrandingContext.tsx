@@ -45,8 +45,11 @@ const hexToHSL = (hex: string) => {
     return { h: h * 360, s: s * 100, l: l * 100 };
 };
 
-// Helper to convert HSL back to RGB string for Tailwind
-const hslToRGBString = (h: number, s: number, l: number) => {
+// Helper to convert HSL back to a CSS color for the Tailwind v4 theme tokens.
+// IMPORTANT: must be a COMPLETE color value (e.g. `rgb(2 132 199)`), because
+// the generated utilities do `background-color: var(--color-brand-600)`.
+// Bare "R G B" triplets would compute to an invalid color (transparent).
+const hslToCssColor = (h: number, s: number, l: number) => {
     s /= 100; l /= 100;
     let c = (1 - Math.abs(2 * l - 1)) * s,
         x = c * (1 - Math.abs((h / 60) % 2 - 1)),
@@ -57,7 +60,7 @@ const hslToRGBString = (h: number, s: number, l: number) => {
     else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
     else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
     else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-    return `${Math.round((r + m) * 255)} ${Math.round((g + m) * 255)} ${Math.round((b + m) * 255)}`;
+    return `rgb(${Math.round((r + m) * 255)} ${Math.round((g + m) * 255)} ${Math.round((b + m) * 255)})`;
 };
 
 // Fix: children made optional
@@ -105,13 +108,19 @@ export const BrandingProvider: React.FC<{ children?: React.ReactNode }> = ({ chi
     const baseColor = branding.primaryColor;
     const hsl = hexToHSL(baseColor);
 
-    // Generate accurate shades using HSL manipulation
-    root.style.setProperty('--color-brand-50', hslToRGBString(hsl.h, hsl.s, 97));
-    root.style.setProperty('--color-brand-100', hslToRGBString(hsl.h, hsl.s, 92));
-    root.style.setProperty('--color-brand-500', hslToRGBString(hsl.h, hsl.s, hsl.l));
-    root.style.setProperty('--color-brand-600', hslToRGBString(hsl.h, hsl.s, Math.max(0, hsl.l - 8)));
-    root.style.setProperty('--color-brand-700', hslToRGBString(hsl.h, hsl.s, Math.max(0, hsl.l - 18)));
-    root.style.setProperty('--color-brand-900', hslToRGBString(hsl.h, hsl.s, Math.max(0, hsl.l - 35)));
+    // Generate accurate shades using HSL manipulation. These override the
+    // Tailwind v4 theme tokens (src/index.css) so EVERY brand-* utility follows
+    // the tenant's primary color – true white-labeling.
+    root.style.setProperty('--color-brand-50', hslToCssColor(hsl.h, hsl.s, 97));
+    root.style.setProperty('--color-brand-100', hslToCssColor(hsl.h, hsl.s, 92));
+    root.style.setProperty('--color-brand-200', hslToCssColor(hsl.h, hsl.s, 85));
+    root.style.setProperty('--color-brand-300', hslToCssColor(hsl.h, hsl.s, 76));
+    root.style.setProperty('--color-brand-400', hslToCssColor(hsl.h, hsl.s, Math.min(100, hsl.l + 8)));
+    root.style.setProperty('--color-brand-500', hslToCssColor(hsl.h, hsl.s, hsl.l));
+    root.style.setProperty('--color-brand-600', hslToCssColor(hsl.h, hsl.s, Math.max(0, hsl.l - 8)));
+    root.style.setProperty('--color-brand-700', hslToCssColor(hsl.h, hsl.s, Math.max(0, hsl.l - 18)));
+    root.style.setProperty('--color-brand-800', hslToCssColor(hsl.h, hsl.s, Math.max(0, hsl.l - 27)));
+    root.style.setProperty('--color-brand-900', hslToCssColor(hsl.h, hsl.s, Math.max(0, hsl.l - 35)));
 
   }, [branding]);
 
