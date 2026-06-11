@@ -5,7 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useBranding } from '../contexts/BrandingContext';
-import { CommandPalette } from './ui/CommandPalette'; // NEW Import
+import { CommandPalette } from './ui/CommandPalette';
+import { LanguageSwitcher } from './ui/LanguageSwitcher';
 import { NotificationBell } from './NotificationBell';
 import { UserRole } from '../types';
 import { 
@@ -125,7 +126,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             items: [
                 { name: t('nav.dashboard'), path: '/dashboard', icon: <LayoutDashboard size={20} /> },
                 { name: t('nav.my_policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
-                { name: 'Mein Portal', path: '/portal', icon: <FolderOpen size={20} /> },
+                { name: t('nav.portal'), path: '/portal', icon: <FolderOpen size={20} /> },
                 { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
                 { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> },
             ]
@@ -192,7 +193,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             items: [
                 { name: 'Abrechnungen (MRR)', path: '/commissions', icon: <Wallet size={20} /> },
                 { name: 'Embedded Finance', path: '/saas/embedded-finance', icon: <Coins size={20} className="text-emerald-500" /> },
-                { name: 'Analytics', path: '/analytics', icon: <PieChart size={20} /> },
+                { name: t('nav.analytics'), path: '/analytics', icon: <PieChart size={20} /> },
             ]
         });
 
@@ -229,52 +230,52 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             ]
         },
         {
-            title: "Clients & Assets",
+            title: t("sec.clients"),
             items: [
-                { name: 'Klienten', path: '/clients', icon: <Users size={20} /> },
-                { name: 'Versicherungen', path: '/policies', icon: <ShieldAlert size={20} /> },
-                { name: 'Hypotheken', path: '/mortgages', icon: <Home size={20} /> },
-                { name: 'Kredit & Leasing', path: '/credit', icon: <CreditCard size={20} /> },
-                { name: 'Steuern', path: '/tax', icon: <Calculator size={20} /> }, 
+                { name: t('nav.clients'), path: '/clients', icon: <Users size={20} /> },
+                { name: t('nav.policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
+                { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
+                { name: t('nav.credit'), path: '/credit', icon: <CreditCard size={20} /> },
+                { name: t('nav.tax'), path: '/tax', icon: <Calculator size={20} /> }, 
             ]
         },
         {
-            title: "Growth & Network",
+            title: t("sec.growth"),
             items: [
-                { name: 'Lead Radar', path: '/leads', icon: <Target size={20} /> },
-                { name: 'Lead Exchange', path: '/marketplace', icon: <ShoppingBag size={20} className="text-purple-500" /> }, // NEW Marketplace
-                { name: 'Partner Hub', path: '/partners', icon: <Handshake size={20} /> },
+                { name: t('nav.leads'), path: '/leads', icon: <Target size={20} /> },
+                { name: t('nav.marketplace'), path: '/marketplace', icon: <ShoppingBag size={20} className="text-purple-500" /> }, // NEW Marketplace
+                { name: t('nav.partners'), path: '/partners', icon: <Handshake size={20} /> },
             ]
         },
         {
-            title: "Performance",
+            title: t("sec.performance"),
             items: [
-                { name: 'Provisionen', path: '/commissions', icon: <Wallet size={20} /> },
-                { name: 'Analytics', path: '/analytics', icon: <PieChart size={20} /> },
+                { name: t('nav.commissions'), path: '/commissions', icon: <Wallet size={20} /> },
+                { name: t('nav.analytics'), path: '/analytics', icon: <PieChart size={20} /> },
             ]
         }
     ];
 
     if (role === UserRole.BROKER_ADMIN || role === UserRole.BROKER_ADMINISTRATION) {
         brokerSections.push({
-            title: "Organization",
+            title: t("sec.organization"),
             items: [
-                { name: 'Team & HR', path: '/team', icon: <Briefcase size={20} /> },
-                { name: 'Webseite & SEO', path: '/web-engine', icon: <Monitor size={20} /> }, 
-                { name: 'AI Studio', path: '/broker/ai-config', icon: <BrainCircuit size={20} /> },
-                { name: 'Daten Import', path: '/import', icon: <Database size={20} /> },
-                { name: 'Audit-Log', path: '/audit', icon: <ScrollText size={20} /> },
+                { name: t('nav.team'), path: '/team', icon: <Briefcase size={20} /> },
+                { name: t('nav.web_engine'), path: '/web-engine', icon: <Monitor size={20} /> }, 
+                { name: t('nav.ai_studio'), path: '/broker/ai-config', icon: <BrainCircuit size={20} /> },
+                { name: t('nav.import'), path: '/import', icon: <Database size={20} /> },
+                { name: t('nav.audit'), path: '/audit', icon: <ScrollText size={20} /> },
             ]
         });
     }
 
     brokerSections.push({
-        title: "Settings",
+        title: t("sec.settings"),
         items: [
-            { name: 'Mein Profil & HR', path: '/profile', icon: <User size={20} /> }, // NEW for Agents
-            { name: 'Mein Abo', path: '/plans', icon: <Package size={20} /> },
-            { name: 'Integrationen', path: '/integrations', icon: <Blocks size={20} /> },
-            { name: 'Einstellungen', path: '/settings', icon: <Settings size={20} /> },
+            { name: t('nav.profile'), path: '/profile', icon: <User size={20} /> }, // NEW for Agents
+            { name: t('nav.plans'), path: '/plans', icon: <Package size={20} /> },
+            { name: t('nav.integrations'), path: '/integrations', icon: <Blocks size={20} /> },
+            { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> },
         ]
     });
 
@@ -385,7 +386,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const UserMenu = () => (
       <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2 bg-white dark:bg-slate-900">
-            <button 
+            <LanguageSwitcher />
+            <button
                 onClick={toggleTheme}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent"
             >
