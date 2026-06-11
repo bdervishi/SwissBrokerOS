@@ -15,6 +15,7 @@ import { PolicyForm } from '../components/forms/PolicyForm';
 import { AssetForm, ASSET_TYPE_LABELS } from '../components/forms/AssetForm';
 import { VagDisclosureButton } from '../components/commissions/VagDisclosure';
 import { useToast, useConfirm } from '../components/ui/Feedback';
+import { auditService } from '../src/services/audit';
 import { CallProcessor } from '../components/CallProcessor';
 import { useAuth } from '../contexts/AuthContext';
 // Lazy-load the 3D view so the heavy three.js vendor chunk (~940 KB) is only
@@ -148,6 +149,7 @@ export const ClientDetail: React.FC = () => {
       } as any);
       setClient(updated as Client);
       setIsEditOpen(false);
+      auditService.log({ tenantId: client.tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'CLIENT_UPDATE', entityType: 'CLIENT', entityId: client.id, summary: `Stammdaten von ${editForm.firstName} ${editForm.lastName} geändert` });
     } catch (err: any) {
       setEntryError(err?.message || 'Speichern fehlgeschlagen.');
     } finally {
@@ -158,6 +160,7 @@ export const ClientDetail: React.FC = () => {
   const handleDeletePolicy = async (policyId: string) => {
       if (!(await confirm({ title: 'Police löschen?', danger: true, confirmLabel: 'Löschen' }))) return;
       await db.policies.remove(policyId);
+      auditService.log({ tenantId: client.tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'POLICY_DELETE', entityType: 'POLICY', entityId: policyId, summary: `Police gelöscht (Kunde ${client.firstName} ${client.lastName})` });
       toast.success('Police gelöscht.');
       refetchPolicies();
   };

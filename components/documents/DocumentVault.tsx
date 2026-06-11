@@ -6,6 +6,7 @@ import { documentsService } from '../../src/services/documents';
 import { USE_MOCK } from '../../src/services/db';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast, useConfirm } from '../ui/Feedback';
+import { auditService } from '../../src/services/audit';
 import {
   ClientDocument, DocumentCategory, Policy, TaxReturn, MortgageScenario,
 } from '../../types';
@@ -108,6 +109,7 @@ export const DocumentVault: React.FC<DocumentVaultProps> = ({
         notes,
       });
       setIsUploadOpen(false);
+      auditService.log({ tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'DOCUMENT_UPLOAD', entityType: 'DOCUMENT', entityId: clientId, summary: `Dokument «${title.trim() || file.name}» hochgeladen` });
       refetch();
     } catch (err: any) {
       setError(err?.message || 'Upload fehlgeschlagen.');
@@ -121,6 +123,7 @@ export const DocumentVault: React.FC<DocumentVaultProps> = ({
     try {
       const url = await documentsService.downloadUrl(doc);
       if (url) window.open(url, '_blank', 'noopener');
+      auditService.log({ tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'DOCUMENT_DOWNLOAD', entityType: 'DOCUMENT', entityId: doc.id, summary: `Dokument «${doc.title}» heruntergeladen` });
     } catch (err: any) {
       toast.error(err?.message || 'Download fehlgeschlagen.');
     } finally {
@@ -133,6 +136,7 @@ export const DocumentVault: React.FC<DocumentVaultProps> = ({
     setBusyDocId(doc.id);
     try {
       await documentsService.remove(doc);
+      auditService.log({ tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'DOCUMENT_DELETE', entityType: 'DOCUMENT', entityId: doc.id, summary: `Dokument «${doc.title}» gelöscht` });
       toast.success('Dokument gelöscht.');
       refetch();
     } finally {

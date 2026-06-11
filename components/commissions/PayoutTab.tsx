@@ -9,6 +9,8 @@ import { POLICY_TYPE_SUGGESTIONS } from '../forms/PolicyForm';
 import { SensitiveData } from '../ui/SensitiveData';
 import { Plus, Trash2, Loader2, CheckCircle, Percent, Users } from 'lucide-react';
 import { useToast, useConfirm } from '../ui/Feedback';
+import { auditService } from '../../src/services/audit';
+import { useAuth } from '../../contexts/AuthContext';
 
 /**
  * Splits & Auszahlung (Konzept 4.4): Beteiligungs-Regelwerk pro Berater,
@@ -26,6 +28,7 @@ export const PayoutTab: React.FC<PayoutTabProps> = ({ tenantId }) => {
   const { data: users } = useProfiles(tenantId);
   const toast = useToast();
   const confirm = useConfirm();
+  const { user } = useAuth();
 
   const [isRuleOpen, setIsRuleOpen] = useState(false);
   const [ruleForm, setRuleForm] = useState({ agentId: '', line: '', rate: '' });
@@ -99,6 +102,7 @@ export const PayoutTab: React.FC<PayoutTabProps> = ({ tenantId }) => {
         await db.commissions.update(c.id, { splitPaidAt: today } as any);
       }
       refetchCommissions();
+      auditService.log({ tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'PAYOUT', entityType: 'COMMISSION', entityId: agentId, summary: `Auszahlung an ${agentName(agentId)}: CHF ${total.toLocaleString()} (${list.length} Positionen)` });
       toast.success('Auszahlung verbucht.');
     } finally {
       setPayingAgent(null);
