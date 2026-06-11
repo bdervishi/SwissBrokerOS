@@ -68,4 +68,22 @@ export const notificationsService = {
     if (USE_MOCK) { store.forEach((n) => { if (n.recipientId === recipientId) n.isRead = true; }); return; }
     await supabase.from('notifications').update({ is_read: true }).eq('recipient_id', recipientId).eq('is_read', false);
   },
+
+  /**
+   * Live updates: invokes `onChange` whenever a notification for this recipient
+   * is inserted/updated (Supabase Realtime). Returns an unsubscribe function.
+   * In mock mode there is no server channel -> no-op (the bell keeps polling).
+   */
+  subscribe: (recipientId: string, onChange: () => void): (() => void) => {
+    if (USE_MOCK) return () => {};
+    const channel = supabase
+      .channel(`notifications:${recipientId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${recipientId}` },
+        () => onChange(),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  },
 };

@@ -45,12 +45,14 @@ export const NotificationBell: React.FC = () => {
     try { setItems(await notificationsService.list(user.id)); } catch { /* ignore */ }
   };
 
-  // Initial load + light polling (every 30s) + reload when opening.
+  // Initial load + realtime subscription (instant in real mode) + a slow poll
+  // as a safety net (and the only mechanism in mock mode).
   useEffect(() => {
     if (!user) return;
     load();
-    const t = setInterval(load, 30000);
-    return () => clearInterval(t);
+    const unsubscribe = notificationsService.subscribe(user.id, load);
+    const t = setInterval(load, 60000);
+    return () => { clearInterval(t); unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 

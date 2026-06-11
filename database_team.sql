@@ -109,3 +109,17 @@ CREATE POLICY "absences_write_self_or_admin" ON public.absences
     tenant_id = public.current_tenant_id()
     AND (user_id = auth.uid() OR public.is_broker_admin() OR public.is_saas_admin())
   );
+
+-- ---------------------------------------------------------------------------
+-- 4. REALTIME: notifications live an die Glocke pushen (Supabase Realtime).
+--    Idempotent – fügt die Tabelle nur hinzu, wenn noch nicht publiziert.
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notifications'
+  ) THEN
+    EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications';
+  END IF;
+END $$;
