@@ -17,7 +17,9 @@ import { VagDisclosureButton } from '../components/commissions/VagDisclosure';
 import { useToast, useConfirm } from '../components/ui/Feedback';
 import { CallProcessor } from '../components/CallProcessor';
 import { useAuth } from '../contexts/AuthContext';
-import { WealthVis } from '../components/3d/WealthVis';
+// Lazy-load the 3D view so the heavy three.js vendor chunk (~940 KB) is only
+// fetched when the Wealth tab is actually opened.
+const WealthVis = React.lazy(() => import('../components/3d/WealthVis').then(m => ({ default: m.WealthVis })));
 import { SensitiveData } from '../components/ui/SensitiveData';
 import { generateContentWithRetry } from '../services/aiService';
 import { SignaturePad } from '../components/ui/SignaturePad'; // New Import
@@ -473,7 +475,9 @@ export const ClientDetail: React.FC = () => {
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Vermögen & Vorsorge</h3>
               <Button icon={<Plus size={16} />} onClick={() => { setEntryError(null); setIsAssetModalOpen(true); }}>Vermögenswert erfassen</Button>
             </div>
-            <WealthVis assets={assets} />
+            <React.Suspense fallback={<div className="h-[400px] w-full rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center text-slate-400 text-sm"><Loader2 className="animate-spin mr-2" size={18} /> 3D-Ansicht lädt…</div>}>
+              <WealthVis assets={assets} />
+            </React.Suspense>
             <Card title="Erfasste Vermögenswerte" noPadding>
               {assets.length === 0 ? (
                 <div className="p-6 text-center text-slate-500">Noch keine Vermögenswerte erfasst.</div>
