@@ -52,7 +52,8 @@ import {
   Power,
   User,
   Linkedin,
-  Search // Added Search Icon
+  Search, // Added Search Icon
+  FolderOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -123,6 +124,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             items: [
                 { name: t('nav.dashboard'), path: '/dashboard', icon: <LayoutDashboard size={20} /> },
                 { name: t('nav.my_policies'), path: '/policies', icon: <ShieldAlert size={20} /> },
+                { name: 'Mein Portal', path: '/portal', icon: <FolderOpen size={20} /> },
                 { name: t('nav.mortgages'), path: '/mortgages', icon: <Home size={20} /> },
                 { name: t('nav.settings'), path: '/settings', icon: <Settings size={20} /> },
             ]
