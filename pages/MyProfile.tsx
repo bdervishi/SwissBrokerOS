@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../components/ui/Feedback';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -32,6 +33,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const MyProfile: React.FC = () => {
+  const toast = useToast();
     const { user } = useAuth();
     const { tenant } = useBranding();
     const { data: clients } = useClients();
@@ -83,7 +85,7 @@ export const MyProfile: React.FC = () => {
         // Simulate API Update
         setTimeout(() => {
             setIsSaving(false);
-            alert("Profiländerungen gespeichert (Mock).");
+            toast.success("Profiländerungen gespeichert.");
         }, 1000);
     };
 
@@ -103,7 +105,7 @@ export const MyProfile: React.FC = () => {
         const drafts = timeEntries.filter(t => t.status === 'DRAFT');
         await Promise.all(drafts.map(t => db.timeEntries.update(t.id, { status: 'SUBMITTED' as TimeEntryStatus })));
         refetchTime();
-        alert(`${drafts.length} Einträge zur Genehmigung eingereicht.`);
+        toast.success(`${drafts.length} Einträge zur Genehmigung eingereicht.`);
     };
 
     const getStatusBadge = (status: TimeEntryStatus) => {

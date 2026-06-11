@@ -71,6 +71,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SecurityProvider, useSecurity } from './contexts/SecurityContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { BrandingProvider } from './contexts/BrandingContext';
+import { FeedbackProvider } from './components/ui/Feedback';
 import { UserRole } from './types';
 
 // Helper Wrapper to route agents to their specific dashboard
@@ -115,6 +116,7 @@ const App = () => {
       <LanguageProvider>
         <BrandingProvider>
           <SecurityProvider>
+           <FeedbackProvider>
             <ApplicationController>
                 <Router>
                 <ScrollToTop />
@@ -205,6 +207,7 @@ const App = () => {
                 </Suspense>
                 </Router>
             </ApplicationController>
+           </FeedbackProvider>
           </SecurityProvider>
         </BrandingProvider>
       </LanguageProvider>

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '../components/ui/Feedback';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react';
 
 export const SaaSCaseStudies: React.FC = () => {
+  const toast = useToast();
     const { role } = useAuth();
     
     // Form State
@@ -113,7 +115,7 @@ export const SaaSCaseStudies: React.FC = () => {
             }
         } catch (e) {
             console.error("AI Generation Error", e);
-            alert("Fehler bei der Generierung. Bitte API-Key prüfen.");
+            toast.error("Fehler bei der Generierung. Bitte API-Key prüfen.");
         } finally {
             setIsGenerating(false);
         }

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useConfirm, useToast } from '../components/ui/Feedback';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -35,6 +36,8 @@ const INITIAL_SAAS_TEAMS = [
 ];
 
 export const SaaSTeams: React.FC = () => {
+  const confirm = useConfirm();
+  const toast = useToast();
     const { role } = useAuth();
     const { data: users } = useProfiles();
     const navigate = useNavigate();
@@ -56,8 +59,8 @@ export const SaaSTeams: React.FC = () => {
 
     const saasUsers = users.filter(u => u.role.startsWith('SAAS_'));
 
-    const handleDelete = (id: string) => {
-        if(window.confirm("Sind Sie sicher, dass Sie dieses Team löschen möchten?")) {
+    const handleDelete = async (id: string) => {
+        if (await confirm({ title: 'Team löschen?', body: 'Dieses Team wird entfernt.', danger: true, confirmLabel: 'Löschen' })) {
             setTeams(prev => prev.filter(t => t.id !== id));
         }
     };

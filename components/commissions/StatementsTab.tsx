@@ -7,6 +7,7 @@ import { documentsService } from '../../src/services/documents';
 import { statementsApi, ReconcileResult } from '../../src/services/commissions';
 import { useCommissionStatements, useCommissionStatementItems, useCommissions } from '../../src/hooks/useData';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../ui/Feedback';
 import { Commission, CommissionStatement, CommissionStatus } from '../../types';
 import { SensitiveData } from '../ui/SensitiveData';
 import {
@@ -26,6 +27,7 @@ interface StatementsTabProps {
 
 export const StatementsTab: React.FC<StatementsTabProps> = ({ tenantId }) => {
   const { user } = useAuth();
+  const toast = useToast();
   const { data: statements, refetch: refetchStatements } = useCommissionStatements(tenantId);
   const { data: commissions, refetch: refetchCommissions } = useCommissions();
   const [selected, setSelected] = useState<CommissionStatement | null>(null);
@@ -84,7 +86,7 @@ export const StatementsTab: React.FC<StatementsTabProps> = ({ tenantId }) => {
       if (selected?.id === s.id) refetchItems();
       setSelected({ ...s, status: 'RECONCILED' });
     } catch (e: any) {
-      alert(e?.message || 'Abgleich fehlgeschlagen. Ist das Backend deployed?');
+      toast.error(e?.message || 'Abgleich fehlgeschlagen. Ist das Backend deployed?');
     } finally {
       setParsingId(null);
     }

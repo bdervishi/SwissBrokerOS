@@ -8,6 +8,7 @@ import { useCommissionAgreements } from '../../src/hooks/useData';
 import { CommissionAgreement } from '../../types';
 import { POLICY_TYPE_SUGGESTIONS } from '../forms/PolicyForm';
 import { Plus, PenTool, Trash2, Loader2, Handshake, BarChart3 } from 'lucide-react';
+import { useToast, useConfirm } from '../ui/Feedback';
 
 /**
  * Courtagevereinbarungen: verhandelte Sätze je Versicherer/Sparte. Grundlage
@@ -22,6 +23,8 @@ const empty = { insurer: '', line: '', acquisitionRate: '', recurringRate: '', l
 
 export const AgreementsTab: React.FC<AgreementsTabProps> = ({ tenantId }) => {
   const { data: agreements, refetch } = useCommissionAgreements(tenantId);
+  const toast = useToast();
+  const confirm = useConfirm();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<CommissionAgreement | null>(null);
   const [form, setForm] = useState(empty);
@@ -78,8 +81,9 @@ export const AgreementsTab: React.FC<AgreementsTabProps> = ({ tenantId }) => {
   };
 
   const remove = async (a: CommissionAgreement) => {
-    if (!window.confirm(`Vereinbarung ${a.insurer}${a.line ? ` / ${a.line}` : ''} löschen?`)) return;
+    if (!(await confirm({ title: 'Vereinbarung löschen?', body: `${a.insurer}${a.line ? ` / ${a.line}` : ''} wird entfernt.`, danger: true, confirmLabel: 'Löschen' }))) return;
     await db.commissionAgreements.remove(a.id);
+    toast.success('Vereinbarung gelöscht.');
     refetch();
   };
 

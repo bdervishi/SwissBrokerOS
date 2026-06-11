@@ -14,6 +14,7 @@ import { DocumentVault } from '../components/documents/DocumentVault';
 import { PolicyForm } from '../components/forms/PolicyForm';
 import { AssetForm, ASSET_TYPE_LABELS } from '../components/forms/AssetForm';
 import { VagDisclosureButton } from '../components/commissions/VagDisclosure';
+import { useToast, useConfirm } from '../components/ui/Feedback';
 import { CallProcessor } from '../components/CallProcessor';
 import { useAuth } from '../contexts/AuthContext';
 import { WealthVis } from '../components/3d/WealthVis';
@@ -55,6 +56,8 @@ import { ActivityType, ActivityLog, ClientNote, TrustScore, Client, Policy, Asse
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'POLICIES' | 'WEALTH' | 'TAX' | 'JOURNAL' | 'COMPLIANCE' | 'DOCUMENTS'>('OVERVIEW');
   
   // Note State
@@ -151,19 +154,21 @@ export const ClientDetail: React.FC = () => {
   };
 
   const handleDeletePolicy = async (policyId: string) => {
-      if (!confirm('Diese Police wirklich löschen?')) return;
+      if (!(await confirm({ title: 'Police löschen?', danger: true, confirmLabel: 'Löschen' }))) return;
       await db.policies.remove(policyId);
+      toast.success('Police gelöscht.');
       refetchPolicies();
   };
 
   const handleDeleteAsset = async (assetId: string) => {
-      if (!confirm('Diesen Vermögenswert wirklich löschen?')) return;
+      if (!(await confirm({ title: 'Vermögenswert löschen?', danger: true, confirmLabel: 'Löschen' }))) return;
       await db.assets.remove(assetId);
+      toast.success('Vermögenswert gelöscht.');
       refetchAssets();
   };
 
   const handleDeleteNote = async (noteId: string) => {
-      if (!confirm('Diese Notiz wirklich löschen?')) return;
+      if (!(await confirm({ title: 'Notiz löschen?', danger: true, confirmLabel: 'Löschen' }))) return;
       await db.clientNotes.remove(noteId);
       refetchNotes();
   };

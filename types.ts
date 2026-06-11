@@ -117,22 +117,29 @@ export interface Asset {
     details?: Record<string, any>;
 }
 
-/* Fix: Added missing Client interface */
+export type ClientType = 'PRIVATE' | 'CORPORATE';
+
+/* Client interface with Corporate extensions */
 export interface Client {
     id: string;
     username: string;
     email: string;
-    firstName: string;
-    lastName: string;
+    type: ClientType;
+    firstName: string; // Used as Contact Person for Corporate
+    lastName: string;  // Used as Contact Person for Corporate
+    companyName?: string; // Required for CORPORATE
+    uidNumber?: string; // CHE-123.456.789
+    nogaCode?: string; // Industry Code
+    employeeCount?: number;
+    totalPayrollSum?: number; // Lohnsumme for BVG
     role: UserRole;
     avatarUrl: string;
     tenantId: string;
     address: string;
     zipCity: string;
-    birthDate: string;
+    birthDate?: string; // Optional for Corporate
     advisorId: string;
     taxDomicile: string;
-    companyName?: string;
     trustScore?: TrustScore;
 }
 

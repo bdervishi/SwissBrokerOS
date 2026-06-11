@@ -115,6 +115,7 @@ export const MOCK_USERS: User[] = [
 export const MOCK_CLIENTS: Client[] = [
   {
     id: 'c1',
+    type: 'PRIVATE',
     username: 'hans_meier',
     email: 'hans.meier@example.com',
     firstName: 'Hans',
@@ -141,6 +142,7 @@ export const MOCK_CLIENTS: Client[] = [
   },
   {
     id: 'c2',
+    type: 'PRIVATE',
     username: 'anna_schmidt',
     email: 'anna.schmidt@example.com',
     firstName: 'Anna',
@@ -165,6 +167,7 @@ export const MOCK_CLIENTS: Client[] = [
   },
   {
     id: 'c3',
+    type: 'PRIVATE',
     username: 'peter_mueller',
     email: 'peter.mueller@example.com',
     firstName: 'Peter',
