@@ -3,27 +3,60 @@ import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
-import { useCalendarEvents } from '../src/hooks/useData';
+import { useCalendarEvents, useProfiles } from '../src/hooks/useData';
 import { calendarService } from '../src/services/calendar';
-import { CalendarEvent, EventType, RelatedEntityType } from '../types';
+import { notificationsService } from '../src/services/notifications';
+import { CalendarEvent, EventType, RelatedEntityType, User } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
+import { HandoverDialog } from '../components/team/HandoverDialog';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
   Plus,
   Clock,
   Briefcase,
   AlertTriangle,
   Cake,
-  CheckCircle
+  CheckCircle,
+  ArrowRightLeft,
+  User as UserIcon
 } from 'lucide-react';
 
 export const CalendarPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: events, refetch } = useCalendarEvents(user?.tenantId);
+  const { data: team } = useProfiles(user?.tenantId);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [scope, setScope] = useState<'MINE' | 'TEAM'>('MINE');
+
+  // Event detail + handover
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isHandoverOpen, setIsHandoverOpen] = useState(false);
+
+  const ownerName = (id?: string | null) => {
+    const u = (team as User[]).find((x) => x.id === id);
+    return u ? `${u.firstName} ${u.lastName}` : null;
+  };
+
+  const handleHandover = async (toUserId: string, toUserName: string, note: string) => {
+    if (!selectedEvent) return;
+    await calendarService.reassign(selectedEvent.id, toUserId);
+    await notificationsService.create({
+      tenantId: user?.tenantId,
+      recipientId: toUserId,
+      actorId: user?.id,
+      type: 'HANDOVER_EVENT',
+      title: 'Termin übergeben',
+      body: `${user?.firstName} ${user?.lastName} hat dir «${selectedEvent.title}» übergeben${note ? `: ${note}` : '.'}`,
+      link: '/calendar',
+      relatedType: 'EVENT',
+      relatedId: selectedEvent.id,
+    });
+    setSelectedEvent(null);
+    refetch();
+  };
 
   // New-event modal
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -73,25 +106,16 @@ export const CalendarPage: React.FC = () => {
       setCurrentDate(new Date());
   }
 
-  const handleEventClick = (event: CalendarEvent) => {
+  const openRelated = (event: CalendarEvent) => {
     switch (event.relatedType) {
-        case RelatedEntityType.CLIENT:
-            navigate(`/client/${event.relatedId}`);
-            break;
-        case RelatedEntityType.POLICY:
-            navigate(`/policy/${event.relatedId}`);
-            break;
-        case RelatedEntityType.MORTGAGE:
-            navigate(`/mortgage/${event.relatedId}`);
-            break;
-        case RelatedEntityType.PARTNER:
-            navigate(`/partner/${event.relatedId}`);
-            break;
-        default:
-            // Could open a modal details here
-            alert(`Event: ${event.title}\n${event.description || ''}`);
+        case RelatedEntityType.CLIENT: navigate(`/client/${event.relatedId}`); break;
+        case RelatedEntityType.POLICY: navigate(`/policy/${event.relatedId}`); break;
+        case RelatedEntityType.MORTGAGE: navigate(`/mortgage/${event.relatedId}`); break;
+        case RelatedEntityType.PARTNER: navigate(`/partner/${event.relatedId}`); break;
     }
   };
+  const hasRelated = (e: CalendarEvent) =>
+    e.relatedId && [RelatedEntityType.CLIENT, RelatedEntityType.POLICY, RelatedEntityType.MORTGAGE, RelatedEntityType.PARTNER].includes(e.relatedType as RelatedEntityType);
 
   // Generate Calendar Grid
   const year = currentDate.getFullYear();
@@ -114,10 +138,13 @@ export const CalendarPage: React.FC = () => {
       "Juli", "August", "September", "Oktober", "November", "Dezember"
   ];
 
+  // Mine = events I own or that have no explicit owner (legacy/seed).
+  const scopedEvents = events.filter(e => scope === 'TEAM' || !e.userId || e.userId === user?.id);
+
   const getEventsForDay = (day: number) => {
-      return events.filter(e =>
-          e.start.getDate() === day && 
-          e.start.getMonth() === month && 
+      return scopedEvents.filter(e =>
+          e.start.getDate() === day &&
+          e.start.getMonth() === month &&
           e.start.getFullYear() === year
       );
   };
@@ -169,7 +196,13 @@ export const CalendarPage: React.FC = () => {
                 </div>
                 <Button variant="outline" size="sm" onClick={handleToday}>Heute</Button>
             </div>
-            <Button icon={<Plus size={18} />} onClick={() => setIsEventModalOpen(true)}>Neuer Termin</Button>
+            <div className="flex items-center gap-2">
+                <div className="flex bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-1 shadow-sm">
+                    <button onClick={() => setScope('MINE')} className={`px-3 py-1 rounded text-sm font-medium ${scope === 'MINE' ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300' : 'text-slate-500'}`}>Meine</button>
+                    <button onClick={() => setScope('TEAM')} className={`px-3 py-1 rounded text-sm font-medium ${scope === 'TEAM' ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300' : 'text-slate-500'}`}>Team</button>
+                </div>
+                <Button icon={<Plus size={18} />} onClick={() => setIsEventModalOpen(true)}>Neuer Termin</Button>
+            </div>
         </div>
 
         {/* Calendar Grid Container */}
@@ -214,17 +247,22 @@ export const CalendarPage: React.FC = () => {
                                     
                                     <div className="space-y-1">
                                         {events.map(event => (
-                                            <div 
+                                            <div
                                                 key={event.id}
-                                                onClick={() => handleEventClick(event)}
+                                                onClick={() => setSelectedEvent(event)}
                                                 className={`
                                                     text-xs p-1.5 rounded cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5 truncate
                                                     ${getEventStyles(event.type)}
                                                 `}
-                                                title={event.title}
+                                                title={`${event.title}${scope === 'TEAM' && ownerName(event.userId) ? ` · ${ownerName(event.userId)}` : ''}`}
                                             >
                                                 <span className="shrink-0">{getEventIcon(event.type)}</span>
                                                 <span className="truncate font-medium">{event.title}</span>
+                                                {scope === 'TEAM' && event.userId && event.userId !== user?.id && (
+                                                    <span className="ml-auto shrink-0 w-4 h-4 rounded-full bg-white/60 dark:bg-black/30 text-[8px] font-bold flex items-center justify-center" title={ownerName(event.userId) || ''}>
+                                                        {(ownerName(event.userId) || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                                    </span>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -269,6 +307,42 @@ export const CalendarPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* EVENT DETAIL + HANDOVER */}
+      <Modal isOpen={!!selectedEvent} onClose={() => setSelectedEvent(null)} title="Termin" maxWidth="max-w-md">
+        {selectedEvent && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className={`p-2 rounded-lg ${getEventStyles(selectedEvent.type)}`}>{getEventIcon(selectedEvent.type)}</span>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100">{selectedEvent.title}</h3>
+                <p className="text-xs text-slate-500">{selectedEvent.start.toLocaleString('de-CH')}</p>
+              </div>
+            </div>
+            {selectedEvent.description && <p className="text-sm text-slate-600 dark:text-slate-300">{selectedEvent.description}</p>}
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <UserIcon size={14} />
+              <span>Zuständig: <strong>{ownerName(selectedEvent.userId) || 'nicht zugewiesen'}</strong>{selectedEvent.userId === user?.id ? ' (Sie)' : ''}</span>
+            </div>
+            <div className="flex justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              {hasRelated(selectedEvent)
+                ? <Button variant="outline" onClick={() => openRelated(selectedEvent)}>Datensatz öffnen</Button>
+                : <span />}
+              <Button icon={<ArrowRightLeft size={16} />} onClick={() => setIsHandoverOpen(true)}>An Kollegen übergeben</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <HandoverDialog
+        isOpen={isHandoverOpen}
+        onClose={() => setIsHandoverOpen(false)}
+        title="Termin übergeben"
+        subjectLabel={selectedEvent?.title || ''}
+        tenantId={user?.tenantId}
+        currentUserId={selectedEvent?.userId ?? user?.id}
+        onConfirm={async (toId, _name, note) => { await handleHandover(toId, _name, note); setIsHandoverOpen(false); }}
+      />
     </Layout>
   );
 };

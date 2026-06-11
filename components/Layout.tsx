@@ -6,6 +6,7 @@ import { useSecurity } from '../contexts/SecurityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useBranding } from '../contexts/BrandingContext';
 import { CommandPalette } from './ui/CommandPalette'; // NEW Import
+import { NotificationBell } from './NotificationBell';
 import { UserRole } from '../types';
 import { 
   LayoutDashboard, 
@@ -345,6 +346,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <span>Suche...</span>
               <kbd className="hidden md:inline-flex ml-auto items-center h-5 px-1.5 text-[10px] font-medium text-slate-400 border border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-900">Ctrl K</kbd>
           </button>
+
+          {/* In-app notifications (handovers, lead assignments, …) */}
+          {role !== UserRole.CLIENT && (
+            <div className="-mt-4 mb-6"><NotificationBell /></div>
+          )}
 
           {navSections.map((section, idx) => (
             <div key={idx} className="space-y-1">

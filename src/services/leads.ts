@@ -37,7 +37,7 @@ const SELECT = '*, lead_contacts(*), lead_activities(*), lead_tasks(*)';
 // ---- mock store ----
 const MOCK_LEADS: Lead[] = [
   {
-    id: 'lead-mock-1', tenantId: 'd78b87d5-cc72-46a2-bc42-99933fd2fbb1', name: 'AlpenTech Solutions',
+    id: 'lead-mock-1', tenantId: 't1', name: 'AlpenTech Solutions',
     city: 'Zürich', address: 'Hardturmstrasse 161, 8005 Zürich', status: 'NEW', potentialValue: 5000,
     type: 'OTHER', website: 'https://alpentech.ch', createdAt: '2024-06-01', updatedAt: '2024-06-02',
     source: 'Radar', aiInsightScore: 85, interests: ['Cyber-Versicherung', 'PK-Optimierung'],
@@ -45,7 +45,7 @@ const MOCK_LEADS: Lead[] = [
     activities: [], tasks: [], offers: [],
   },
   {
-    id: 'lead-mock-2', tenantId: 'd78b87d5-cc72-46a2-bc42-99933fd2fbb1', name: 'Brunner Bau GmbH',
+    id: 'lead-mock-2', tenantId: 't1', name: 'Brunner Bau GmbH',
     city: 'Winterthur', address: 'Industriestrasse 5, 8400 Winterthur', status: 'CONTACTED', potentialValue: 8200,
     type: 'OTHER', website: '', createdAt: '2024-05-20', updatedAt: '2024-06-01',
     source: 'LinkedIn', aiInsightScore: 72, interests: ['BVG', 'Betriebshaftpflicht'],
@@ -108,6 +108,34 @@ export const leadsService = {
       return;
     }
     const { error } = await supabase.from('leads').update({ status, updated_at: new Date().toISOString() }).eq('id', leadId);
+    if (error) throw error;
+  },
+
+  /** Assign / hand over a lead to a team member. */
+  assign: async (leadId: string, toUserId: string | null): Promise<void> => {
+    if (USE_MOCK) {
+      const l = store.find((x) => x.id === leadId);
+      if (l) l.assignedTo = toUserId;
+      return;
+    }
+    const { error } = await supabase.from('leads')
+      .update({ assigned_to: toUserId, updated_at: new Date().toISOString() }).eq('id', leadId);
+    if (error) throw error;
+  },
+
+  /** Append a lead activity (e.g. handover note) to the timeline. */
+  addActivity: async (leadId: string, activity: { type: string; title: string; description?: string; authorName?: string }): Promise<void> => {
+    const entry = {
+      id: uid(), type: activity.type, title: activity.title,
+      description: activity.description ?? '', authorName: activity.authorName ?? 'System',
+      timestamp: new Date().toLocaleString('de-CH'),
+    };
+    if (USE_MOCK) {
+      const l = store.find((x) => x.id === leadId);
+      if (l) l.activities = [entry as any, ...(l.activities || [])];
+      return;
+    }
+    const { error } = await supabase.from('lead_activities').insert(snakeKeys({ ...entry, leadId, id: undefined }));
     if (error) throw error;
   },
 

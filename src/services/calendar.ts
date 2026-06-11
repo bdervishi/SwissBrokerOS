@@ -18,6 +18,8 @@ const rowToEvent = (row: any): CalendarEvent => ({
   relatedType: row.related_type,
   isAllDay: row.is_all_day ?? false,
   description: row.description ?? undefined,
+  userId: row.user_id ?? null,
+  tenantId: row.tenant_id ?? undefined,
 });
 
 const eventToRow = (e: Partial<CalendarEvent> & { tenantId?: string; userId?: string }) => ({
@@ -62,5 +64,16 @@ export const calendarService = {
     const { data, error } = await supabase.from('calendar_events').insert(eventToRow(event)).select('*').single();
     if (error) throw error;
     return rowToEvent(data);
+  },
+
+  /** Reassign a calendar event to another team member (handover). */
+  reassign: async (eventId: string, toUserId: string): Promise<void> => {
+    if (USE_MOCK) {
+      const e = store.find((x) => x.id === eventId);
+      if (e) e.userId = toUserId;
+      return;
+    }
+    const { error } = await supabase.from('calendar_events').update({ user_id: toUserId }).eq('id', eventId);
+    if (error) throw error;
   },
 };

@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { MOCK_TEAMS } from '../constants';
 import { useProfiles } from '../src/hooks/useData';
+import { TeamWorkload } from '../components/team/TeamWorkload';
 import { UserRole, EmployeeModule, Team } from '../types';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -130,6 +131,7 @@ export const TeamOverview: React.FC = () => {
 
                 {/* Right: Employee List */}
                 <div className="lg:col-span-2 space-y-6">
+                    <TeamWorkload employees={employees} />
                     <div className="flex gap-4 mb-4">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
