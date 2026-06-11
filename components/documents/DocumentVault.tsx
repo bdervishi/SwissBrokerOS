@@ -22,7 +22,7 @@ import {
 export const CATEGORY_LABELS: Record<DocumentCategory, string> = {
   POLICE: 'Police', OFFERTE: 'Offerte', STEUERN: 'Steuern', VORSORGE: 'Vorsorge',
   HYPOTHEK: 'Hypothek', IDENTITAET: 'Identität / KYC', KORRESPONDENZ: 'Korrespondenz',
-  SONSTIGES: 'Sonstiges',
+  COURTAGE: 'Courtageabrechnung', SONSTIGES: 'Sonstiges',
 };
 
 const CATEGORY_COLORS: Record<DocumentCategory, string> = {
@@ -33,6 +33,7 @@ const CATEGORY_COLORS: Record<DocumentCategory, string> = {
   HYPOTHEK: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
   IDENTITAET: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   KORRESPONDENZ: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  COURTAGE: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
   SONSTIGES: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
 

@@ -4,7 +4,10 @@ import { leadsService } from '../services/leads';
 import { calendarService } from '../services/calendar';
 import { emailsService } from '../services/emails';
 import { leadOffersService } from '../services/leadOffers';
-import { CalendarEvent, TaxReturn, Email, LeadOffer, ClientDocument } from '../types';
+import {
+  CalendarEvent, TaxReturn, Email, LeadOffer, ClientDocument,
+  CommissionAgreement, CommissionStatement, CommissionStatementItem, CommissionSplitRule,
+} from '../types';
 import {
   Client,
   Policy,
@@ -152,6 +155,31 @@ export const useDocuments = (clientId?: string) =>
   useCollection<ClientDocument>(
     () => (clientId ? db.documents.getAll({ clientId }) : Promise.resolve([])),
     [clientId],
+  );
+
+// ---- Courtage-Management -------------------------------------------------
+export const useCommissionAgreements = (tenantId?: string) =>
+  useCollection<CommissionAgreement>(
+    () => db.commissionAgreements.getAll(tenantId ? { tenantId } : undefined),
+    [tenantId],
+  );
+
+export const useCommissionStatements = (tenantId?: string) =>
+  useCollection<CommissionStatement>(
+    () => db.commissionStatements.getAll(tenantId ? { tenantId } : undefined),
+    [tenantId],
+  );
+
+export const useCommissionStatementItems = (statementId?: string) =>
+  useCollection<CommissionStatementItem>(
+    () => (statementId ? db.commissionStatementItems.getAll({ statementId }) : Promise.resolve([])),
+    [statementId],
+  );
+
+export const useCommissionSplitRules = (tenantId?: string) =>
+  useCollection<CommissionSplitRule>(
+    () => db.commissionSplitRules.getAll(tenantId ? { tenantId } : undefined),
+    [tenantId],
   );
 
 // ---- Single items -------------------------------------------------------

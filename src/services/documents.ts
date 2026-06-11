@@ -11,7 +11,8 @@ import { ClientDocument, DocumentCategory } from '../types';
 
 export interface UploadDocumentInput {
   tenantId: string;
-  clientId: string;
+  /** Omit/null for tenant-level documents (e.g. Courtageabrechnungen). */
+  clientId?: string | null;
   file: File;
   title: string;
   category: DocumentCategory;
@@ -34,7 +35,7 @@ export const documentsService = {
   upload: async (input: UploadDocumentInput): Promise<ClientDocument> => {
     const meta: Partial<ClientDocument> = {
       tenantId: input.tenantId,
-      clientId: input.clientId,
+      clientId: input.clientId ?? null as any,
       title: input.title.trim() || input.file.name,
       category: input.category,
       relatedType: input.relatedType ?? null,
@@ -51,7 +52,7 @@ export const documentsService = {
       return db.documents.create({ ...meta, createdAt: new Date().toISOString() });
     }
 
-    const path = `${input.tenantId}/${input.clientId}/${crypto.randomUUID()}-${sanitizeFileName(input.file.name)}`;
+    const path = `${input.tenantId}/${input.clientId || '_tenant'}/${crypto.randomUUID()}-${sanitizeFileName(input.file.name)}`;
     const { error: upErr } = await supabase.storage
       .from(BUCKET)
       .upload(path, input.file, { contentType: meta.mimeType, upsert: false });

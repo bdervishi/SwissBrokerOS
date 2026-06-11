@@ -24,6 +24,10 @@ import {
   ClientNote,
   TaxReturn,
   ClientDocument,
+  CommissionAgreement,
+  CommissionStatement,
+  CommissionStatementItem,
+  CommissionSplitRule,
 } from '../types';
 
 // ==========================================================================
@@ -174,6 +178,16 @@ const tenantTransform = (t: any): Tenant => ({
   joinedDate: t.joinedDate ?? t.createdAt ?? '',
 });
 
+// The commissions table stores the insurer in `source_partner`; the UI reads
+// `partnerName`/`source`. Mock rows already carry those fields – normalise DB
+// rows so both data sources match the Commission interface.
+const commissionTransform = (c: any): Commission => ({
+  ...c,
+  partnerName: c.partnerName ?? c.sourcePartner ?? '',
+  source: c.source ?? c.description ?? '',
+  agentSplitPercentage: c.agentSplitPercentage ?? (c.splitRate != null ? c.splitRate / 100 : 0.5),
+});
+
 export const db = {
   tenants: createTable<Tenant>('tenants', MOCK_TENANTS, tenantTransform),
   profiles: createTable<User>('profiles', MOCK_USERS),
@@ -182,7 +196,11 @@ export const db = {
   mortgages: createTable<MortgageScenario>('mortgages', MOCK_MORTGAGES),
   assets: createTable<Asset>('assets', MOCK_ASSETS),
   leads: createTable<Lead>('leads', []),
-  commissions: createTable<Commission>('commissions', MOCK_COMMISSIONS),
+  commissions: createTable<Commission>('commissions', MOCK_COMMISSIONS, commissionTransform),
+  commissionAgreements: createTable<CommissionAgreement>('commission_agreements', []),
+  commissionStatements: createTable<CommissionStatement>('commission_statements', []),
+  commissionStatementItems: createTable<CommissionStatementItem>('commission_statement_items', []),
+  commissionSplitRules: createTable<CommissionSplitRule>('commission_split_rules', []),
   timeEntries: createTable<TimeEntry>('time_entries', MOCK_TIME_ENTRIES),
   clientNotes: createTable<ClientNote>('client_notes', MOCK_CLIENT_NOTES),
   taxReturns: createTable<TaxReturn>('tax_returns', MOCK_TAX_RETURNS),

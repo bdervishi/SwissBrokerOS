@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { integrationsRouter } from './integrations';
 import { callsRouter } from './calls';
 import { demoRouter } from './demo';
+import { commissionsRouter } from './commissions';
 import cron from 'node-cron';
 import { runAllAutomation } from './automation';
 
@@ -45,6 +46,9 @@ app.use('/api/calls', callsRouter);
 
 // Demo access (email allow-list -> magic-link into the shared demo tenant)
 app.use('/api/demo', demoRouter);
+
+// Courtage: KI-Abrechnungsabgleich + Benchmark (docs/COURTAGEN_KONZEPT.md)
+app.use('/api/commissions', commissionsRouter);
 
 // 3. AI Proxy Route
 app.post('/api/generate', async (req, res) => {

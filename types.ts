@@ -326,7 +326,11 @@ export enum CommissionType {
 /* Fix: Added missing CommissionStatus enum */
 export enum CommissionStatus {
     PAID = 'PAID',
-    PENDING = 'PENDING'
+    PENDING = 'PENDING',
+    EXPECTED = 'EXPECTED',     // Soll-Stellung aus Police/Vereinbarung
+    MATCHED = 'MATCHED',       // in Versicherer-Abrechnung gefunden
+    DISPUTED = 'DISPUTED',     // Abweichung -> Reklamation
+    CLAWBACK = 'CLAWBACK'      // Storno-Rückforderung
 }
 
 /* Fix: Added missing Commission interface */
@@ -342,6 +346,75 @@ export interface Commission {
     description: string;
     agentId: string;
     agentSplitPercentage: number;
+    // Courtage-Management (docs/COURTAGEN_KONZEPT.md)
+    tenantId?: string;
+    policyId?: string | null;
+    clientId?: string | null;
+    agreementId?: string | null;
+    period?: string | null;          // 'YYYY-MM'
+    expectedAmount?: number | null;  // Soll; amount = Ist
+    statementItemId?: string | null;
+    splitAgentId?: string | null;
+    splitRate?: number | null;
+    splitAmount?: number | null;
+    splitPaidAt?: string | null;
+}
+
+/* Courtagevereinbarung je Versicherer/Sparte */
+export interface CommissionAgreement {
+    id: string;
+    tenantId: string;
+    insurer: string;
+    line?: string | null;            // Sparte; null = alle
+    acquisitionRate: number;         // % Abschlusscourtage
+    recurringRate: number;           // % Bestandescourtage
+    liabilityMonths: number;         // Default-Stornohaftung
+    validFrom?: string | null;
+    validTo?: string | null;
+    notes?: string | null;
+    createdAt?: string;
+}
+
+/* Hochgeladene Versicherer-Courtageabrechnung */
+export interface CommissionStatement {
+    id: string;
+    tenantId: string;
+    insurer: string;
+    period?: string | null;
+    documentId?: string | null;
+    totalAmount?: number | null;
+    status: 'NEW' | 'PARSED' | 'RECONCILED';
+    parsedAt?: string | null;
+    notes?: string | null;
+    createdAt?: string;
+}
+
+/* KI-extrahierte Position einer Abrechnung */
+export interface CommissionStatementItem {
+    id: string;
+    tenantId: string;
+    statementId: string;
+    policyNumber?: string | null;
+    clientName?: string | null;
+    line?: string | null;
+    premium?: number | null;
+    amount?: number | null;
+    matchStatus: 'UNMATCHED' | 'MATCHED' | 'DISPUTED' | 'UNEXPECTED';
+    matchedCommissionId?: string | null;
+    raw?: Record<string, any>;
+    createdAt?: string;
+}
+
+/* Beteiligungs-Regel pro Berater */
+export interface CommissionSplitRule {
+    id: string;
+    tenantId: string;
+    agentId: string;
+    line?: string | null;            // null = alle Sparten
+    rate: number;                    // %
+    validFrom?: string | null;
+    notes?: string | null;
+    createdAt?: string;
 }
 
 /* Fix: Added missing User interface */
@@ -476,7 +549,7 @@ export interface TaxReturn {
 /* Native client document (metadata row; binary lives in Supabase Storage) */
 export type DocumentCategory =
   | 'POLICE' | 'OFFERTE' | 'STEUERN' | 'VORSORGE' | 'HYPOTHEK'
-  | 'IDENTITAET' | 'KORRESPONDENZ' | 'SONSTIGES';
+  | 'IDENTITAET' | 'KORRESPONDENZ' | 'COURTAGE' | 'SONSTIGES';
 
 export interface ClientDocument {
     id: string;
