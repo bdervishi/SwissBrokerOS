@@ -6,6 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 import { Navigate } from 'react-router-dom';
 import { getAIClient } from '../services/aiService';
+import { db } from '../src/services/db';
+import { leadsService } from '../src/services/leads';
+import { auditService } from '../src/services/audit';
+import { useToast } from '../components/ui/Feedback';
 import { 
     Upload, 
     FileSpreadsheet, 
@@ -54,7 +58,8 @@ const SCHEMA_DEFINITIONS: Record<ImportType, { key: string; label: string; requi
 };
 
 export const DataImport: React.FC = () => {
-    const { role } = useAuth();
+    const { role, user } = useAuth();
+    const toast = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // State
@@ -63,9 +68,11 @@ export const DataImport: React.FC = () => {
     const [file, setFile] = useState<File | null>(null);
     const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
     const [csvPreview, setCsvPreview] = useState<string[][]>([]);
+    const [csvRows, setCsvRows] = useState<string[][]>([]); // ALL data rows
     const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
+    const [result, setResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
 
     // Access Control
     if (role === UserRole.CLIENT) {
@@ -93,24 +100,47 @@ export const DataImport: React.FC = () => {
         }
     };
 
-    // Simple CSV Parser (Mock implementation)
+    // CSV parser supporting quoted fields, commas and semicolons, CRLF.
+    const splitLine = (line: string, delim: string): string[] => {
+        const out: string[] = []; let cur = ''; let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ;
+            } else if (ch === delim && !inQ) { out.push(cur); cur = ''; }
+            else cur += ch;
+        }
+        out.push(cur);
+        return out.map(c => c.trim());
+    };
+
     const parseCSV = (file: File) => {
         const reader = new FileReader();
         reader.onload = (evt) => {
-            const text = evt.target?.result as string;
-            const lines = text.split('\n');
-            if (lines.length > 0) {
-                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                const preview = lines.slice(1, 4).map(l => l.split(',').map(c => c.trim().replace(/"/g, '')));
-                setCsvHeaders(headers);
-                setCsvPreview(preview);
-                
-                // Trigger AI Mapping immediately after parsing
-                suggestMappingWithAI(headers);
-                setStep('MAPPING');
-            }
+            const text = (evt.target?.result as string).replace(/\r/g, '');
+            const lines = text.split('\n').filter(l => l.trim().length > 0);
+            if (lines.length === 0) return;
+            const delim = (lines[0].match(/;/g)?.length || 0) > (lines[0].match(/,/g)?.length || 0) ? ';' : ',';
+            const headers = splitLine(lines[0], delim);
+            const rows = lines.slice(1).map(l => splitLine(l, delim));
+            setCsvHeaders(headers);
+            setCsvRows(rows);
+            setCsvPreview(rows.slice(0, 3));
+            suggestMappingWithAI(headers);
+            setStep('MAPPING');
         };
         reader.readAsText(file);
+    };
+
+    // Build an entity object from a CSV row using the column mapping.
+    const rowToEntity = (row: string[]): Record<string, string> => {
+        const e: Record<string, string> = {};
+        for (const f of SCHEMA_DEFINITIONS[activeType]) {
+            const header = Object.keys(columnMapping).find(k => columnMapping[k] === f.key);
+            const idx = header ? csvHeaders.indexOf(header) : -1;
+            e[f.key] = idx >= 0 ? (row[idx] ?? '').trim() : '';
+        }
+        return e;
     };
 
     const suggestMappingWithAI = async (headers: string[]) => {
@@ -151,19 +181,71 @@ export const DataImport: React.FC = () => {
         }
     };
 
-    const handleImport = () => {
+    const handleImport = async () => {
         setIsImporting(true);
-        // Simulate API delay
-        setTimeout(() => {
-            setIsImporting(false);
+        const tenantId = user?.tenantId;
+        const errors: string[] = [];
+        let created = 0, skipped = 0;
+
+        try {
+            for (let i = 0; i < csvRows.length; i++) {
+                const e = rowToEntity(csvRows[i]);
+                // required-field validation
+                const missing = SCHEMA_DEFINITIONS[activeType].filter(f => f.required && !e[f.key]);
+                if (missing.length) { skipped++; if (errors.length < 5) errors.push(`Zeile ${i + 2}: ${missing.map(m => m.label).join(', ')} fehlt`); continue; }
+                try {
+                    if (activeType === 'CLIENTS') {
+                        await db.clients.create({
+                            tenantId, advisorId: user?.id, type: 'PRIVATE',
+                            firstName: e.firstName, lastName: e.lastName, email: e.email,
+                            address: e.address || '', zipCity: e.zipCity, birthDate: e.birthDate || null,
+                            taxDomicile: '', username: `${e.firstName}.${e.lastName}`.toLowerCase().replace(/\s+/g, ''),
+                            role: UserRole.CLIENT, avatarUrl: '',
+                        } as any);
+                        created++;
+                    } else if (activeType === 'LEADS') {
+                        await leadsService.create({
+                            tenantId, name: e.company, city: e.city,
+                            status: (e.status as any) || 'NEW', source: 'Import', potentialValue: 0,
+                            address: '', type: 'OTHER', aiInsightScore: 0, interests: [],
+                            contacts: e.contactPerson || e.email ? [{ id: '', name: e.contactPerson || e.company, role: '', email: e.email || '', phone: '', isPrimary: true } as any] : [],
+                            activities: [], tasks: [], offers: [],
+                        } as any);
+                        created++;
+                    } else if (activeType === 'POLICIES') {
+                        await db.policies.create({
+                            tenantId, insurer: e.insurer, type: e.type, policyNumber: e.policyNumber,
+                            premiumAmount: Number((e.premiumAmount || '').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0,
+                            premiumFrequency: 'Jährlich', status: 'ACTIVE',
+                            startDate: e.startDate || null, endDate: e.endDate || null,
+                        } as any);
+                        created++;
+                    } else {
+                        skipped++;
+                    }
+                } catch (rowErr: any) {
+                    skipped++;
+                    if (errors.length < 5) errors.push(`Zeile ${i + 2}: ${rowErr?.message || 'Fehler'}`);
+                }
+            }
+
+            auditService.log({ tenantId, actorId: user?.id, actorName: user ? `${user.firstName} ${user.lastName}` : null, action: 'BULK_IMPORT', entityType: activeType, summary: `Import ${activeType}: ${created} erstellt, ${skipped} übersprungen` });
+            setResult({ created, skipped, errors });
+            if (created > 0) toast.success(`${created} Datensätze importiert.`);
+            if (created === 0) toast.warning('Keine Datensätze importiert — bitte Mapping prüfen.');
             setStep('SUCCESS');
-        }, 1500);
+        } finally {
+            setIsImporting(false);
+        }
     };
 
     const resetImport = () => {
         setFile(null);
         setCsvHeaders([]);
+        setCsvRows([]);
+        setCsvPreview([]);
         setColumnMapping({});
+        setResult(null);
         setStep('UPLOAD');
     };
 
@@ -332,7 +414,7 @@ export const DataImport: React.FC = () => {
 
                             <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 p-4 rounded-xl">
                                 <div className="text-sm">
-                                    <span className="font-bold text-slate-900 dark:text-slate-100">Total Datensätze:</span> ca. 150
+                                    <span className="font-bold text-slate-900 dark:text-slate-100">Total Datensätze:</span> {csvRows.length}
                                 </div>
                                 <div className="flex gap-3">
                                     <Button variant="ghost" onClick={() => setStep('MAPPING')}>Zurück</Button>
@@ -353,10 +435,18 @@ export const DataImport: React.FC = () => {
                             <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center mb-6">
                                 <CheckCircle size={40} />
                             </div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Import erfolgreich!</h2>
-                            <p className="text-slate-500 dark:text-slate-400 mb-8 text-center max-w-md">
-                                150 Datensätze wurden erfolgreich importiert. Sie finden die Daten nun in der entsprechenden Übersicht.
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Import abgeschlossen</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mb-4 text-center max-w-md">
+                                <span className="font-bold text-emerald-600">{result?.created ?? 0}</span> Datensätze importiert
+                                {(result?.skipped ?? 0) > 0 && <> · <span className="font-bold text-amber-600">{result?.skipped}</span> übersprungen</>}.
+                                Sie finden die Daten nun in der entsprechenden Übersicht.
                             </p>
+                            {result && result.errors.length > 0 && (
+                                <div className="mb-8 w-full max-w-md text-xs bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg p-3 text-amber-700 dark:text-amber-300">
+                                    <p className="font-bold mb-1">Übersprungene Zeilen (Auszug):</p>
+                                    <ul className="list-disc list-inside space-y-0.5">{result.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                                </div>
+                            )}
                             <div className="flex gap-4">
                                 <Button variant="outline" onClick={resetImport}>Weitere Datei importieren</Button>
                                 <Button onClick={() => window.location.href = '/dashboard'}>Zum Dashboard</Button>
