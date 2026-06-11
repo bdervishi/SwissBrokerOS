@@ -23,6 +23,7 @@ depend on earlier files).
 | 15 | `database_demo_allowlist.sql` | `demo_allowlist` table for gated demo access |
 | 16 | `database_detail_capture.sql` | Detailed capture: extends `policies`/`assets`/`tax_returns`, adds native `documents` table + private Storage bucket `documents` (incl. storage RLS) |
 | 17 | `database_commissions.sql` | Courtage-Management: `commission_agreements`/`_statements`/`_statement_items`/`_split_rules` + extends `commissions` (Soll/Ist, Splits) — see `docs/COURTAGEN_KONZEPT.md` |
+| 18 | `database_superadmin_lock.sql` | **Security**: reserves `SAAS_SUPER_ADMIN` for ONE designated auth e-mail (edit `super_admin_email()` at the top!), blocks self-service role changes (closes a privilege-escalation hole in `profile_self_update`), demotes any other super admins |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |
