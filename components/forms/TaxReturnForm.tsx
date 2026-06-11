@@ -1,14 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
 import { db } from '../../src/services/db';
 import { TaxReturn, TaxReturnStatus } from '../../types';
 import { ClientLite } from './PolicyForm';
-import { Loader2 } from 'lucide-react';
+import { WizardModal, WizardStep, Field, FieldLabel, SelectField, SummaryRow, inputCls } from './Wizard';
 
 /**
- * Create/edit form for tax mandates: client/year/canton plus itemised Swiss
- * deductions. `deductionsTotal` is computed automatically from the line items.
+ * Create/edit WIZARD for tax mandates (3 steps: Mandat -> Einkommen & Abzüge
+ * -> Abschluss). `deductionsTotal` is computed automatically from the
+ * itemised Swiss deduction line items.
  */
 
 export const SWISS_CANTONS = [
@@ -19,7 +18,7 @@ export const SWISS_CANTONS = [
   'Zug', 'Zürich',
 ];
 
-const STATUS_OPTIONS: { value: TaxReturnStatus; label: string }[] = [
+const STATUS_OPTIONS = [
   { value: 'OPEN', label: 'Offen' },
   { value: 'DOCS_MISSING', label: 'Unterlagen fehlen' },
   { value: 'IN_PROGRESS', label: 'In Bearbeitung' },
@@ -122,14 +121,11 @@ export const TaxReturnForm: React.FC<TaxReturnFormProps> = ({
 
   const handleSave = async () => {
     setError(null);
-    if (!form.clientId) { setError('Bitte einen Kunden wählen.'); return; }
-    const year = Number(form.year);
-    if (!year || year < 2000 || year > 2100) { setError('Bitte ein gültiges Steuerjahr angeben.'); return; }
     setSaving(true);
     try {
       const owner = clients.find((c) => c.id === form.clientId);
       const payload: any = {
-        year,
+        year: Number(form.year),
         canton: form.canton,
         municipality: form.municipality.trim() || null,
         status: form.status,
@@ -156,93 +152,99 @@ export const TaxReturnForm: React.FC<TaxReturnFormProps> = ({
     }
   };
 
+  const clientName = (id: string) => {
+    const c = clients.find((x) => x.id === id);
+    return c ? (c.companyName || `${c.firstName} ${c.lastName}`) : '';
+  };
+
+  const steps: WizardStep[] = [
+    {
+      label: 'Mandat',
+      validate: () => {
+        if (!form.clientId) return 'Bitte einen Kunden wählen.';
+        const year = Number(form.year);
+        if (!year || year < 2000 || year > 2100) return 'Bitte ein gültiges Steuerjahr angeben.';
+        return null;
+      },
+      content: (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <FieldLabel>Kunde *</FieldLabel>
+              <select value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} className={inputCls} disabled={!!initial}>
+                <option value="">– Kunde wählen –</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>{c.companyName ? c.companyName : `${c.firstName} ${c.lastName}`}</option>
+                ))}
+              </select>
+            </div>
+            <Field label="Steuerjahr *" type="number" value={form.year} onChange={(v) => set({ year: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField label="Kanton" value={form.canton} onChange={(v) => set({ canton: v })} options={SWISS_CANTONS} allowEmpty={false} />
+            <Field label="Gemeinde" value={form.municipality} onChange={(v) => set({ municipality: v })} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <SelectField label="Status" value={form.status} onChange={(v) => set({ status: v as TaxReturnStatus })} options={STATUS_OPTIONS} allowEmpty={false} />
+            <Field label="Frist" type="date" value={form.deadline} onChange={(v) => set({ deadline: v })} />
+            <Field label="Eingereicht am" type="date" value={form.submittedAt} onChange={(v) => set({ submittedAt: v })} />
+          </div>
+        </>
+      ),
+    },
+    {
+      label: 'Einkommen & Abzüge',
+      content: (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Bruttoeinkommen (CHF)" type="number" value={form.grossIncome} onChange={(v) => set({ grossIncome: v })} />
+            <Field label="Steuerbares Einkommen (CHF)" type="number" value={form.taxableIncome} onChange={(v) => set({ taxableIncome: v })} />
+          </div>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest pt-2">Abzüge</p>
+          <div className="grid grid-cols-2 gap-3">
+            {DEDUCTION_FIELDS.map((f) => (
+              <Field key={f.key} label={`${f.label} (CHF)`} type="number" value={form.deductions[f.key]} onChange={(v) => setDeduction(f.key, v)} />
+            ))}
+          </div>
+          <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-lg px-4 py-3">
+            <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Abzüge Total (automatisch)</span>
+            <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">CHF {deductionsTotal.toLocaleString()}</span>
+          </div>
+        </>
+      ),
+    },
+    {
+      label: 'Abschluss',
+      content: (
+        <>
+          <div className="space-y-1">
+            <FieldLabel>Interne Notiz</FieldLabel>
+            <textarea value={form.notes} onChange={(e) => set({ notes: e.target.value })} className={`${inputCls} min-h-[80px]`} />
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Zusammenfassung</p>
+            <SummaryRow label="Kunde" value={clientName(form.clientId)} />
+            <SummaryRow label="Steuerjahr / Kanton" value={`${form.year} • ${form.canton}${form.municipality ? ` (${form.municipality})` : ''}`} />
+            <SummaryRow label="Status / Frist" value={`${STATUS_OPTIONS.find((s) => s.value === form.status)?.label} • ${form.deadline || '–'}`} />
+            <SummaryRow label="Steuerbares Einkommen" value={form.taxableIncome ? `CHF ${Number(form.taxableIncome).toLocaleString()}` : '–'} />
+            <SummaryRow label="Abzüge Total" value={`CHF ${deductionsTotal.toLocaleString()}`} />
+          </div>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={initial ? 'Steuermandat bearbeiten' : 'Neues Steuermandat'} maxWidth="max-w-3xl">
-      <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
-        {/* Mandat */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <FieldLabel>Kunde *</FieldLabel>
-            <select value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} className={inputCls} disabled={!!initial}>
-              <option value="">– Kunde wählen –</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.companyName ? c.companyName : `${c.firstName} ${c.lastName}`}</option>
-              ))}
-            </select>
-          </div>
-          <Field label="Steuerjahr *" type="number" value={form.year} onChange={(v) => set({ year: v })} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <FieldLabel>Kanton</FieldLabel>
-            <select value={form.canton} onChange={(e) => set({ canton: e.target.value })} className={inputCls}>
-              {SWISS_CANTONS.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <Field label="Gemeinde" value={form.municipality} onChange={(v) => set({ municipality: v })} />
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <FieldLabel>Status</FieldLabel>
-            <select value={form.status} onChange={(e) => set({ status: e.target.value as TaxReturnStatus })} className={inputCls}>
-              {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </div>
-          <Field label="Frist" type="date" value={form.deadline} onChange={(v) => set({ deadline: v })} />
-          <Field label="Eingereicht am" type="date" value={form.submittedAt} onChange={(v) => set({ submittedAt: v })} />
-        </div>
-
-        {/* Einkommen */}
-        <SectionTitle>Einkommen</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Bruttoeinkommen (CHF)" type="number" value={form.grossIncome} onChange={(v) => set({ grossIncome: v })} />
-          <Field label="Steuerbares Einkommen (CHF)" type="number" value={form.taxableIncome} onChange={(v) => set({ taxableIncome: v })} />
-        </div>
-
-        {/* Abzüge */}
-        <SectionTitle>Abzüge</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          {DEDUCTION_FIELDS.map((f) => (
-            <Field key={f.key} label={`${f.label} (CHF)`} type="number" value={form.deductions[f.key]} onChange={(v) => setDeduction(f.key, v)} />
-          ))}
-        </div>
-        <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-lg px-4 py-3">
-          <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Abzüge Total (automatisch)</span>
-          <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">CHF {deductionsTotal.toLocaleString()}</span>
-        </div>
-
-        <div className="space-y-1">
-          <FieldLabel>Interne Notiz</FieldLabel>
-          <textarea value={form.notes} onChange={(e) => set({ notes: e.target.value })} className={`${inputCls} min-h-[60px]`} />
-        </div>
-
-        {error && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{error}</p>}
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <Button variant="outline" onClick={onClose} disabled={saving}>Abbrechen</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="animate-spin" size={18} /> : (initial ? 'Änderungen speichern' : 'Mandat anlegen')}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+    <WizardModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initial ? 'Steuermandat bearbeiten' : 'Neues Steuermandat'}
+      steps={steps}
+      onFinish={handleSave}
+      saving={saving}
+      finishLabel={initial ? 'Änderungen speichern' : 'Mandat anlegen'}
+      externalError={error}
+      maxWidth="max-w-2xl"
+    />
   );
 };
-
-// ---- field helpers ---------------------------------------------------------
-const inputCls = 'w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm';
-
-const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{children}</label>
-);
-
-const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pt-2 border-t border-slate-100 dark:border-slate-800">{children}</h4>
-);
-
-const Field: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string }> =
-  ({ label, value, onChange, type = 'text' }) => (
-    <div className="space-y-1">
-      <FieldLabel>{label}</FieldLabel>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={inputCls} />
-    </div>
-  );

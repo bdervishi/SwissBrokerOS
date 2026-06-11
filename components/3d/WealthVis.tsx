@@ -1,9 +1,23 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text, Float, Billboard, RoundedBox, SoftShadows, Grid, useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import { Asset, AssetType } from '../../types';
+
+/**
+ * The drei <Text> labels suspend while fetching their font from a CDN. Without
+ * a LOCAL boundary that suspension/rejection bubbles up to the app-level
+ * <Suspense> and blanks the whole client dossier (verified offline). Contain
+ * both cases here: Suspense inside the canvas + an error boundary around it
+ * that degrades to a simple 2D list.
+ */
+class WealthVisBoundary extends React.Component<{ fallback: React.ReactNode; children?: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(err: Error) { console.warn('[WealthVis] 3D view unavailable:', err.message); }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
 
 // Define Three.js elements as local constants to fix JSX intrinsic element errors
 const Group = 'group' as any;
@@ -179,9 +193,28 @@ export const WealthVis: React.FC<WealthVisProps> = ({ assets }) => {
     });
   }, [assets]);
 
+  // Plain 2D fallback when WebGL/the font CDN is unavailable – the dossier
+  // must never depend on the 3D extra.
+  const fallback2d = (
+    <div className="h-full w-full p-6 flex flex-col justify-center gap-3">
+      {data.map((item) => (
+        <div key={item.type} className="flex items-center gap-3">
+          <span className="w-40 text-xs font-bold text-slate-300 uppercase tracking-wide truncate">{item.label}</span>
+          <div className="flex-1 h-3 bg-slate-700/50 rounded-full overflow-hidden">
+            <div className="h-full rounded-full" style={{ width: `${(item.height / 6) * 100}%`, backgroundColor: item.color }} />
+          </div>
+          <span className="w-24 text-right text-xs font-mono text-slate-400">{item.valueFormatted}</span>
+        </div>
+      ))}
+      {data.length === 0 && <p className="text-center text-sm text-slate-500">Noch keine Vermögenswerte erfasst.</p>}
+    </div>
+  );
+
   return (
     <div className="h-[400px] w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl overflow-hidden relative">
+      <WealthVisBoundary fallback={fallback2d}>
       <Canvas shadows camera={{ position: [0, 6, 10], fov: 45 }}>
+        <Suspense fallback={null}>
         <Fog attach="fog" args={['#0f172a', 5, 20]} />
         
         {/* Lights */}
@@ -240,12 +273,14 @@ export const WealthVis: React.FC<WealthVisProps> = ({ assets }) => {
         </Group>
 
         <SoftShadows size={10} samples={10} focus={0} />
+        </Suspense>
       </Canvas>
 
       <div className="absolute bottom-4 left-4 text-xs text-slate-400 pointer-events-none">
           <p>Interaktive 3D Ansicht</p>
           <p>Klicken & Ziehen zum Drehen</p>
       </div>
+      </WealthVisBoundary>
     </div>
   );
 };

@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
 import { db } from '../../src/services/db';
 import { Policy, PolicyStatus } from '../../types';
-import { Loader2 } from 'lucide-react';
+import { WizardModal, WizardStep, Field, FieldLabel, SelectField, SummaryRow, inputCls } from './Wizard';
+
+/**
+ * Detailed create/edit WIZARD for insurance policies (4 steps:
+ * Vertrag -> Laufzeit & Prämie -> Deckung -> Abschluss). Used from the
+ * Policies page (with client selector) and from ClientDetail (client fixed).
+ * Covers every persisted column of public.policies.
+ */
 
 /** Structural client shape – avoids coupling to the (duplicated) Client type. */
 export interface ClientLite {
@@ -13,12 +18,6 @@ export interface ClientLite {
   companyName?: string | null;
   tenantId?: string;
 }
-
-/**
- * Detailed create/edit form for insurance policies. Used from the Policies
- * page (with client selector) and from ClientDetail (client fixed). Covers
- * every persisted column of public.policies.
- */
 
 export const POLICY_TYPE_SUGGESTIONS = [
   'Krankenkasse (KVG)', 'Krankenzusatz (VVG)', 'Privathaftpflicht', 'Hausrat',
@@ -30,10 +29,10 @@ export const POLICY_TYPE_SUGGESTIONS = [
 
 const FREQUENCIES = ['Jährlich', 'Halbjährlich', 'Vierteljährlich', 'Monatlich'];
 const PAYMENT_METHODS = ['Rechnung', 'eBill', 'LSV / Lastschrift', 'QR-Rechnung', 'Kreditkarte'];
-const STATUS_OPTIONS: { value: PolicyStatus; label: string }[] = [
-  { value: 'ACTIVE' as PolicyStatus, label: 'Aktiv' },
-  { value: 'PENDING' as PolicyStatus, label: 'Pendent / Offerte' },
-  { value: 'CANCELLED' as PolicyStatus, label: 'Gekündigt' },
+const STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'Aktiv' },
+  { value: 'PENDING', label: 'Pendent / Offerte' },
+  { value: 'CANCELLED', label: 'Gekündigt' },
 ];
 
 interface PolicyFormState {
@@ -117,11 +116,6 @@ export const PolicyForm: React.FC<PolicyFormProps> = ({
 
   const handleSave = async () => {
     setError(null);
-    if (!form.clientId) { setError('Bitte einen Kunden wählen.'); return; }
-    if (!form.insurer.trim() || !form.type.trim()) {
-      setError('Versicherer und Sparte sind erforderlich.');
-      return;
-    }
     setSaving(true);
     try {
       const owner = clients?.find((c) => c.id === form.clientId);
@@ -162,123 +156,121 @@ export const PolicyForm: React.FC<PolicyFormProps> = ({
     }
   };
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={initial ? 'Police bearbeiten' : 'Neue Police erfassen'} maxWidth="max-w-3xl">
-      <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
-        {/* Kunde */}
-        {!initial && clients && !fixedClientId && (
-          <div className="space-y-1">
-            <FieldLabel>Kunde *</FieldLabel>
-            <select value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} className={inputCls}>
-              <option value="">– Kunde wählen –</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.companyName ? c.companyName : `${c.firstName} ${c.lastName}`}</option>
-              ))}
-            </select>
-          </div>
-        )}
+  const clientName = (id: string) => {
+    const c = clients?.find((x) => x.id === id);
+    return c ? (c.companyName || `${c.firstName} ${c.lastName}`) : '';
+  };
 
-        {/* Grunddaten */}
-        <SectionTitle>Vertrag</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Versicherer *" value={form.insurer} onChange={(v) => set({ insurer: v })} placeholder="z.B. Helvetia" />
-          <div className="space-y-1">
-            <FieldLabel>Sparte / Art *</FieldLabel>
-            <input list="policy-type-suggestions" value={form.type} onChange={(e) => set({ type: e.target.value })} className={inputCls} placeholder="z.B. Hausrat" />
-            <datalist id="policy-type-suggestions">
-              {POLICY_TYPE_SUGGESTIONS.map((t) => <option key={t} value={t} />)}
-            </datalist>
+  const steps: WizardStep[] = [
+    {
+      label: 'Vertrag',
+      validate: () => {
+        if (!form.clientId) return 'Bitte einen Kunden wählen.';
+        if (!form.insurer.trim() || !form.type.trim()) return 'Versicherer und Sparte sind erforderlich.';
+        return null;
+      },
+      content: (
+        <>
+          {!initial && clients && !fixedClientId && (
+            <div className="space-y-1">
+              <FieldLabel>Kunde *</FieldLabel>
+              <select value={form.clientId} onChange={(e) => set({ clientId: e.target.value })} className={inputCls}>
+                <option value="">– Kunde wählen –</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>{c.companyName ? c.companyName : `${c.firstName} ${c.lastName}`}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Versicherer *" value={form.insurer} onChange={(v) => set({ insurer: v })} placeholder="z.B. Helvetia" />
+            <div className="space-y-1">
+              <FieldLabel>Sparte / Art *</FieldLabel>
+              <input list="policy-type-suggestions" value={form.type} onChange={(e) => set({ type: e.target.value })} className={inputCls} placeholder="z.B. Hausrat" />
+              <datalist id="policy-type-suggestions">
+                {POLICY_TYPE_SUGGESTIONS.map((t) => <option key={t} value={t} />)}
+              </datalist>
+            </div>
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Produktname" value={form.productName} onChange={(v) => set({ productName: v })} placeholder="z.B. Komfort Plus" />
-          <Field label="Policennummer" value={form.policyNumber} onChange={(v) => set({ policyNumber: v })} />
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <FieldLabel>Status</FieldLabel>
-            <select value={form.status} onChange={(e) => set({ status: e.target.value })} className={inputCls}>
-              {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Produktname" value={form.productName} onChange={(v) => set({ productName: v })} placeholder="z.B. Komfort Plus" />
+            <Field label="Policennummer" value={form.policyNumber} onChange={(v) => set({ policyNumber: v })} />
           </div>
-          <Field label="Beginn" type="date" value={form.startDate} onChange={(v) => set({ startDate: v })} />
-          <Field label="Ablauf" type="date" value={form.endDate} onChange={(v) => set({ endDate: v })} />
-        </div>
-
-        {/* Prämie & Zahlung */}
-        <SectionTitle>Prämie & Zahlung</SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="Prämie (CHF)" type="number" value={form.premiumAmount} onChange={(v) => set({ premiumAmount: v })} />
-          <div className="space-y-1">
-            <FieldLabel>Zahlungsrhythmus</FieldLabel>
-            <select value={form.premiumFrequency} onChange={(e) => set({ premiumFrequency: e.target.value })} className={inputCls}>
-              {FREQUENCIES.map((f) => <option key={f} value={f}>{f}</option>)}
-            </select>
+          <SelectField label="Status" value={form.status} onChange={(v) => set({ status: v })} options={STATUS_OPTIONS} allowEmpty={false} />
+        </>
+      ),
+    },
+    {
+      label: 'Laufzeit & Prämie',
+      content: (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Beginn" type="date" value={form.startDate} onChange={(v) => set({ startDate: v })} />
+            <Field label="Ablauf" type="date" value={form.endDate} onChange={(v) => set({ endDate: v })} />
+            <Field label="Kündigungsfrist (Monate)" type="number" value={form.cancellationNoticePeriod} onChange={(v) => set({ cancellationNoticePeriod: v })} placeholder="z.B. 3" />
           </div>
-          <div className="space-y-1">
-            <FieldLabel>Zahlart</FieldLabel>
-            <select value={form.paymentMethod} onChange={(e) => set({ paymentMethod: e.target.value })} className={inputCls}>
-              <option value="">–</option>
-              {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Prämie (CHF)" type="number" value={form.premiumAmount} onChange={(v) => set({ premiumAmount: v })} />
+            <SelectField label="Zahlungsrhythmus" value={form.premiumFrequency} onChange={(v) => set({ premiumFrequency: v })} options={FREQUENCIES} allowEmpty={false} />
+            <SelectField label="Zahlart" value={form.paymentMethod} onChange={(v) => set({ paymentMethod: v })} options={PAYMENT_METHODS} />
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
           <Field label="Selbstbehalt (CHF)" type="number" value={form.deductible} onChange={(v) => set({ deductible: v })} />
-          <Field label="Kündigungsfrist (Monate)" type="number" value={form.cancellationNoticePeriod} onChange={(v) => set({ cancellationNoticePeriod: v })} placeholder="z.B. 3" />
-        </div>
+        </>
+      ),
+    },
+    {
+      label: 'Deckung',
+      content: (
+        <>
+          <Field label="Versicherte Personen (kommagetrennt)" value={form.insuredPersons} onChange={(v) => set({ insuredPersons: v })} placeholder="z.B. Max Muster, Anna Muster" />
+          <div className="space-y-1">
+            <FieldLabel>Deckungen / Leistungen (eine pro Zeile)</FieldLabel>
+            <textarea
+              value={form.coverageDetails}
+              onChange={(e) => set({ coverageDetails: e.target.value })}
+              className={`${inputCls} min-h-[140px] font-mono text-xs`}
+              placeholder={'Hausrat bis CHF 100\'000\nGlasbruch\nDiebstahl auswärts'}
+            />
+          </div>
+        </>
+      ),
+    },
+    {
+      label: 'Abschluss',
+      content: (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Abschlussprovision (CHF)" type="number" value={form.initialCommission} onChange={(v) => set({ initialCommission: v })} />
+            <Field label="Stornohaftung (Monate)" type="number" value={form.liabilityDurationMonths} onChange={(v) => set({ liabilityDurationMonths: v })} />
+          </div>
+          <div className="space-y-1">
+            <FieldLabel>Interne Notizen</FieldLabel>
+            <textarea value={form.notes} onChange={(e) => set({ notes: e.target.value })} className={`${inputCls} min-h-[60px]`} />
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 mt-2">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Zusammenfassung</p>
+            {(!initial && clients && !fixedClientId) && <SummaryRow label="Kunde" value={clientName(form.clientId)} />}
+            <SummaryRow label="Versicherer / Sparte" value={`${form.insurer || '–'} • ${form.type || '–'}`} />
+            <SummaryRow label="Prämie" value={form.premiumAmount ? `CHF ${Number(form.premiumAmount).toLocaleString()} (${form.premiumFrequency})` : '–'} />
+            <SummaryRow label="Laufzeit" value={form.startDate || form.endDate ? `${form.startDate || '?'} – ${form.endDate || 'offen'}` : '–'} />
+            <SummaryRow label="Status" value={STATUS_OPTIONS.find((s) => s.value === form.status)?.label} />
+          </div>
+        </>
+      ),
+    },
+  ];
 
-        {/* Deckung */}
-        <SectionTitle>Deckung</SectionTitle>
-        <Field label="Versicherte Personen (kommagetrennt)" value={form.insuredPersons} onChange={(v) => set({ insuredPersons: v })} placeholder="z.B. Max Muster, Anna Muster" />
-        <div className="space-y-1">
-          <FieldLabel>Deckungen / Leistungen (eine pro Zeile)</FieldLabel>
-          <textarea
-            value={form.coverageDetails}
-            onChange={(e) => set({ coverageDetails: e.target.value })}
-            className={`${inputCls} min-h-[80px] font-mono text-xs`}
-            placeholder={'Hausrat bis CHF 100\'000\nGlasbruch\nDiebstahl auswärts'}
-          />
-        </div>
-
-        {/* Broker-intern */}
-        <SectionTitle>Broker-intern</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Abschlussprovision (CHF)" type="number" value={form.initialCommission} onChange={(v) => set({ initialCommission: v })} />
-          <Field label="Stornohaftung (Monate)" type="number" value={form.liabilityDurationMonths} onChange={(v) => set({ liabilityDurationMonths: v })} />
-        </div>
-        <div className="space-y-1">
-          <FieldLabel>Interne Notizen</FieldLabel>
-          <textarea value={form.notes} onChange={(e) => set({ notes: e.target.value })} className={`${inputCls} min-h-[60px]`} />
-        </div>
-
-        {error && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{error}</p>}
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <Button variant="outline" onClick={onClose} disabled={saving}>Abbrechen</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="animate-spin" size={18} /> : (initial ? 'Änderungen speichern' : 'Police speichern')}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+  return (
+    <WizardModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initial ? 'Police bearbeiten' : 'Neue Police erfassen'}
+      steps={steps}
+      onFinish={handleSave}
+      saving={saving}
+      finishLabel={initial ? 'Änderungen speichern' : 'Police speichern'}
+      externalError={error}
+      maxWidth="max-w-2xl"
+    />
   );
 };
-
-// ---- small shared field helpers -------------------------------------------
-const inputCls = 'w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm';
-
-const FieldLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{children}</label>
-);
-
-const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pt-2 border-t border-slate-100 dark:border-slate-800 first:border-0 first:pt-0">{children}</h4>
-);
-
-const Field: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }> =
-  ({ label, value, onChange, type = 'text', placeholder }) => (
-    <div className="space-y-1">
-      <FieldLabel>{label}</FieldLabel>
-      <input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className={inputCls} />
-    </div>
-  );
