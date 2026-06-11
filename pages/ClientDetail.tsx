@@ -7,9 +7,12 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal'; // Added Modal Import
 import { ComplianceShield } from '../components/ui/ComplianceShield';
 import { MOCK_ADVICE, MOCK_ACTIVITY_LOGS } from '../constants';
-import { useClient, usePolicies, useAssets, useClientNotes } from '../src/hooks/useData';
+import { useClient, usePolicies, useAssets, useClientNotes, useMortgages, useTaxReturns } from '../src/hooks/useData';
 import { db } from '../src/services/db';
 import { ClientDocuments } from '../components/integrations/ClientDocuments';
+import { DocumentVault } from '../components/documents/DocumentVault';
+import { PolicyForm } from '../components/forms/PolicyForm';
+import { AssetForm, ASSET_TYPE_LABELS } from '../components/forms/AssetForm';
 import { CallProcessor } from '../components/CallProcessor';
 import { useAuth } from '../contexts/AuthContext';
 import { WealthVis } from '../components/3d/WealthVis';
@@ -46,7 +49,7 @@ import {
   Sparkles,
   Trash2
 } from 'lucide-react';
-import { AssetType, ActivityType, ActivityLog, ClientNote, TrustScore, Client } from '../types';
+import { ActivityType, ActivityLog, ClientNote, TrustScore, Client, Policy, Asset } from '../types';
 
 export const ClientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -77,20 +80,17 @@ export const ClientDetail: React.FC = () => {
 
   const { data: policies, refetch: refetchPolicies } = usePolicies(id);
   const { data: assets, refetch: refetchAssets } = useAssets(id);
+  const { data: mortgages } = useMortgages(id);
+  const { data: clientTaxReturns } = useTaxReturns(id);
   const advice = MOCK_ADVICE.filter(a => a.clientId === id);
   const activities = MOCK_ACTIVITY_LOGS.filter(a => a.clientId === id).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
-  // New-entry (policy / asset) capture state
+  // Detailed capture modals (create + edit) – forms live in components/forms/.
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+  const [editPolicy, setEditPolicy] = useState<Policy | null>(null);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
-  const [savingEntry, setSavingEntry] = useState(false);
+  const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [entryError, setEntryError] = useState<string | null>(null);
-  const [policyForm, setPolicyForm] = useState({
-    insurer: '', type: '', policyNumber: '', premiumAmount: '', premiumFrequency: 'Jährlich', startDate: '', deductible: '',
-  });
-  const [assetForm, setAssetForm] = useState({
-    type: AssetType.PILLAR_3A, name: '', value: '', provider: '',
-  });
 
   // Call processing
   const [isCallOpen, setIsCallOpen] = useState(false);
@@ -103,62 +103,6 @@ export const ClientDetail: React.FC = () => {
   });
 
   if (!client) return <Layout><div className="p-8">{clientLoading ? 'Lädt…' : 'Klient nicht gefunden'}</div></Layout>;
-
-  const handleCreatePolicy = async () => {
-    setEntryError(null);
-    if (!policyForm.insurer.trim() || !policyForm.type.trim()) {
-      setEntryError('Versicherer und Art sind erforderlich.');
-      return;
-    }
-    setSavingEntry(true);
-    try {
-      await db.policies.create({
-        clientId: id,
-        tenantId: client.tenantId,
-        insurer: policyForm.insurer.trim(),
-        type: policyForm.type.trim(),
-        policyNumber: policyForm.policyNumber.trim(),
-        premiumAmount: Number(policyForm.premiumAmount) || 0,
-        premiumFrequency: policyForm.premiumFrequency,
-        status: 'ACTIVE',
-        startDate: policyForm.startDate || null,
-        deductible: policyForm.deductible ? Number(policyForm.deductible) : null,
-      } as any);
-      setIsPolicyModalOpen(false);
-      setPolicyForm({ insurer: '', type: '', policyNumber: '', premiumAmount: '', premiumFrequency: 'Jährlich', startDate: '', deductible: '' });
-      refetchPolicies();
-    } catch (err: any) {
-      setEntryError(err?.message || 'Speichern fehlgeschlagen.');
-    } finally {
-      setSavingEntry(false);
-    }
-  };
-
-  const handleCreateAsset = async () => {
-    setEntryError(null);
-    if (!assetForm.name.trim()) {
-      setEntryError('Bezeichnung ist erforderlich.');
-      return;
-    }
-    setSavingEntry(true);
-    try {
-      await db.assets.create({
-        clientId: id,
-        type: assetForm.type,
-        name: assetForm.name.trim(),
-        value: Number(assetForm.value) || 0,
-        provider: assetForm.provider.trim(),
-        lastUpdated: new Date().toISOString().slice(0, 10),
-      } as any);
-      setIsAssetModalOpen(false);
-      setAssetForm({ type: AssetType.PILLAR_3A, name: '', value: '', provider: '' });
-      refetchAssets();
-    } catch (err: any) {
-      setEntryError(err?.message || 'Speichern fehlgeschlagen.');
-    } finally {
-      setSavingEntry(false);
-    }
-  };
 
   const openEdit = () => {
     if (!client) return;
@@ -522,10 +466,17 @@ export const ClientDetail: React.FC = () => {
                     <div key={a.id} className="px-6 py-4 flex justify-between items-center group">
                       <div>
                         <p className="font-medium text-slate-900 dark:text-slate-100">{a.name}</p>
-                        <p className="text-xs text-slate-500">{a.type}{a.provider ? ` • ${a.provider}` : ''}</p>
+                        <p className="text-xs text-slate-500">
+                          {ASSET_TYPE_LABELS[a.type] ?? a.type}
+                          {a.provider ? ` • ${a.provider}` : ''}
+                          {a.details?.annualContribution ? ` • Beitrag CHF ${Number(a.details.annualContribution).toLocaleString()}/Jahr` : ''}
+                          {a.details?.employer ? ` • ${a.details.employer}` : ''}
+                          {a.lastUpdated ? ` • per ${a.lastUpdated}` : ''}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="font-mono font-semibold text-slate-900 dark:text-slate-100"><SensitiveData>CHF {a.value.toLocaleString()}</SensitiveData></p>
+                        <button onClick={() => { setEditAsset(a); setIsAssetModalOpen(true); }} className="text-slate-300 hover:text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Bearbeiten"><PenTool size={16} /></button>
                         <button onClick={() => handleDeleteAsset(a.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Löschen"><Trash2 size={16} /></button>
                       </div>
                     </div>
@@ -537,32 +488,75 @@ export const ClientDetail: React.FC = () => {
         )}
         
         {activeTab === 'TAX' && (
-           <div className="max-w-4xl mx-auto">
-             <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-4">
+           <div className="max-w-4xl mx-auto space-y-6">
+             <div className="p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-4">
                <div className="text-blue-600"><Calculator /></div>
-               <div>
+               <div className="flex-1">
                  <h4 className="font-bold text-blue-900 dark:text-blue-100">Steuer-Support Modus</h4>
-                 <p className="text-sm text-blue-800 dark:text-blue-200">Diese Ansicht aggregiert steuerrelevante Daten.</p>
+                 <p className="text-sm text-blue-800 dark:text-blue-200">Steuermandate dieses Kunden. Detail-Erfassung im <Link to="/tax" className="underline font-medium">Steuer-Cockpit</Link>.</p>
                </div>
              </div>
-             <Card title="Steuerausweis 2023 (Vorschau)">
-                <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="pt-4 flex justify-between items-center">
-                    <span>Versicherungsabzüge (KVG)</span>
-                    <span className="font-mono"><SensitiveData>CHF 4,250.00</SensitiveData></span>
+             {clientTaxReturns.length === 0 ? (
+               <div className="text-center text-slate-500 py-10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                 Noch kein Steuermandat erfasst. <Link to="/tax" className="text-brand-600 underline">Im Steuer-Cockpit anlegen</Link>.
+               </div>
+             ) : [...clientTaxReturns].sort((a, b) => b.year - a.year).map(tr => (
+               <Card key={tr.id} title={`Steuererklärung ${tr.year} – ${tr.canton}${tr.municipality ? ` (${tr.municipality})` : ''}`}>
+                  <div className="space-y-3 divide-y divide-slate-100 dark:divide-slate-800">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-500">Status / Frist</span>
+                      <span className="text-sm font-medium">{tr.status} • {tr.deadline || '–'}</span>
+                    </div>
+                    {(tr.grossIncome ?? 0) > 0 && (
+                      <div className="pt-3 flex justify-between items-center">
+                        <span className="text-sm text-slate-500">Bruttoeinkommen</span>
+                        <span className="font-mono"><SensitiveData>CHF {Number(tr.grossIncome).toLocaleString()}</SensitiveData></span>
+                      </div>
+                    )}
+                    <div className="pt-3 flex justify-between items-center">
+                      <span className="text-sm text-slate-500">Steuerbares Einkommen</span>
+                      <span className="font-mono"><SensitiveData>CHF {Number(tr.taxableIncome ?? 0).toLocaleString()}</SensitiveData></span>
+                    </div>
+                    <div className="pt-3 flex justify-between items-center">
+                      <span className="text-sm text-slate-500">Abzüge Total</span>
+                      <span className="font-mono text-emerald-600"><SensitiveData>- CHF {Number(tr.deductionsTotal ?? 0).toLocaleString()}</SensitiveData></span>
+                    </div>
+                    {(tr.pillar3aContributions ?? 0) > 0 && (
+                      <div className="pt-3 flex justify-between items-center">
+                        <span className="text-sm text-slate-500 pl-4">davon Säule 3a</span>
+                        <span className="font-mono text-xs"><SensitiveData>CHF {Number(tr.pillar3aContributions).toLocaleString()}</SensitiveData></span>
+                      </div>
+                    )}
+                    {(tr.insurancePremiums ?? 0) > 0 && (
+                      <div className="pt-3 flex justify-between items-center">
+                        <span className="text-sm text-slate-500 pl-4">davon Versicherungsprämien</span>
+                        <span className="font-mono text-xs"><SensitiveData>CHF {Number(tr.insurancePremiums).toLocaleString()}</SensitiveData></span>
+                      </div>
+                    )}
                   </div>
-                </div>
-             </Card>
+               </Card>
+             ))}
            </div>
         )}
 
         {activeTab === 'DOCUMENTS' && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Dokumente vom Cloud-Speicher</h3>
-              <p className="text-sm text-slate-500">Verknüpfe pro Cloud-Anbieter einen Ordner mit diesem Kunden — seine Dateien erscheinen dann direkt hier.</p>
+          <div className="space-y-8">
+            {/* Native vault: upload + categorise + link */}
+            <DocumentVault
+              tenantId={client.tenantId}
+              clientId={client.id}
+              policies={policies}
+              taxReturns={clientTaxReturns}
+              mortgages={mortgages}
+            />
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Dokumente vom Cloud-Speicher</h3>
+                <p className="text-sm text-slate-500">Verknüpfe pro Cloud-Anbieter einen Ordner mit diesem Kunden — seine Dateien erscheinen dann direkt hier.</p>
+              </div>
+              <ClientDocuments tenantId={client.tenantId} clientId={client.id} />
             </div>
-            <ClientDocuments tenantId={client.tenantId} clientId={client.id} />
           </div>
         )}
 
@@ -662,12 +656,13 @@ export const ClientDetail: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-8">
                              <div className="text-right hidden sm:block">
-                                 <p className="text-sm text-slate-500">Jahresprämie</p>
+                                 <p className="text-sm text-slate-500">{p.premiumFrequency ? `Prämie (${p.premiumFrequency})` : 'Prämie'}</p>
                                  <p className="font-semibold text-slate-900 dark:text-slate-100"><SensitiveData>CHF {p.premiumAmount.toFixed(2)}</SensitiveData></p>
                              </div>
                              <Link to={`/policy/${p.id}`}>
                                 <Button variant="outline">Details</Button>
                              </Link>
+                             <button onClick={() => { setEditPolicy(p); setIsPolicyModalOpen(true); }} className="text-slate-300 hover:text-brand-600 transition-colors" title="Police bearbeiten"><PenTool size={18} /></button>
                              <button onClick={() => handleDeletePolicy(p.id)} className="text-slate-300 hover:text-red-500 transition-colors" title="Police löschen"><Trash2 size={18} /></button>
                         </div>
                      </div>
@@ -706,54 +701,25 @@ export const ClientDetail: React.FC = () => {
         </div>
       </Modal>
 
-      {/* NEW POLICY MODAL */}
-      <Modal isOpen={isPolicyModalOpen} onClose={() => setIsPolicyModalOpen(false)} title="Neue Police erfassen" maxWidth="max-w-xl">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <EntryField label="Versicherer *" value={policyForm.insurer} onChange={(v) => setPolicyForm({ ...policyForm, insurer: v })} />
-            <EntryField label="Art (z.B. Hausrat) *" value={policyForm.type} onChange={(v) => setPolicyForm({ ...policyForm, type: v })} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <EntryField label="Policennummer" value={policyForm.policyNumber} onChange={(v) => setPolicyForm({ ...policyForm, policyNumber: v })} />
-            <EntryField label="Jahresprämie (CHF)" type="number" value={policyForm.premiumAmount} onChange={(v) => setPolicyForm({ ...policyForm, premiumAmount: v })} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <EntryField label="Beginn" type="date" value={policyForm.startDate} onChange={(v) => setPolicyForm({ ...policyForm, startDate: v })} />
-            <EntryField label="Selbstbehalt (CHF)" type="number" value={policyForm.deductible} onChange={(v) => setPolicyForm({ ...policyForm, deductible: v })} />
-          </div>
-          {entryError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{entryError}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setIsPolicyModalOpen(false)} disabled={savingEntry}>Abbrechen</Button>
-            <Button onClick={handleCreatePolicy} disabled={savingEntry}>{savingEntry ? <Loader2 className="animate-spin" size={18} /> : 'Police speichern'}</Button>
-          </div>
-        </div>
-      </Modal>
+      {/* POLICY CREATE/EDIT (detailed form) */}
+      <PolicyForm
+        isOpen={isPolicyModalOpen}
+        onClose={() => { setIsPolicyModalOpen(false); setEditPolicy(null); }}
+        onSaved={refetchPolicies}
+        fixedClientId={client.id}
+        fixedTenantId={client.tenantId}
+        initial={editPolicy}
+      />
 
-      {/* NEW ASSET MODAL */}
-      <Modal isOpen={isAssetModalOpen} onClose={() => setIsAssetModalOpen(false)} title="Vermögenswert erfassen" maxWidth="max-w-xl">
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Typ</label>
-            <select
-              value={assetForm.type}
-              onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value as AssetType })}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              {Object.values(AssetType).map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <EntryField label="Bezeichnung *" value={assetForm.name} onChange={(v) => setAssetForm({ ...assetForm, name: v })} />
-          <div className="grid grid-cols-2 gap-3">
-            <EntryField label="Wert (CHF)" type="number" value={assetForm.value} onChange={(v) => setAssetForm({ ...assetForm, value: v })} />
-            <EntryField label="Anbieter / Bank" value={assetForm.provider} onChange={(v) => setAssetForm({ ...assetForm, provider: v })} />
-          </div>
-          {entryError && <p className="text-sm text-red-500 font-medium bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded">{entryError}</p>}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setIsAssetModalOpen(false)} disabled={savingEntry}>Abbrechen</Button>
-            <Button onClick={handleCreateAsset} disabled={savingEntry}>{savingEntry ? <Loader2 className="animate-spin" size={18} /> : 'Vermögenswert speichern'}</Button>
-          </div>
-        </div>
-      </Modal>
+      {/* ASSET CREATE/EDIT (type-specific detailed form) */}
+      <AssetForm
+        isOpen={isAssetModalOpen}
+        onClose={() => { setIsAssetModalOpen(false); setEditAsset(null); }}
+        onSaved={refetchAssets}
+        clientId={client.id}
+        mortgages={mortgages}
+        initial={editAsset}
+      />
 
       {/* CONSULTATION PROTOCOL MODAL */}
       <Modal

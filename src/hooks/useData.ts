@@ -4,7 +4,7 @@ import { leadsService } from '../services/leads';
 import { calendarService } from '../services/calendar';
 import { emailsService } from '../services/emails';
 import { leadOffersService } from '../services/leadOffers';
-import { CalendarEvent, TaxReturn, Email, LeadOffer } from '../types';
+import { CalendarEvent, TaxReturn, Email, LeadOffer, ClientDocument } from '../types';
 import {
   Client,
   Policy,
@@ -145,6 +145,12 @@ export const useTaxReturns = (clientId?: string) =>
 export const useClientNotes = (clientId?: string) =>
   useCollection<ClientNote>(
     () => db.clientNotes.getAll(clientId ? { clientId } : undefined),
+    [clientId],
+  );
+
+export const useDocuments = (clientId?: string) =>
+  useCollection<ClientDocument>(
+    () => (clientId ? db.documents.getAll({ clientId }) : Promise.resolve([])),
     [clientId],
   );
 

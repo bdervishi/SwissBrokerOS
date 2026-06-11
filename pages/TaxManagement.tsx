@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useTaxReturns, useClients } from '../src/hooks/useData';
 import { TaxReturn, TaxReturnStatus, UserRole } from '../types';
+import { TaxReturnForm, DEDUCTION_FIELDS } from '../components/forms/TaxReturnForm';
 import { useAuth } from '../contexts/AuthContext';
 import { useSecurity } from '../contexts/SecurityContext';
 import { getAIClient } from '../services/aiService';
@@ -36,14 +37,18 @@ import { Navigate } from 'react-router-dom';
 export const TaxManagement: React.FC = () => {
     const { role } = useAuth();
     const { isAIEnabled } = useSecurity();
-    const { data: taxReturns } = useTaxReturns();
+    const { data: taxReturns, refetch: refetchTaxReturns } = useTaxReturns();
     const { data: clients } = useClients();
-    
+
     // View State
     const [viewMode, setViewMode] = useState<'KANBAN' | 'LIST'>('KANBAN');
     const [selectedYear, setSelectedYear] = useState<number>(2023);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedReturn, setSelectedReturn] = useState<TaxReturn | null>(null);
+
+    // Create/edit mandate form (components/forms/TaxReturnForm.tsx)
+    const [isTaxFormOpen, setIsTaxFormOpen] = useState(false);
+    const [editReturn, setEditReturn] = useState<TaxReturn | null>(null);
     
     // Simulator State
     const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
@@ -268,7 +273,7 @@ export const TaxManagement: React.FC = () => {
                             {selectedYear + 1}
                         </button>
                     </div>
-                    <Button icon={<Plus size={18} />}>Neues Mandat</Button>
+                    <Button icon={<Plus size={18} />} onClick={() => { setEditReturn(null); setIsTaxFormOpen(true); }}>Neues Mandat</Button>
                 </div>
             </div>
 
@@ -311,6 +316,46 @@ export const TaxManagement: React.FC = () => {
                     <KanbanColumn title="Review" status="REVIEW" items={filteredReturns.filter(r => r.status === 'REVIEW')} />
                     <KanbanColumn title="Eingereicht" status="SUBMITTED" items={filteredReturns.filter(r => r.status === 'SUBMITTED')} />
                 </div>
+            )}
+
+            {viewMode === 'LIST' && (
+                <Card noPadding>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-medium border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th className="px-6 py-3">Kunde</th>
+                                    <th className="px-6 py-3">Kanton</th>
+                                    <th className="px-6 py-3">Status</th>
+                                    <th className="px-6 py-3">Frist</th>
+                                    <th className="px-6 py-3 text-right">Steuerbares Einkommen</th>
+                                    <th className="px-6 py-3 text-right">Abzüge</th>
+                                    <th className="px-6 py-3 text-center">Docs</th>
+                                    <th className="px-6 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {filteredReturns.length > 0 ? filteredReturns.map(tr => {
+                                    const c = getClient(tr.clientId);
+                                    return (
+                                        <tr key={tr.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer" onClick={() => setSelectedReturn(tr)}>
+                                            <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{c?.firstName} {c?.lastName}</td>
+                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{tr.canton}{tr.municipality ? ` (${tr.municipality})` : ''}</td>
+                                            <td className="px-6 py-4"><StatusBadge status={tr.status} /></td>
+                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{tr.deadline}</td>
+                                            <td className="px-6 py-4 text-right font-mono"><SensitiveData>CHF {Number(tr.taxableIncome ?? 0).toLocaleString()}</SensitiveData></td>
+                                            <td className="px-6 py-4 text-right font-mono text-emerald-600"><SensitiveData>CHF {Number(tr.deductionsTotal ?? 0).toLocaleString()}</SensitiveData></td>
+                                            <td className="px-6 py-4 text-center text-slate-500">{tr.documentsCount}</td>
+                                            <td className="px-6 py-4 text-right"><ChevronRight size={14} className="text-slate-300" /></td>
+                                        </tr>
+                                    );
+                                }) : (
+                                    <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">Keine Mandate für {selectedYear} gefunden.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
             )}
 
             {/* SIMULATOR MODAL */}
@@ -522,15 +567,46 @@ export const TaxManagement: React.FC = () => {
                                     Eckdaten (Vorläufig)
                                 </h3>
                                 <div className="space-y-3">
+                                    {(selectedReturn.grossIncome ?? 0) > 0 && (
+                                        <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="text-sm text-slate-500">Bruttoeinkommen</span>
+                                            <span className="font-mono font-medium"><SensitiveData>CHF {Number(selectedReturn.grossIncome).toLocaleString()}</SensitiveData></span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                                        <span className="text-sm text-slate-500">Nettoeinkommen</span>
+                                        <span className="text-sm text-slate-500">Steuerbares Einkommen</span>
                                         <span className="font-mono font-medium"><SensitiveData>CHF {selectedReturn.taxableIncome?.toLocaleString()}</SensitiveData></span>
                                     </div>
                                     <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
                                         <span className="text-sm text-slate-500">Abzüge Total</span>
                                         <span className="font-mono font-medium text-emerald-600"><SensitiveData>- CHF {selectedReturn.deductionsTotal?.toLocaleString()}</SensitiveData></span>
                                     </div>
-                                    
+
+                                    {/* Itemised deductions (only lines that are set) */}
+                                    {DEDUCTION_FIELDS.some(f => (selectedReturn[f.key] ?? 0) > 0) && (
+                                        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg space-y-1.5">
+                                            {DEDUCTION_FIELDS.filter(f => (selectedReturn[f.key] ?? 0) > 0).map(f => (
+                                                <div key={f.key} className="flex justify-between text-xs">
+                                                    <span className="text-slate-500">{f.label}</span>
+                                                    <span className="font-mono text-slate-700 dark:text-slate-300"><SensitiveData>CHF {Number(selectedReturn[f.key]).toLocaleString()}</SensitiveData></span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {selectedReturn.municipality && (
+                                        <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="text-sm text-slate-500">Gemeinde</span>
+                                            <span className="text-sm font-medium">{selectedReturn.municipality}</span>
+                                        </div>
+                                    )}
+                                    {selectedReturn.submittedAt && (
+                                        <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="text-sm text-slate-500">Eingereicht am</span>
+                                            <span className="text-sm font-medium">{selectedReturn.submittedAt}</span>
+                                        </div>
+                                    )}
+
                                     {selectedReturn.notes && (
                                         <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800 rounded-lg">
                                             <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-1">Interne Notiz:</p>
@@ -589,11 +665,21 @@ export const TaxManagement: React.FC = () => {
                         {/* Footer Actions */}
                         <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
                             <Button variant="outline" onClick={() => setSelectedReturn(null)}>Schliessen</Button>
-                            <Button>Mandat öffnen</Button>
+                            <Button onClick={() => { setEditReturn(selectedReturn); setSelectedReturn(null); setAiAdvice(null); setIsTaxFormOpen(true); }}>Bearbeiten</Button>
                         </div>
                     </div>
                 </Modal>
             )}
+
+            {/* CREATE / EDIT MANDATE */}
+            <TaxReturnForm
+                isOpen={isTaxFormOpen}
+                onClose={() => { setIsTaxFormOpen(false); setEditReturn(null); }}
+                onSaved={refetchTaxReturns}
+                clients={clients}
+                defaultYear={selectedYear}
+                initial={editReturn}
+            />
         </Layout>
     );
 };
