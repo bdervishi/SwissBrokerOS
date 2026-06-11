@@ -62,21 +62,41 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
             id: 'b1',
             title: "Scale without Admin.",
             subtitle: "Fokus für Broker-Inhaber",
-            description: "Makler verlieren 60% ihrer Zeit in Portalen. Wir geben Ihnen diese Zeit zurück durch totale Automatisierung.",
+            description: "Makler verlieren 60% ihrer Zeit in Portalen und Excel. SwissBroker OS ist das System-of-Record: vom Kunden über die Police bis zur Auszahlung.",
             icon: <Building size={48} />,
             color: "from-brand-600 to-indigo-700",
-            points: ["Zentrales Portfolio Management", "Automatisierte Zeiterfassung", "Team-Hierarchien & HR", "nDSG Safe Vault"],
+            points: ["360°-Kundendossier (Policen, Vorsorge, Steuern, Hypotheken)", "Wizard-Erfassung in Minuten statt Formular-Wüste", "Dokumenten-Tresor, mandantengetrennt (revDSG)", "Team, HR & Zeiterfassung integriert"],
             visualType: 'NETWORK'
         },
         {
             id: 'b2',
+            title: "Kein Franken bleibt liegen.",
+            subtitle: "Courtage-Cockpit mit KI-Abgleich",
+            description: "Beim Erfassen der Police entsteht automatisch der Courtage-Plan (Soll). Die KI liest die Abrechnungen der Versicherer und findet jede Abweichung – und jede vergessene Courtage.",
+            icon: <Coins size={48} />,
+            color: "from-amber-500 to-orange-700",
+            points: ["Automatische Soll-Stellung aus Courtagevereinbarungen", "KI-Abgleich der Versicherer-Abrechnungen (PDF/Excel)", "Leakage-Detektor: nie abgerechnete Courtagen in CHF", "Storno-Radar & 12-Monats-Forecast"],
+            visualType: 'STATS'
+        },
+        {
+            id: 'b3',
             title: "Data Sovereignty (BYOS).",
             subtitle: "Ihre Daten bleiben Ihre Daten",
-            description: "Keine Migration nötig. Wir verbinden uns direkt mit Ihrem OneDrive, SharePoint oder Google Drive. Sie behalten die volle Kontrolle.",
+            description: "Keine Migration nötig. Wir verbinden uns direkt mit Ihrem OneDrive, SharePoint oder Google Drive – pro Kunde verknüpft. Sie behalten die volle Kontrolle.",
             icon: <HardDrive size={48} />,
             color: "from-emerald-600 to-emerald-800",
-            points: ["Zero-Migration (Sofortstart)", "Kein Vendor Lock-in", "Volle SharePoint Integration", "Hybrider Swiss Vault"],
+            points: ["Zero-Migration (Sofortstart)", "Kein Vendor Lock-in", "Google Drive / OneDrive / Dropbox pro Mandant", "White-Label: Ihre Farben, Ihr Logo"],
             visualType: 'STATS'
+        },
+        {
+            id: 'b4',
+            title: "Compliance by Design.",
+            subtitle: "FINMA / VAG / revDSG",
+            description: "Regulatorik auf Knopfdruck statt Anwaltsstunden: Offenlegung, Protokolle und Datentrennung sind in den Workflow eingebaut.",
+            icon: <Scale size={48} />,
+            color: "from-slate-700 to-slate-900",
+            points: ["VAG-45b-Entschädigungsoffenlegung pro Kunde, druckfertig", "KI-Beratungsprotokolle (VAG/FIDLEG) mit Signatur", "Strikte Mandanten-Isolation (Row Level Security)", "KYC-Checks & GwG-Dokumentation im Dossier"],
+            visualType: 'GRID'
         }
     ],
     AGENT: [
@@ -84,20 +104,30 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
             id: 'a1',
             title: "Your Wallet. Your Rules.",
             subtitle: "Fokus für Vermittler & Aussendienst",
-            description: "Schluss mit Excel-Listen für Ihre Provisionen. Sehen Sie Ihren Verdienst in Echtzeit – direkt nach dem Abschluss.",
+            description: "Schluss mit Excel-Listen für Provisionen. Ihr Split wird beim Policen-Abschluss berechnet und nach dem Abgleich automatisch zur Auszahlung freigegeben.",
             icon: <Wallet size={48} />,
             color: "from-amber-500 to-orange-700",
-            points: ["Live Commission Tracking", "Digitales 'Portemonnaie'", "Sofortige Abrechnung", "Transparente Splits"],
+            points: ["Splits aus transparentem Regelwerk (% je Sparte)", "Auszahlungs-Journal in Echtzeit", "Faire Storno-Verrechnung, nachvollziehbar", "Eigenes Storno-Risiko jederzeit sichtbar"],
             visualType: 'STATS'
         },
         {
             id: 'a2',
             title: "The Lead Magnet.",
             subtitle: "Mehr Sales, weniger Suchen",
-            description: "Der Lead Radar findet für Sie Neukunden im Web. Unsere KI bereitet das Gespräch vor, bevor Sie wählen.",
+            description: "Der Lead Radar findet Neukunden, das Cross-Selling-Radar findet Deckungslücken im Bestand – mit CHF-Potenzial pro Kunde.",
             icon: <Target size={48} />,
             color: "from-purple-600 to-pink-700",
-            points: ["AI-gestützte Kaltakquise", "Mobile Client App", "3D Wealth Vis (Wow-Effekt)", "Terminbuchung integriert"],
+            points: ["AI-gestützte Kaltakquise & Lead-Pipeline", "Cross-Selling-Radar: Lücken mit Prämienpotenzial", "Call-Agent: KI fasst Gespräche zusammen & erstellt Aufgaben", "3D Wealth Vis (Wow-Effekt im Beratungsgespräch)"],
+            visualType: 'NETWORK'
+        },
+        {
+            id: 'a3',
+            title: "Teamwork ohne Reibung.",
+            subtitle: "Übergabe & Vertretung eingebaut",
+            description: "Termin verhindert? Ein Klick, und der Kollege übernimmt – inklusive Kontext, Notiz und Benachrichtigung. Ferien? Die Stellvertretung erbt automatisch.",
+            icon: <Users2 size={48} />,
+            color: "from-blue-600 to-indigo-800",
+            points: ["Termin- & Lead-Übergabe mit einem Klick", "Abwesenheits-Modus mit automatischer Umverteilung", "In-App-Benachrichtigungen statt E-Mail-Ping-Pong", "Team-Kalender: Meine vs. Team-Sicht"],
             visualType: 'NETWORK'
         }
     ],
@@ -121,6 +151,16 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
             color: "from-emerald-700 to-teal-900",
             points: ["Verifizierte Lead-Qualität", "Transparentes Bidding", "Direkter Datentransfer", "Sichere Abrechnung"],
             visualType: 'GRID'
+        },
+        {
+            id: 'p3',
+            title: "Friction-free Settlement.",
+            subtitle: "Weniger Rückfragen, schnellere Courtage",
+            description: "Broker gleichen Ihre Courtageabrechnungen KI-gestützt ab. Saubere Daten auf beiden Seiten heisst: weniger Disputes, weniger Hotline, schnellere Zahlung.",
+            icon: <Coins size={48} />,
+            color: "from-amber-600 to-orange-800",
+            points: ["Strukturierter Abrechnungs-Abgleich statt PDF-Pingpong", "Police-genaue Zuordnung per Policennummer", "Differenzen als strukturierte Reklamation", "Anonymisierte Markt-Benchmarks"],
+            visualType: 'STATS'
         }
     ],
     INVESTOR: [
@@ -128,21 +168,31 @@ const PERSONA_DECKS: Record<Exclude<Persona, null>, Slide[]> = {
             id: 'i1',
             title: "The Vertical SaaS Moat.",
             subtitle: "Investor Relations",
-            description: "Wir digitalisieren den Kernmarkt der Schweizer Finanzindustrie. Ein unersetzbares System-of-Record.",
+            description: "Wir digitalisieren den Kernmarkt der Schweizer Finanzindustrie. Wer Kunden, Policen UND den Geldfluss (Courtagen) hält, wird nicht mehr ersetzt.",
             icon: <TrendingUp size={48} />,
             color: "from-slate-800 to-slate-950",
-            points: ["High Stickiness (Core OS)", "Low Churn durch BYOS", "Scalable Unit Economics", "Expansion in EU Ready"],
+            points: ["System-of-Record: Kunde → Police → Courtage → Auszahlung", "High Stickiness, Low Churn durch BYOS", "White-Label Multi-Tenant Architektur", "Expansion in EU Ready"],
             visualType: 'STATS'
         },
         {
             id: 'i2',
             title: "AI & Automation DNA.",
             subtitle: "Unfair Advantage",
-            description: "Unsere proprietären KI-Modelle für Schweizer AVBs schaffen eine Effizienz-Barriere für Konkurrenten.",
+            description: "KI nicht als Chatbot, sondern im Geldfluss: Abrechnungs-Abgleich, Dokument-Extraktion und Post-Call-Pipeline sparen messbar Stunden pro Woche.",
             icon: <BrainCircuit size={48} />,
             color: "from-indigo-900 to-purple-900",
-            points: ["Proprietary AI Pipelines", "Deep Legal Integration", "18% MRR Growth Rate", "Low Friction Onboarding"],
+            points: ["KI-Abgleich der Courtageabrechnungen (findet bares Geld)", "Call-Agent: Transkript → Zusammenfassung → Aufgaben", "Dokument-Extraktion direkt aus dem Drive", "Deadline-/Storno-Automation als Cron-Pipeline"],
             visualType: 'NETWORK'
+        },
+        {
+            id: 'i3',
+            title: "Layered Monetization.",
+            subtitle: "Mehr als ein Abo",
+            description: "Drei Umsatzschichten auf einer Plattform: SaaS-Subscription als Basis, Transaktionsumsätze im Lead-Marktplatz, API-Fees aus Embedded Finance.",
+            icon: <Layers size={48} />,
+            color: "from-emerald-700 to-teal-900",
+            points: ["SaaS-Abo pro Mandant (Starter → Enterprise)", "Lead-Marketplace: Take-Rate pro Transaktion", "Embedded-Finance-API für Provider", "Daten-Benchmarks als Premium-Feature"],
+            visualType: 'GRID'
         }
     ]
 };
