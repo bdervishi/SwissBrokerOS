@@ -4,36 +4,36 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { CommissionStatus, CommissionType, UserRole, PolicyStatus } from '../types';
-import { TrendingUp, DollarSign, Clock, Download, Filter, Building2, AlertTriangle, ShieldAlert, Phone, Users, CheckCircle, Settings as SettingsIcon } from 'lucide-react';
+import { TrendingUp, DollarSign, Clock, Download, Filter, Building2, AlertTriangle, ShieldAlert, Phone, Users, Handshake, FileSearch, Settings as SettingsIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useAuth } from '../contexts/AuthContext';
 import { useCommissions, useTenants, usePolicies, useClients, useProfiles } from '../src/hooks/useData';
 import { Navigate, Link, useLocation } from 'react-router-dom';
 import { SensitiveData } from '../components/ui/SensitiveData';
+import { AgreementsTab } from '../components/commissions/AgreementsTab';
+import { StatementsTab } from '../components/commissions/StatementsTab';
+import { PayoutTab } from '../components/commissions/PayoutTab';
+
+type CommissionsTab = 'OVERVIEW' | 'AGREEMENTS' | 'STATEMENTS' | 'STORNO' | 'PAYOUT';
 
 export const Commissions: React.FC = () => {
-    const { role } = useAuth();
+    const { user, role } = useAuth();
     const { data: commissions } = useCommissions();
     const { data: tenants } = useTenants();
     const { data: policies } = usePolicies();
     const { data: clients } = useClients();
     const { data: users } = useProfiles();
     const location = useLocation();
-    
-    // Check if a specific tab was requested via navigation state
-    const initialTab = location.state?.tab === 'STORNO' ? 'STORNO' : 'OVERVIEW';
-    const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'STORNO' | 'AGENTS'>(initialTab);
+    const tenantId = user?.tenantId;
 
-    // Mock Agent Settings (Local State)
-    const [agentSettings, setAgentSettings] = useState([
-        { userId: 'u_agent_1', name: 'Felix Fieldagent', split: 60, role: 'Broker Agent' },
-        { userId: 'u_saas_4', name: 'Alex Acquisition', split: 20, role: 'Hunter (SaaS)' } // Hunter gets recurring SaaS commission
-    ]);
+    // Check if a specific tab was requested via navigation state
+    const initialTab: CommissionsTab = location.state?.tab === 'STORNO' ? 'STORNO' : 'OVERVIEW';
+    const [activeTab, setActiveTab] = useState<CommissionsTab>(initialTab);
 
     // Update tab if location state changes (e.g. clicking multiple times)
     useEffect(() => {
         if (location.state?.tab) {
-            setActiveTab(location.state.tab);
+            setActiveTab(location.state.tab === 'AGENTS' ? 'PAYOUT' : location.state.tab);
         }
     }, [location.state]);
 
@@ -113,24 +113,36 @@ export const Commissions: React.FC = () => {
         );
     }
 
-    // 4. Broker View (Normal Commissions + Storno + Agents)
-    
+    // 4. Broker View (Soll/Ist + Vereinbarungen + Abgleich + Storno + Auszahlung)
+
     // --- Data Prep for Overview ---
     const totalPaid = commissions
-        .filter(c => c.status === CommissionStatus.PAID)
+        .filter(c => c.status === CommissionStatus.PAID || c.status === CommissionStatus.MATCHED)
         .reduce((sum, c) => sum + c.amount, 0);
 
     const totalPending = commissions
         .filter(c => c.status === CommissionStatus.PENDING)
         .reduce((sum, c) => sum + c.amount, 0);
 
-    const recentMonthData = [
-        { name: 'Jan', value: 3200 },
-        { name: 'Feb', value: 4100 },
-        { name: 'Mär', value: 3800 },
-        { name: 'Apr', value: 5200 },
-        { name: 'Mai', value: totalPaid + totalPending }, // Approx
-    ];
+    const totalExpectedOpen = commissions
+        .filter(c => c.status === CommissionStatus.EXPECTED)
+        .reduce((sum, c) => sum + (c.expectedAmount ?? 0), 0);
+
+    // 12-Monats-Forecast aus der Soll-Stellung (Bestandes- + Abschlusscourtagen).
+    const ymOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const forecastMonths: { name: string; value: number }[] = [];
+    for (let i = 0; i < 12; i++) {
+        const d = new Date();
+        d.setMonth(d.getMonth() + i);
+        const key = ymOf(d);
+        const value = commissions
+            .filter(c => c.status === CommissionStatus.EXPECTED && c.period === key)
+            .reduce((s, c) => s + (c.expectedAmount ?? 0), 0);
+        forecastMonths.push({ name: key.slice(2), value: Math.round(value) });
+    }
+    const forecast12Total = forecastMonths.reduce((s, m) => s + m.value, 0);
+
+    const sortedCommissions = [...commissions].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
 
     // --- Data Prep for Storno Risk ---
     // Filter policies that have a liability duration and are active
@@ -174,25 +186,6 @@ export const Commissions: React.FC = () => {
         ? Math.round(riskyPolicies.reduce((sum, p) => sum + p.remainingMonths, 0) / riskyPolicies.length) 
         : 0;
 
-    // --- Data Prep for Agents ---
-    const agents = users.filter(u => u.role === UserRole.BROKER_AGENT);
-    const agentStats = agents.map(agent => {
-        const agentCommissions = commissions.filter(c => c.agentId === agent.id);
-        const totalVolume = agentCommissions.reduce((sum, c) => sum + c.amount, 0);
-        
-        // Calculated payout
-        const payoutDue = agentCommissions
-            .filter(c => c.status === CommissionStatus.PAID) // Only pay out what we received
-            .reduce((sum, c) => sum + (c.amount * (c.agentSplitPercentage || 0.5)), 0);
-            
-        return {
-            agent,
-            dealCount: agentCommissions.length,
-            totalVolume,
-            payoutDue
-        };
-    });
-
     return (
         <Layout>
             <div className="flex justify-between items-center mb-6">
@@ -208,79 +201,110 @@ export const Commissions: React.FC = () => {
 
             {/* Tabs */}
             <div className="flex border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto">
-                <TabButton 
-                    active={activeTab === 'OVERVIEW'} 
-                    onClick={() => setActiveTab('OVERVIEW')} 
-                    icon={<DollarSign size={16} />} 
-                    label="Umsatz & Provisionen" 
+                <TabButton
+                    active={activeTab === 'OVERVIEW'}
+                    onClick={() => setActiveTab('OVERVIEW')}
+                    icon={<DollarSign size={16} />}
+                    label="Umsatz & Provisionen"
                 />
-                <TabButton 
-                    active={activeTab === 'STORNO'} 
-                    onClick={() => setActiveTab('STORNO')} 
-                    icon={<ShieldAlert size={16} />} 
+                <TabButton
+                    active={activeTab === 'AGREEMENTS'}
+                    onClick={() => setActiveTab('AGREEMENTS')}
+                    icon={<Handshake size={16} />}
+                    label="Vereinbarungen"
+                />
+                <TabButton
+                    active={activeTab === 'STATEMENTS'}
+                    onClick={() => setActiveTab('STATEMENTS')}
+                    icon={<FileSearch size={16} />}
+                    label="Abrechnungs-Abgleich"
+                />
+                <TabButton
+                    active={activeTab === 'STORNO'}
+                    onClick={() => setActiveTab('STORNO')}
+                    icon={<ShieldAlert size={16} />}
                     label="Storno-Überwachung"
                     badge={riskyPolicies.length}
                 />
-                <TabButton 
-                    active={activeTab === 'AGENTS'} 
-                    onClick={() => setActiveTab('AGENTS')} 
-                    icon={<Users size={16} />} 
-                    label="Sales Force & Abrechnung"
+                <TabButton
+                    active={activeTab === 'PAYOUT'}
+                    onClick={() => setActiveTab('PAYOUT')}
+                    icon={<Users size={16} />}
+                    label="Splits & Auszahlung"
                 />
             </div>
+
+            {activeTab === 'AGREEMENTS' && <AgreementsTab tenantId={tenantId} />}
+            {activeTab === 'STATEMENTS' && <StatementsTab tenantId={tenantId} />}
+            {activeTab === 'PAYOUT' && <PayoutTab tenantId={tenantId} />}
 
             {activeTab === 'OVERVIEW' && (
                 <>
                     {/* KPIs */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <KPICard 
-                            title="Ausbezahlt (YTD)" 
-                            value={<SensitiveData>CHF {totalPaid.toLocaleString()}</SensitiveData>} 
-                            icon={<DollarSign className="text-emerald-600" />} 
-                            trend="+12% vs. Vorjahr"
+                        <KPICard
+                            title="Erhalten (Ist)"
+                            value={<SensitiveData>CHF {totalPaid.toLocaleString()}</SensitiveData>}
+                            icon={<DollarSign className="text-emerald-600" />}
+                            trend="Abgeglichene & bezahlte Courtagen"
                         />
-                        <KPICard 
-                            title="Ausstehend / Pending" 
-                            value={<SensitiveData>CHF {totalPending.toLocaleString()}</SensitiveData>}
-                            icon={<Clock className="text-amber-600" />} 
-                            trend="Erwartet in 30 Tagen"
+                        <KPICard
+                            title="Offenes Soll"
+                            value={<SensitiveData>CHF {Math.round(totalExpectedOpen + totalPending).toLocaleString()}</SensitiveData>}
+                            icon={<Clock className="text-amber-600" />}
+                            trend="Erwartet gemäss Courtage-Plan"
                             highlight
                         />
-                        <KPICard 
-                            title="Bestandscourtage (Prognose)" 
-                            value={<SensitiveData>CHF 45,000</SensitiveData>}
-                            icon={<TrendingUp className="text-brand-600" />} 
-                            trend="Basis 2024"
+                        <KPICard
+                            title="Forecast 12 Monate"
+                            value={<SensitiveData>CHF {forecast12Total.toLocaleString()}</SensitiveData>}
+                            icon={<TrendingUp className="text-brand-600" />}
+                            trend="Aus Soll-Stellung (Abschluss + Bestand)"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Main List */}
                         <div className="lg:col-span-2 space-y-6">
-                            <Card title="Transaktionen" noPadding>
+                            <Card title="Courtage-Positionen (Soll / Ist)" noPadding>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-sm">
                                         <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-medium border-b border-slate-200 dark:border-slate-800">
                                             <tr>
-                                                <th className="px-6 py-3">Datum</th>
-                                                <th className="px-6 py-3">Partner</th>
-                                                <th className="px-6 py-3">Quelle</th>
+                                                <th className="px-6 py-3">Fällig</th>
+                                                <th className="px-6 py-3">Versicherer / Position</th>
                                                 <th className="px-6 py-3">Typ</th>
-                                                <th className="px-6 py-3 text-right">Betrag</th>
+                                                <th className="px-6 py-3 text-right">Soll</th>
+                                                <th className="px-6 py-3 text-right">Ist</th>
                                                 <th className="px-6 py-3">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {commissions.map(com => (
+                                            {sortedCommissions.length === 0 && (
+                                                <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-500 italic">
+                                                    Noch keine Courtagen. Erfasse eine Courtagevereinbarung und lege eine Police an —
+                                                    der Courtage-Plan wird automatisch erstellt.
+                                                </td></tr>
+                                            )}
+                                            {sortedCommissions.map(com => (
                                                 <tr key={com.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{com.date}</td>
-                                                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{com.partnerName}</td>
-                                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{com.source}</td>
+                                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">{com.period || com.date}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="font-medium text-slate-900 dark:text-slate-100">{com.partnerName}</div>
+                                                        <div className="text-xs text-slate-500">
+                                                            {com.clientId
+                                                                ? <Link to={`/client/${com.clientId}`} className="text-brand-600 hover:underline">{com.description || com.source}</Link>
+                                                                : (com.description || com.source)}
+                                                        </div>
+                                                    </td>
                                                     <td className="px-6 py-4">
                                                         <BadgeType type={com.type} />
                                                     </td>
+                                                    <td className="px-6 py-4 text-right font-mono text-slate-500">
+                                                        {com.expectedAmount != null ? <SensitiveData>CHF {com.expectedAmount.toLocaleString()}</SensitiveData> : '–'}
+                                                    </td>
                                                     <td className="px-6 py-4 text-right font-mono font-medium">
-                                                        <SensitiveData>CHF {com.amount.toFixed(2)}</SensitiveData>
+                                                        {com.amount ? <SensitiveData>CHF {com.amount.toLocaleString()}</SensitiveData> : '–'}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <BadgeStatus status={com.status} />
@@ -295,10 +319,10 @@ export const Commissions: React.FC = () => {
 
                         {/* Sidebar Chart */}
                         <div className="space-y-6">
-                            <Card title="Einnahmen Verlauf">
+                            <Card title="Courtage-Forecast (12 Monate)">
                                 <div className="h-[250px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={recentMonthData}>
+                                    <BarChart data={forecastMonths}>
                                         <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value/1000}k`} />
                                         <Tooltip 
@@ -435,86 +459,6 @@ export const Commissions: React.FC = () => {
                 </>
             )}
 
-            {activeTab === 'AGENTS' && (
-                <>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="font-bold text-lg text-slate-900 dark:text-slate-100">Externe Vermittler Übersicht</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                        <Card title="Agenten Konfiguration (Admin)" className="lg:col-span-1 bg-slate-50 dark:bg-slate-900/50">
-                            <div className="space-y-4">
-                                {agentSettings.map(agent => (
-                                    <div key={agent.userId} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                                        <div>
-                                            <div className="font-bold text-sm">{agent.name}</div>
-                                            <div className="text-xs text-slate-500">{agent.role}</div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-xs text-slate-400 uppercase">Split</div>
-                                            <div className="font-bold text-brand-600">{agent.split}%</div>
-                                        </div>
-                                    </div>
-                                ))}
-                                <Button variant="outline" className="w-full text-xs">Provisionen bearbeiten</Button>
-                            </div>
-                        </Card>
-
-                        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {agentStats.map(stat => (
-                                <div key={stat.agent.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <img src={stat.agent.avatarUrl} className="w-12 h-12 rounded-full bg-slate-200" alt="" />
-                                        <div>
-                                            <h3 className="font-bold text-slate-900 dark:text-slate-100">{stat.agent.firstName} {stat.agent.lastName}</h3>
-                                            <p className="text-xs text-slate-500">{stat.dealCount} Abschlüsse</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="space-y-3 mb-6">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-slate-500">Volumen Total</span>
-                                            <span className="font-medium"><SensitiveData>CHF {stat.totalVolume.toLocaleString()}</SensitiveData></span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-slate-500">Auszahlbar (Freigegeben)</span>
-                                            <span className="font-bold text-emerald-600"><SensitiveData>CHF {stat.payoutDue.toLocaleString()}</SensitiveData></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" className="flex-1">Details</Button>
-                                        <Button size="sm" className="flex-1" icon={<CheckCircle size={14}/>}>Abrechnen</Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <Card title="Abrechnungs-Journal" noPadding>
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-medium border-b border-slate-200 dark:border-slate-800">
-                                <tr>
-                                    <th className="px-6 py-3">Datum</th>
-                                    <th className="px-6 py-3">Vermittler</th>
-                                    <th className="px-6 py-3">Periode</th>
-                                    <th className="px-6 py-3 text-right">Betrag</th>
-                                    <th className="px-6 py-3">Dokument</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">30.04.2024</td>
-                                    <td className="px-6 py-4 font-medium">Felix Fieldagent</td>
-                                    <td className="px-6 py-4">April 2024</td>
-                                    <td className="px-6 py-4 text-right font-mono"><SensitiveData>CHF 1,250.00</SensitiveData></td>
-                                    <td className="px-6 py-4"><Button size="sm" variant="ghost" icon={<Download size={14}/>}>PDF</Button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </Card>
-                </>
-            )}
         </Layout>
     );
 };
@@ -544,7 +488,11 @@ const BadgeType = ({ type }: { type: CommissionType }) => {
 const BadgeStatus = ({ status }: { status: CommissionStatus }) => {
     switch(status) {
         case CommissionStatus.PAID: return <span className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">Bezahlt</span>;
+        case CommissionStatus.MATCHED: return <span className="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">Abgeglichen</span>;
         case CommissionStatus.PENDING: return <span className="text-xs font-medium text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded">Offen</span>;
+        case CommissionStatus.EXPECTED: return <span className="text-xs font-medium text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded">Erwartet</span>;
+        case CommissionStatus.DISPUTED: return <span className="text-xs font-medium text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded">Strittig</span>;
+        case CommissionStatus.CLAWBACK: return <span className="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded">Storno</span>;
         default: return <span className="text-xs text-slate-500">Unbekannt</span>;
     }
 };

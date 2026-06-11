@@ -13,6 +13,7 @@ import { ClientDocuments } from '../components/integrations/ClientDocuments';
 import { DocumentVault } from '../components/documents/DocumentVault';
 import { PolicyForm } from '../components/forms/PolicyForm';
 import { AssetForm, ASSET_TYPE_LABELS } from '../components/forms/AssetForm';
+import { VagDisclosureButton } from '../components/commissions/VagDisclosure';
 import { CallProcessor } from '../components/CallProcessor';
 import { useAuth } from '../contexts/AuthContext';
 import { WealthVis } from '../components/3d/WealthVis';
@@ -444,6 +445,17 @@ export const ClientDetail: React.FC = () => {
                                 <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Vorhanden</span>
                             </div>
                         </div>
+                    </Card>
+                    <Card title="Transparenz (Art. 45b VAG)">
+                        <p className="text-sm text-slate-500 mb-4">
+                            Offenlegung der Vermittler-Entschädigung gegenüber dem Kunden — generiert aus den
+                            erfassten Policen und Courtage-Daten.
+                        </p>
+                        <VagDisclosureButton
+                            clientId={client.id}
+                            clientName={client.companyName || `${client.firstName} ${client.lastName}`}
+                            policies={policies}
+                        />
                     </Card>
                 </div>
             </div>

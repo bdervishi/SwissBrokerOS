@@ -22,6 +22,7 @@ depend on earlier files).
 | 14 | `database_signup.sql` | `provision_tenant()` RPC for self-serve tenant signup |
 | 15 | `database_demo_allowlist.sql` | `demo_allowlist` table for gated demo access |
 | 16 | `database_detail_capture.sql` | Detailed capture: extends `policies`/`assets`/`tax_returns`, adds native `documents` table + private Storage bucket `documents` (incl. storage RLS) |
+| 17 | `database_commissions.sql` | Courtage-Management: `commission_agreements`/`_statements`/`_statement_items`/`_split_rules` + extends `commissions` (Soll/Ist, Splits) — see `docs/COURTAGEN_KONZEPT.md` |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |

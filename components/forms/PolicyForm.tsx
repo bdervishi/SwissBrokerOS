@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../../src/services/db';
+import { generateExpectedForPolicy, registerClawbackForPolicy } from '../../src/services/commissions';
 import { Policy, PolicyStatus } from '../../types';
 import { WizardModal, WizardStep, Field, FieldLabel, SelectField, SummaryRow, inputCls } from './Wizard';
 
@@ -139,13 +140,21 @@ export const PolicyForm: React.FC<PolicyFormProps> = ({
         notes: form.notes.trim() || null,
       };
       if (initial) {
-        await db.policies.update(initial.id, payload);
+        const updated = await db.policies.update(initial.id, payload);
+        // Kündigung in der Haftungszeit -> Storno-Rückforderung buchen.
+        if (payload.status === 'CANCELLED' && (initial.status as string) !== 'CANCELLED') {
+          await registerClawbackForPolicy(updated as any).catch((e) =>
+            console.warn('[Commissions] clawback failed:', e?.message));
+        }
       } else {
-        await db.policies.create({
+        const created = await db.policies.create({
           ...payload,
           clientId: form.clientId,
           tenantId: fixedTenantId ?? owner?.tenantId,
         });
+        // Soll-Stellung: erwartete Courtagen aus der Courtagevereinbarung.
+        await generateExpectedForPolicy(created as any).catch((e) =>
+          console.warn('[Commissions] expected generation failed:', e?.message));
       }
       onSaved();
       onClose();
