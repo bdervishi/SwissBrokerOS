@@ -25,6 +25,7 @@ depend on earlier files).
 | 17 | `database_commissions.sql` | Courtage-Management: `commission_agreements`/`_statements`/`_statement_items`/`_split_rules` + extends `commissions` (Soll/Ist, Splits) — see `docs/COURTAGEN_KONZEPT.md` |
 | 18 | `database_superadmin_lock.sql` | **Security**: reserves `SAAS_SUPER_ADMIN` for ONE designated auth e-mail (edit `super_admin_email()` at the top!), blocks self-service role changes (closes a privilege-escalation hole in `profile_self_update`), demotes any other super admins |
 | 19 | `database_team.sql` | **Team**: `leads.assigned_to`, `notifications` (Glocke), `absences` (Vertretung) + RLS + `is_broker_admin()` helper |
+| 20 | `database_audit.sql` | **Compliance**: append-only `audit_logs` (Aktivitätshistorie) + RLS (Broker-/SaaS-Admin lesen) |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |

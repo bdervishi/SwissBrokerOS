@@ -54,6 +54,7 @@ import {
   Linkedin,
   Search, // Added Search Icon
   FolderOpen,
+  ScrollText,
 } from 'lucide-react';
 
 interface NavItem {
@@ -262,6 +263,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 { name: 'Webseite & SEO', path: '/web-engine', icon: <Monitor size={20} /> }, 
                 { name: 'AI Studio', path: '/broker/ai-config', icon: <BrainCircuit size={20} /> },
                 { name: 'Daten Import', path: '/import', icon: <Database size={20} /> },
+                { name: 'Audit-Log', path: '/audit', icon: <ScrollText size={20} /> },
             ]
         });
     }
