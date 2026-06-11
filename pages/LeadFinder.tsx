@@ -6,17 +6,19 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { generateContentWithRetry } from '../services/aiService';
 import { leadsService } from '../src/services/leads';
-import { useLeadsFull } from '../src/hooks/useData';
+import { notificationsService } from '../src/services/notifications';
+import { useLeadsFull, useProfiles } from '../src/hooks/useData';
 import { useAuth } from '../contexts/AuthContext';
-import { UserRole, Lead, LeadContact, LeadActivity } from '../types';
+import { UserRole, Lead, LeadContact, LeadActivity, User } from '../types';
+import { HandoverDialog } from '../components/team/HandoverDialog';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Search, MapPin, Globe, Plus, Loader2, Building2, Phone, 
     ArrowRight, Target, X, MessageSquare, History, 
     UserPlus, Zap, Users, Mail, PhoneCall, CalendarPlus, Trash2, 
-    Edit3, ExternalLink, Map as MapIcon, 
-    CheckCircle2, Linkedin, Briefcase, Filter
+    Edit3, ExternalLink, Map as MapIcon,
+    CheckCircle2, Linkedin, Briefcase, Filter, Send
 } from 'lucide-react';
 
 type SearchMode = 'COMPANIES' | 'PEOPLE';
@@ -41,7 +43,30 @@ export const LeadFinder: React.FC = () => {
     
     // Pipeline State
     const { data: leads, refetch: refetchLeads } = useLeadsFull(currentUser?.tenantId);
+    const { data: team } = useProfiles(currentUser?.tenantId);
     const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+    const [isLeadHandoverOpen, setIsLeadHandoverOpen] = useState(false);
+
+    const leadOwnerName = (id?: string | null) => {
+        const u = (team as User[]).find((x) => x.id === id);
+        return u ? `${u.firstName} ${u.lastName}` : null;
+    };
+
+    const handleLeadHandover = async (leadId: string, leadName: string, toUserId: string, note: string) => {
+        await leadsService.assign(leadId, toUserId);
+        await leadsService.addActivity(leadId, {
+            type: 'SYSTEM', title: 'Lead übergeben',
+            description: `Übergeben an ${leadOwnerName(toUserId) || 'Kollege'}${note ? ` – ${note}` : ''}.`,
+            authorName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'System',
+        });
+        await notificationsService.create({
+            tenantId: currentUser?.tenantId, recipientId: toUserId, actorId: currentUser?.id,
+            type: 'LEAD_ASSIGNED', title: 'Lead zugewiesen',
+            body: `${currentUser?.firstName} ${currentUser?.lastName} hat dir den Lead «${leadName}» übergeben${note ? `: ${note}` : '.'}`,
+            link: '/leads', relatedType: 'LEAD', relatedId: leadId,
+        });
+        refetchLeads();
+    };
     const [activeDetailTab, setActiveDetailTab] = useState<'COCKPIT' | 'JOURNAL' | 'CONTACTS'>('COCKPIT');
 
     // Modals & Helpers
@@ -340,10 +365,16 @@ export const LeadFinder: React.FC = () => {
                                         <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                                             <span className="flex items-center gap-1"><MapPin size={12}/> {selectedLead.city}</span>
                                             <span className="flex items-center gap-1"><Globe size={12}/> {selectedLead.source}</span>
+                                            <span className="flex items-center gap-1"><Users size={12}/> {leadOwnerName(selectedLead.assignedTo) || 'nicht zugewiesen'}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setSelectedLeadId(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors"><X size={20}/></button>
+                                <div className="flex items-center gap-2">
+                                    {!isHunter && (
+                                        <Button size="sm" variant="outline" icon={<Send size={14}/>} onClick={() => setIsLeadHandoverOpen(true)}>Übergeben</Button>
+                                    )}
+                                    <button onClick={() => setSelectedLeadId(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors"><X size={20}/></button>
+                                </div>
                             </div>
 
                             {/* Detail Tabs */}
@@ -426,6 +457,20 @@ export const LeadFinder: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            <HandoverDialog
+                isOpen={isLeadHandoverOpen}
+                onClose={() => setIsLeadHandoverOpen(false)}
+                title="Lead übergeben"
+                subjectLabel={selectedLead?.name || ''}
+                tenantId={currentUser?.tenantId}
+                currentUserId={selectedLead?.assignedTo ?? currentUser?.id}
+                confirmLabel="Lead übergeben"
+                onConfirm={async (toId, _name, note) => {
+                    if (selectedLead) await handleLeadHandover(selectedLead.id, selectedLead.name, toId, note);
+                    setIsLeadHandoverOpen(false);
+                }}
+            />
         </Layout>
     );
 };

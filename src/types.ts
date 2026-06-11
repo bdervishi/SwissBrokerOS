@@ -321,6 +321,43 @@ export interface CalendarEvent {
     relatedType: RelatedEntityType;
     isAllDay: boolean;
     description?: string;
+    userId?: string | null;       // Termin-Besitzer (profiles.id)
+    tenantId?: string;
+}
+
+/* Team-Zusammenarbeit: In-App-Benachrichtigung */
+export type NotificationType =
+  | 'HANDOVER_EVENT' | 'LEAD_ASSIGNED' | 'MENTION'
+  | 'COMMISSION_DISPUTE' | 'DEADLINE' | 'SYSTEM';
+
+export interface AppNotification {
+    id: string;
+    tenantId?: string;
+    recipientId: string;
+    actorId?: string | null;
+    type: NotificationType;
+    title: string;
+    body?: string | null;
+    link?: string | null;
+    relatedType?: string | null;
+    relatedId?: string | null;
+    isRead: boolean;
+    createdAt?: string;
+}
+
+/* Team-Zusammenarbeit: Abwesenheit + Stellvertretung */
+export type AbsenceReason = 'VACATION' | 'SICK' | 'OTHER';
+
+export interface Absence {
+    id: string;
+    tenantId?: string;
+    userId: string;
+    deputyId?: string | null;
+    reason: AbsenceReason;
+    startDate: string;
+    endDate: string;
+    note?: string | null;
+    createdAt?: string;
 }
 
 /* Fix: Added missing CommissionType enum */
@@ -767,6 +804,7 @@ export interface Lead {
     interests: string[];
     tasks: LeadTask[];
     offers: any[];
+    assignedTo?: string | null;   // zuständiger Mitarbeiter (profiles.id)
 }
 
 /* Fix: Added missing WebSectionType type */

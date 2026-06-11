@@ -7,6 +7,7 @@ import { SensitiveData } from '../components/ui/SensitiveData';
 import { useClients, useTimeEntries } from '../src/hooks/useData';
 import { db } from '../src/services/db';
 import { TimeEntry, TimeEntryStatus } from '../types';
+import { AbsenceManager } from '../components/team/AbsenceManager';
 import { useBranding } from '../contexts/BrandingContext';
 import { 
     User, 
@@ -25,7 +26,8 @@ import {
     Send,
     CheckCircle,
     AlertCircle,
-    Info
+    Info,
+    Plane
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -34,7 +36,7 @@ export const MyProfile: React.FC = () => {
     const { tenant } = useBranding();
     const { data: clients } = useClients();
     const { data: loadedTimeEntries, refetch: refetchTime } = useTimeEntries(user?.id);
-    const [activeTab, setActiveTab] = useState<'PERSONAL' | 'HR_FINANCE' | 'TIMESHEET'>('PERSONAL');
+    const [activeTab, setActiveTab] = useState<'PERSONAL' | 'HR_FINANCE' | 'TIMESHEET' | 'ABSENCE'>('PERSONAL');
     const [isSaving, setIsSaving] = useState(false);
 
     // Check Plan for Time Tracking Feature
@@ -159,6 +161,12 @@ export const MyProfile: React.FC = () => {
                     icon={<Wallet size={16} />} 
                     label="Lohn & Finanzen" 
                 />
+                <TabButton
+                    active={activeTab === 'ABSENCE'}
+                    onClick={() => setActiveTab('ABSENCE')}
+                    icon={<Plane size={16} />}
+                    label="Abwesenheit"
+                />
                 {hasTimeTracking && (
                     <TabButton 
                         active={activeTab === 'TIMESHEET'} 
@@ -246,6 +254,10 @@ export const MyProfile: React.FC = () => {
                 )}
 
                 {/* --- TAB 2: HR & FINANCE --- */}
+                {activeTab === 'ABSENCE' && (
+                    <div className="max-w-3xl animate-in fade-in duration-300"><AbsenceManager /></div>
+                )}
+
                 {activeTab === 'HR_FINANCE' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-300">
                         <Card title="Bankverbindung (Lohn)">

@@ -4,9 +4,11 @@ import { leadsService } from '../services/leads';
 import { calendarService } from '../services/calendar';
 import { emailsService } from '../services/emails';
 import { leadOffersService } from '../services/leadOffers';
+import { absencesService } from '../services/absences';
 import {
   CalendarEvent, TaxReturn, Email, LeadOffer, ClientDocument,
   CommissionAgreement, CommissionStatement, CommissionStatementItem, CommissionSplitRule,
+  Absence,
 } from '../types';
 import {
   Client,
@@ -181,6 +183,10 @@ export const useCommissionSplitRules = (tenantId?: string) =>
     () => db.commissionSplitRules.getAll(tenantId ? { tenantId } : undefined),
     [tenantId],
   );
+
+// ---- Team-Zusammenarbeit -------------------------------------------------
+export const useAbsences = (tenantId?: string) =>
+  useCollection<Absence>(() => absencesService.list(tenantId), [tenantId]);
 
 // ---- Single items -------------------------------------------------------
 export const useClient = (id?: string) =>
