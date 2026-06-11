@@ -95,9 +95,11 @@ export interface LeadActivity {
 export enum AssetType {
     CASH = 'CASH',
     PILLAR_3A = 'PILLAR_3A',
+    PILLAR_3B = 'PILLAR_3B',
     REAL_ESTATE = 'REAL_ESTATE',
     SECURITIES = 'SECURITIES',
-    PENSION_FUND = 'PENSION_FUND'
+    PENSION_FUND = 'PENSION_FUND',
+    OTHER = 'OTHER'
 }
 
 /* Fix: Added missing Asset interface */
@@ -109,6 +111,10 @@ export interface Asset {
     value: number;
     lastUpdated: string;
     provider?: string;
+    purchaseValue?: number;
+    notes?: string;
+    /** Type-specific detail fields (JSONB column `details`). */
+    details?: Record<string, any>;
 }
 
 export type ClientType = 'PRIVATE' | 'CORPORATE';
@@ -170,6 +176,10 @@ export interface Policy {
     liabilityDurationMonths?: number;
     marketBenchmarkDelta?: number;
     contractFlags?: string[];
+    productName?: string;
+    insuredPersons?: string[];
+    paymentMethod?: string;
+    notes?: string;
 }
 
 /* Fix: Added missing AIAdvice interface */
@@ -456,6 +466,40 @@ export interface TaxReturn {
     taxableIncome: number;
     deductionsTotal: number;
     notes?: string;
+    // Detailed Swiss filing data
+    municipality?: string;
+    grossIncome?: number;
+    occupationalExpenses?: number;   // Berufsauslagen
+    insurancePremiums?: number;      // Versicherungsprämien (KVG/VVG)
+    pillar3aContributions?: number;  // Säule 3a
+    debtInterest?: number;           // Schuldzinsen
+    medicalExpenses?: number;        // Krankheitskosten
+    donations?: number;              // Spenden
+    childcareCosts?: number;         // Kinderbetreuung
+    educationCosts?: number;         // Weiterbildung
+    submittedAt?: string;            // Einreichdatum
+}
+
+/* Native client document (metadata row; binary lives in Supabase Storage) */
+export type DocumentCategory =
+  | 'POLICE' | 'OFFERTE' | 'STEUERN' | 'VORSORGE' | 'HYPOTHEK'
+  | 'IDENTITAET' | 'KORRESPONDENZ' | 'SONSTIGES';
+
+export interface ClientDocument {
+    id: string;
+    tenantId: string;
+    clientId: string;
+    title: string;
+    category: DocumentCategory;
+    relatedType?: 'POLICY' | 'MORTGAGE' | 'TAX_RETURN' | null;
+    relatedId?: string | null;
+    fileName?: string;
+    storagePath?: string | null;
+    mimeType?: string;
+    sizeBytes?: number;
+    uploadedBy?: string | null;
+    notes?: string;
+    createdAt?: string;
 }
 
 /* Fix: Added missing Testimonial interface */

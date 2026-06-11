@@ -21,6 +21,7 @@ depend on earlier files).
 | 13 | `database_calls.sql` | `calls` table + RLS (call agent post-call pipeline) |
 | 14 | `database_signup.sql` | `provision_tenant()` RPC for self-serve tenant signup |
 | 15 | `database_demo_allowlist.sql` | `demo_allowlist` table for gated demo access |
+| 16 | `database_detail_capture.sql` | Detailed capture: extends `policies`/`assets`/`tax_returns`, adds native `documents` table + private Storage bucket `documents` (incl. storage RLS) |
 
 ## Frontend env (Vercel → Environment Variables)
 | Variable | Value |

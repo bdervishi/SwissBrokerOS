@@ -23,6 +23,7 @@ import {
   Tenant,
   ClientNote,
   TaxReturn,
+  ClientDocument,
 } from '../types';
 
 // ==========================================================================
@@ -185,6 +186,9 @@ export const db = {
   timeEntries: createTable<TimeEntry>('time_entries', MOCK_TIME_ENTRIES),
   clientNotes: createTable<ClientNote>('client_notes', MOCK_CLIENT_NOTES),
   taxReturns: createTable<TaxReturn>('tax_returns', MOCK_TAX_RETURNS),
+  // Native document registry (metadata rows; binaries live in Supabase Storage
+  // – see src/services/documents.ts for upload/download).
+  documents: createTable<ClientDocument>('documents', []),
 };
 
 export type Database = typeof db;
