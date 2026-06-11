@@ -55,6 +55,7 @@ const Career = lazy(() => import('./pages/Career').then(m => ({ default: m.Caree
 const AffiliateProgram = lazy(() => import('./pages/AffiliateProgram').then(m => ({ default: m.AffiliateProgram })));
 const FAQPage = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQPage })));
 const OnboardingWizard = lazy(() => import('./pages/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
+const ClientPortal = lazy(() => import('./pages/ClientPortal').then(m => ({ default: m.ClientPortal })));
 import { MaintenanceView } from './components/MaintenanceView'; 
 const PublicPlans = lazy(() => import('./pages/PublicPlans').then(m => ({ default: m.PublicPlans })));
 const PublicCaseStudies = lazy(() => import('./pages/PublicCaseStudies').then(m => ({ default: m.PublicCaseStudies })));
@@ -171,6 +172,7 @@ const App = () => {
                     <Route path="/team/member/:id" element={<ProtectedRoute><EmployeeDetail /></ProtectedRoute>} />
                     
                     <Route path="/profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+                    <Route path="/portal" element={<ProtectedRoute><ClientPortal /></ProtectedRoute>} />
 
                     <Route path="/broker/ai-config" element={<ProtectedRoute><BrokerAIConfig /></ProtectedRoute>} />
                     <Route path="/web-engine" element={<ProtectedRoute><WebEngine /></ProtectedRoute>} /> 
